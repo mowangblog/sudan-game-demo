@@ -1,0 +1,227 @@
+[
+  {
+	"id": 1,
+	"name": "治理家业",
+	"description": "管理你的庄园和资产，稳定获取金币。",
+	"location": "palace",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 0, "auto_start": true, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["soc", "wis"], "required_successes": 2},
+	"outcomes": {
+	  "success": {"gold": 3,
+		"narrative": "晨曦微露，[角色]便起身巡查庄园。\n庄稼长势喜人，佃农们勤勉地耕作着——\n今日收入颇丰，金币+3。"},
+	  "fail": {"gold": 1,
+		"narrative": "[角色]在账本前皱眉许久。\n今日的市场行情不佳，\n勉强维持了收支平衡，金币+1。"}
+	}
+  },
+  {
+	"id": 2,
+	"name": "上朝觐见",
+	"description": "前往宫廷觐见苏丹。权势≥5时可稳定获取1金币。",
+	"location": "palace",
+	"slots": [{"type": "character", "required_tags": ["follower"], "optional": true}],
+	"time_limit": 0, "duration": 0, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["soc", "cha"], "required_successes": 3},
+	"outcomes": {
+	  "success": {"gold": 1, "power": 1,
+		"narrative": "[角色]身着华服，在朝堂之上一番慷慨陈词。\n苏丹微微颔首，露出了难得的笑容。\n权势+1，金币+1。"},
+	  "fail": {"gold": 0,
+		"narrative": "苏丹今日心情烦躁，\n将酒杯重重砸在[角色]脚边。\n『滚出去！』——所幸未受皮肉之苦。"}
+	}
+  },
+  {
+	"id": 3,
+	"name": "欢愉之馆",
+	"description": "城中的欢愉场所。可用于消耗纵欲卡。",
+	"location": "market",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUST"]}, {"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 1, "duration": 0, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["cha", "soc"], "required_successes": 2},
+	"outcomes": {
+	  "success": {"gold": -2,
+		"narrative": "丝竹之声不绝于耳，香薰弥漫整个房间。\n[角色]在欢愉之馆度过了一个纵情的夜晚，\n纵欲卡在灯红酒绿中化为灰烬。金币-2。"},
+	  "fail": {"gold": -2,
+		"narrative": "[角色]在欢愉之馆门前犹豫再三，\n最终还是被高昂的入场费劝退了——\n但已经交出去的金币却拿不回来。金币-2。"}
+	}
+  },
+  {
+	"id": 4,
+	"name": "浴场",
+	"description": "打听消息、触发事件的社交场所。",
+	"location": "market",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"check": {"type": "solo", "attribute": "soc", "required_successes": 1},
+	"outcomes": {
+	  "success": {"trigger_event": "bath_discovery",
+		"narrative": "蒸汽氤氲中，[角色]听到隔壁有人低声交谈。\n『听说了吗？苏丹最近...』\n一段隐秘的对话传入了耳中。"},
+	  "fail": {
+		"narrative": "浴场的水温正好，但除了放松疲惫的身躯，\n[角色]什么也没打听到。\n也罢，至少洗了一个舒服的热水澡。"}
+	}
+  },
+  {
+	"id": 5,
+	"name": "舍馆经营",
+	"description": "修建舍馆，收留被压迫者。侠名≥3触发建舍馆。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["soc", "wis"], "required_successes": 3},
+	"outcomes": {
+	  "success": {"hero": 1,
+		"narrative": "[角色]走访了几户最贫困的人家，\n为他们提供了食物和庇护。\n消息传开后，巷子里有人轻声念着你的名字。侠名+1。"},
+	  "fail": {
+		"narrative": "[角色]敲了几扇门都无人应答。\n贫民窟的人们眼神警惕——\n他们早已不相信任何人的善意。"}
+	}
+  },
+  {
+	"id": 6,
+	"name": "赌马",
+	"description": "用金币博取更多金币——高风险高回报。",
+	"location": "market",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 1, "duration": 0, "auto_start": false, "repeatable": true,
+	"check": {"type": "solo", "attribute": "sur", "required_successes": 2},
+	"outcomes": {
+	  "success": {"gold": 5,
+		"narrative": "『冲啊！冲啊！』\n[角色]攥着马票，声嘶力竭地呐喊着。\n骏马率先冲过终点——金币+5！"},
+	  "fail": {"gold": -3,
+		"narrative": "[角色]眼睁睁看着自己下注的马匹\n在最后一个弯道被超越。\n『不——！』金币-3。"}
+	}
+  },
+  {
+	"id": 7,
+	"name": "市场贸易",
+	"description": "在市场中买卖货物，获取金币。",
+	"location": "market",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 0, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["soc", "wis"], "required_successes": 2},
+	"outcomes": {
+	  "success": {"gold": 4,
+		"narrative": "[角色]在熙熙攘攘的集市中游刃有余，\n用三寸不烂之舌讨价还价，\n今天的买卖格外顺利，金币+4。"},
+	  "fail": {"gold": 1,
+		"narrative": "集市上的商人一个比一个精明，\n[角色]费尽口舌也只谈成了一笔小生意。\n勉强赚了点零花钱，金币+1。"}
+	}
+  },
+  {
+	"id": 8,
+	"name": "探索贫民窟",
+	"description": "在贫民窟中寻找隐藏的机会和情报。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["ste", "sur"], "required_successes": 2},
+	"outcomes": {
+	  "success": {"trigger_event": "slum_discovery",
+		"narrative": "[角色]悄无声息地穿过狭窄的巷道，\n在一间废弃的房屋中发现了被藏起来的密信。\n信上的内容让人不寒而栗..."},
+	  "fail": {
+		"narrative": "[角色]在贫民窟的小巷中穿梭了大半天，\n除了几只警惕的野猫，什么也没发现。\n这里的人们守口如瓶。"}
+	}
+  },
+  {
+	"id": 9,
+	"name": "军事训练",
+	"description": "在军营中训练，提升战斗能力。",
+	"location": "barracks",
+	"slots": [{"type": "character", "required_tags": ["warrior"], "optional": false}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["com", "phy"], "required_successes": 3},
+	"outcomes": {
+	  "success": {
+		"narrative": "晨光中，[角色]与士兵们一同挥舞刀剑。\n汗如雨下，肌肉酸痛，但眼神愈发坚毅。\n训练成效显著——战斗能力得到提升。"},
+	  "fail": {
+		"narrative": "[角色]试图跟上士兵们的训练节奏，\n却发现自己力不从心。\n教官摇了摇头，『明天再来吧，菜鸟。』"}
+	}
+  },
+  {
+	"id": 10,
+	"name": "寺庙祈祷",
+	"description": "在寺庙中寻求正教的神迹指引。",
+	"location": "temple",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 0, "auto_start": false, "repeatable": true,
+	"check": {"type": "solo", "attribute": "mag", "required_successes": 2},
+	"outcomes": {
+	  "success": {"spirit": 1,
+		"narrative": "[角色]跪在佛像前虔诚祷告。\n忽然间，一阵微风吹过——\n灵视微启，仿佛看见了另一个世界的轮廓。灵视+1。"},
+	  "fail": {
+		"narrative": "寺庙的钟声悠远，香烟缭绕。\n[角色]跪了很久，但内心依旧无法平静。\n今日的祈祷，未得回应。"}
+	}
+  },
+  {
+	"id": 11,
+	"name": "密教献祭",
+	"description": "在阴暗的角落进行密教仪式。获取灵视，但增加恶名。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": ["stealth"], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["mag", "ste"], "required_successes": 3},
+	"outcomes": {
+	  "success": {"spirit": 2, "evil": 1,
+		"narrative": "烛火在黑暗中摇曳，[角色]低吟着古老的咒语。\n空气中弥漫着硫磺与没药的气息——\n仪式完成了，但城中开始流传不祥的流言。灵视+2，恶名+1。"},
+	  "fail": {"evil": 1,
+		"narrative": "[角色]不小心打翻了祭坛上的烛台。\n火焰舔舐着陈旧的经卷，冒出了浓密的黑烟。\n邻居们纷纷探头张望。仪式失败，恶名+1。"}
+	}
+  },
+  {
+	"id": 12,
+	"name": "妻子的茶会",
+	"description": "梅姬举办茶会，可消耗银奢靡卡。",
+	"location": "palace",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUXURY", "SILVER"]}, {"type": "character", "required_tags": ["wife"], "optional": false}],
+	"time_limit": 1, "duration": 0, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["soc", "cha"], "required_successes": 3},
+	"outcomes": {
+	  "success": {
+		"narrative": "午后阳光透过纱帘洒在茶桌上，\n梅姬亲手泡制的玫瑰茶香气四溢。\n银奢靡卡在优雅的谈笑中悄然消散——\n这是属于文明人的奢侈。"},
+	  "fail": {
+		"narrative": "茶会开始了，但气氛却有些僵硬。\n梅姬不小心说了一句冒犯客人的话，\n几位贵妇匆匆告辞。\n银奢靡卡依旧散发着刺眼的光芒。"}
+	}
+  },
+  {
+	"id": 13,
+	"name": "裁缝铺",
+	"description": "在此强化角色的属性。部分角色有特殊强化收益。",
+	"location": "market",
+	"slots": [{"type": "character", "required_tags": [], "optional": false}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"check": {"type": "solo", "attribute": "wis", "required_successes": 1},
+	"outcomes": {
+	  "success": {
+		"narrative": "老裁缝仔细打量着[角色]的身形，\n手中的针线如蝴蝶般飞舞。\n『好了，这件新衣会让你在城中更有面子。』"},
+	  "fail": {
+		"narrative": "裁缝铺的门上挂着一块小木牌：\n『今日歇业』。\n[角色]叹了口气，转身离开。"}
+	}
+  },
+  {
+	"id": 14,
+	"name": "野外探险",
+	"description": "深入野外寻找野兽、宝藏和危险。",
+	"location": "wilderness",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 2, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["sur", "com"], "required_successes": 3},
+	"outcomes": {
+	  "success": {"gold": 5, "trigger_event": "wilderness_event",
+		"narrative": "[角色]深入荒野，穿越荆棘与密林，\n在一处古老的遗迹中发现了被遗忘的宝藏。\n金币+5——但远处传来了野兽的嚎叫..."},
+	  "fail": {
+		"narrative": "荒野比想象中更加凶险。\n[角色]几乎迷失了方向，\n幸好在日落前找到了一条返回的小路。\n——差点丢了性命。"}
+	}
+  },
+  {
+	"id": 15,
+	"name": "情报收集",
+	"description": "派遣角色收集关键情报。情报可在刺杀和阴谋中使用。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": ["stealth", "scout"], "optional": false}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"check": {"type": "combined", "attributes": ["ste", "wis"], "required_successes": 2},
+	"outcomes": {
+	  "success": {
+		"narrative": "月光下，[角色]像影子一样穿梭于街巷之间。\n几个时辰后，一份详细的情报已经到手。」\n『苏丹的秘密，就藏在这张纸里。』"},
+	  "fail": {
+		"narrative": "[角色]在各个暗巷中徘徊了一整夜，\n但所有的线索都指向了死胡同。\n『他们藏得太深了...』"}
+	}
+  }
+]

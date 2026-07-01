@@ -1,0 +1,256 @@
+[
+  {
+	"id": "event_001",
+	"name": "背叛的朋友",
+	"trigger_condition": {"type": "random", "chance": 0.1, "min_day": 3},
+	"text": "你曾经的朋友，如今站在了你的对立面。他或许是被收买，或许是被威胁——但这不重要了。\n\n'你不会真的下手吧？'他颤抖着问。",
+	"choices": [
+	  {"text": "动手——这是苏丹的命令", "outcome": {"consume_card": "LUST", "evil": 1}},
+	  {"text": "放过他——我做不到", "outcome": {"good": 1, "relation_loss": "friend"}}
+	],
+	"priority": 3,
+	"one_time": true
+  },
+  {
+	"id": "event_002",
+	"name": "等死的奴隶",
+	"trigger_condition": {"type": "random", "chance": 0.15, "min_day": 1},
+	"text": "一个濒死的奴隶躺在路边。他的身体已被疾病侵蚀，眼神中只剩下乞求。\n\n'请……请结束我的痛苦。'他虚弱地说。",
+	"choices": [
+	  {"text": "让他的身体抵债——拖入俺寻思", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "给他食物和水——我们不是怪物", "outcome": {"good": 1, "gold": -1}},
+	  {"text": "无视他——这不是我的问题", "outcome": {}}
+	],
+	"priority": 3,
+	"one_time": true
+  },
+  {
+	"id": "event_003",
+	"name": "欠钱的朋友",
+	"trigger_condition": {"type": "random", "chance": 0.10, "min_day": 2},
+	"text": "你的老友欠了一屁股债，逃到你这里来避风头。\n\n'帮帮我——只要几天就好！'他眼巴巴地看着你。",
+	"choices": [
+	  {"text": "找机会敲闷棍——拖入俺寻思", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "帮他偿还债务", "outcome": {"gold": -2, "good": 1}},
+	  {"text": "赶走他——你自己惹的麻烦自己解决", "outcome": {"power": -1}}
+	],
+	"priority": 3,
+	"one_time": true
+  },
+  {
+	"id": "event_004",
+	"name": "浴场发现",
+	"trigger_condition": {"type": "rite", "rite_id": 4},
+	"text": "在浴场的蒸汽中，你听到了一些不得了的传闻。\n\n一个商人正在吹嘘他的商队路线，一个士兵则在抱怨即将到来的征讨……",
+	"choices": [
+	  {"text": "接近商人——打听贸易路线", "outcome": {"gold": 3}},
+	  {"text": "接近士兵——了解征讨计划", "outcome": {"trigger_event": "military_intel"}},
+	  {"text": "什么都不做——听听就好", "outcome": {}}
+	],
+	"priority": 2,
+	"one_time": false
+  },
+  {
+	"id": "event_005",
+	"name": "妻子的不满",
+	"trigger_condition": {"type": "character_idle", "character_id": "meji", "days_idle": 2},
+	"text": "梅姬站在窗前，脸色阴沉。\n\n'你已经好几天没和我说过话了。'她轻声说，声音里带着一种危险的平静。",
+	"choices": [
+	  {"text": "陪她度过一天——仪式暂停", "outcome": {"meji_emotion": 2, "waste_day": true}},
+	  {"text": "给她买礼物——用金子消灾", "outcome": {"gold": -2, "meji_emotion": 1}},
+	  {"text": "我这周很忙——再等等", "outcome": {"meji_emotion": -2}}
+	],
+	"priority": 2,
+	"one_time": false
+  },
+  {
+	"id": "event_006",
+	"name": "慷慨解囊",
+	"trigger_condition": {"type": "random", "chance": 0.08, "min_day": 5},
+	"text": "一个慈善募捐活动正在城市广场举行。捐赠一大笔钱可以——\n\n'慷慨的人会得到苏丹的青睐。'有人低声提醒你。",
+	"choices": [
+	  {"text": "捐一大笔钱——消耗奢华卡", "outcome": {"consume_card": "LUXURY", "good": 2}, "requires_card": "LUXURY"},
+	  {"text": "象征性地捐一点", "outcome": {"gold": -1, "good": 1}},
+	  {"text": "转身离开——我还有苏丹的任务", "outcome": {}}
+	],
+	"priority": 3,
+	"one_time": true
+  },
+  {
+	"id": "event_007",
+	"name": "诸地暴乱",
+	"trigger_condition": {"type": "random", "chance": 0.12, "min_day": 4},
+	"text": "叛乱在诸地同时爆发。苏丹需要有人去镇压——这是你展示军事力量的机会。\n\n'去，让他们知道谁才是这片土地的主人。'",
+	"choices": [
+	  {"text": "亲自率军镇压", "outcome": {"consume_card": "CONQUEST", "power": 2, "evil": 1}, "requires_card": "CONQUEST"},
+	  {"text": "派遣铁头去指挥", "outcome": {"power": 1}, "requires_character": "tietou"},
+	  {"text": "这不是我的战争", "outcome": {"power": -1}}
+	],
+	"priority": 2,
+	"one_time": true
+  },
+  {
+	"id": "event_008",
+	"name": "被俘的异教徒",
+	"trigger_condition": {"type": "random", "chance": 0.10, "min_day": 3},
+	"text": "一个异教徒在集市上被卫兵拖了出来。他嘴里大喊着他的神的名字。\n\n'你竟敢敬拜异神！'队长怒吼道。",
+	"choices": [
+	  {"text": "你竟敢敬拜异神！——丢入俺寻思", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "放了他——信仰不是罪", "outcome": {"good": 1, "spirit": 1}},
+	  {"text": "让他受审——按法律来", "outcome": {"power": 1}}
+	],
+	"priority": 3,
+	"one_time": true
+  },
+  {
+	"id": "event_009",
+	"name": "登山事件",
+	"trigger_condition": {"type": "insight", "card_type": "CONQUEST"},
+	"text": "将征服卡拖入俺寻思——你感觉到大山的召唤。据说山顶有一种稀有的白犀牛……\n\n但爬上去需要相当的生存能力。",
+	"choices": [
+	  {"text": "开始攀登", "outcome": {"consume_card": "CONQUEST"}, "check": {"sur": {"required_successes": 3}}},
+	  {"text": "还是算了——太危险", "outcome": {}}
+	],
+	"priority": 2,
+	"one_time": true
+  },
+  {
+	"id": "event_010",
+	"name": "天体派对",
+	"trigger_condition": {"type": "character_available", "character_id": "shamar_ref"},
+	"text": "夏玛邀请你参加一场极其私密的天体派对。所有参与者都将摘下面具——和衣服。\n\n气氛既紧张又诱惑。",
+	"choices": [
+	  {"text": "欣然参加——消耗金纵欲卡", "outcome": {"consume_card": "LUST"}, "requires_card": "LUST", "requires_rank": "GOLD"},
+	  {"text": "婉拒——这不是我的风格", "outcome": {"good": 1}}
+	],
+	"priority": 1,
+	"one_time": true
+  },
+  {
+	"id": "event_011",
+	"name": "将军助我",
+	"trigger_condition": {"type": "hold_card", "card_type": "CONQUEST", "turns_held": 5},
+	"text": "你手中的征服卡已经握了很多天。一位将军注意到了你的困境。\n\n'大人，如果您需要帮助……我很乐意效劳。'",
+	"choices": [
+	  {"text": "接受帮助——将军助我征服", "outcome": {"consume_card": "CONQUEST", "power": 1}, "check": {"com": {"required_successes": 3}}},
+	  {"text": "我自己可以——委婉拒绝", "outcome": {}}
+	],
+	"priority": 2,
+	"one_time": true
+  },
+  {
+	"id": "event_012",
+	"name": "硕鼠事件",
+	"trigger_condition": {"type": "random", "chance": 0.12, "min_day": 2},
+	"text": "宿舍里闹了鼠患。厨师的粮食被啃了个精光。\n\n'这些该死的老鼠！'厨师挥舞着菜刀，眼睛发红。",
+	"choices": [
+	  {"text": "把铜以下征服卡拖入——剿灭鼠患", "outcome": {"consume_card": "CONQUEST", "food": 1}},
+	  {"text": "把铜以下杀戮卡拖入——屠鼠", "outcome": {"consume_card": "MURDER"}},
+	  {"text": "让厨师自己想办法", "outcome": {}}
+	],
+	"priority": 4,
+	"one_time": true
+  },
+  {
+	"id": "event_013",
+	"name": "狼穴恶战",
+	"trigger_condition": {"type": "rite", "rite_id": 4, "chance": 0.3},
+	"text": "浴场里传来的消息——野外有一个狼穴，里面的狼群已经袭击了数个村庄。\n\n'谁敢去就是英雄。'有人咕哝道。",
+	"choices": [
+	  {"text": "率队讨伐——消耗铜征服卡", "outcome": {"consume_card": "CONQUEST", "hero": 2}, "check": {"com": {"required_successes": 3}}},
+	  {"text": "派铁头去——让他单独处理", "outcome": {"hero": 1}, "requires_character": "tietou"},
+	  {"text": "这太危险了——放弃", "outcome": {}}
+	],
+	"priority": 2,
+	"one_time": true
+  },
+  {
+	"id": "event_014",
+	"name": "白犀牛传说",
+	"trigger_condition": {"type": "random", "chance": 0.08, "min_day": 7},
+	"text": "有人在野外目击了一头白犀牛。传说击杀它能获得无尽的荣耀——和财富。\n\n'那是只有真正勇士才能战胜的野兽。'",
+	"choices": [
+	  {"text": "前去狩猎——消耗银征服卡", "outcome": {"consume_card": "CONQUEST", "hero": 3, "gold": 5}, "check": {"com": {"required_successes": 4}}, "requires_rank": "SILVER"},
+	  {"text": "记录下来——卖情报", "outcome": {"gold": 2}},
+	  {"text": "不相信——白犀牛早就绝种了", "outcome": {}}
+	],
+	"priority": 1,
+	"one_time": true
+  },
+  {
+	"id": "event_015",
+	"name": "等重的黄金",
+	"trigger_condition": {"type": "random", "chance": 0.06, "min_day": 10},
+	"text": "一个神秘商人来到你面前，拿出一只纯金打造的鸟儿。\n\n'这是等重的黄金——用你所有值钱的东西来换。'他的眼睛闪着异样的光。",
+	"choices": [
+	  {"text": "用金奢靡卡换金鸟", "outcome": {"consume_card": "LUXURY", "special_item": "golden_bird"}, "requires_rank": "GOLD"},
+	  {"text": "用金币购买——花费20金", "outcome": {"gold": -20, "special_item": "golden_bird"}},
+	  {"text": "不买——太贵了", "outcome": {}}
+	],
+	"priority": 1,
+	"one_time": true
+  },
+  {
+	"id": "event_016",
+	"name": "杀手暗杀",
+	"trigger_condition": {"type": "reputation", "reputation": "evil", "threshold": 10},
+	"text": "你在黑暗中的名声已经传遍了整座城市。现在有人想杀你了。\n\n半夜，匕首的寒光在你的卧室闪过。",
+	"choices": [
+	  {"text": "反杀——以牙还牙", "outcome": {"evil": 1, "consume_card": "MURDER"}, "check": {"com": {"required_successes": 4}}},
+	  {"text": "逃跑——留得青山在", "outcome": {"power": -2}},
+	  {"text": "谈判——也许能收买他", "outcome": {"gold": -5, "power": 1}}
+	],
+	"priority": 1,
+	"one_time": true
+  },
+  {
+	"id": "event_017",
+	"name": "奸佞裁决",
+	"trigger_condition": {"type": "reputation", "reputation": "evil", "threshold": 5},
+	"text": "你在苏丹面前告发了一个同僚的罪行。苏丹很满意你的'忠诚'。\n\n'很好。但我希望你记住——如果你哪天也犯了事……'苏丹的笑容意味深长。",
+	"choices": [
+	  {"text": "销卡——趁机消耗任意苏丹卡", "outcome": {"evil": 1, "consume_card": "ANY_SINGLE"}},
+	  {"text": "拒绝——我不要这种权力", "outcome": {"good": 1, "power": -1}}
+	],
+	"priority": 1,
+	"one_time": true
+  },
+  {
+	"id": "event_018",
+	"name": "复制神迹",
+	"trigger_condition": {"type": "reputation", "reputation": "good", "threshold": 3},
+	"text": "正教的祭司们为你举行了一场仪式。空气中弥漫着焚香的味道。\n\n'神回应了你的善行——你可以将一张卡复制。'大祭司庄严宣布。",
+	"choices": [
+	  {"text": "复制一张角色卡", "outcome": {"duplicate_character": true}},
+	  {"text": "复制一张道具卡", "outcome": {"duplicate_item": true}},
+	  {"text": "拒绝——我不需要神的恩典", "outcome": {"spirit": 1}}
+	],
+	"priority": 1,
+	"one_time": true
+  },
+  {
+	"id": "event_019",
+	"name": "心灵之战",
+	"trigger_condition": {"type": "reputation", "reputation": "spirit", "threshold": 2},
+	"text": "灵视开启了。你的意识被拉入了一个黑暗的维度——一个古老的存在在低语。\n\n'你的灵魂……我正在注视着你。'",
+	"choices": [
+	  {"text": "挑战心灵之战", "outcome": {"spirit": 2}, "check": {"mag": {"required_successes": 4}}},
+	  {"text": "退缩——这超出我的理解", "outcome": {"spirit": -1}},
+	  {"text": "接受低语——也许能学到什么", "outcome": {"spirit": 1, "evil": 2}}
+	],
+	"priority": 1,
+	"one_time": false
+  },
+  {
+	"id": "event_020",
+	"name": "妻子的惊喜",
+	"trigger_condition": {"type": "character_idle", "character_id": "meji", "emotion_min": 8},
+	"text": "梅姬今天看起来格外明媚。她为你准备了一份惊喜——\n\n'我知道你这几天很辛苦。所以……'她把一个精致的小盒子放在你手中。",
+	"choices": [
+	  {"text": "打开盒子——接受她的心意", "outcome": {"gold": 3, "meji_emotion": 1, "special_item": "wife_gift"}},
+	  {"text": "感动地拥抱她——这比什么礼物都好", "outcome": {"meji_emotion": 2}}
+	],
+	"priority": 2,
+	"one_time": false
+  }
+]

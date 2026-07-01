@@ -1,0 +1,228 @@
+[
+  {
+	"id": "lust_stone",
+	"name": "石纵欲",
+	"type": "LUST",
+	"rank": "STONE",
+	"rank_order": 1,
+	"description": "须寻床笫之欢——与某人共度",
+	"flavor": "苏丹的欲望如沙漠之风，无孔不入。",
+	"base_difficulty": 1,
+	"elimination_paths": [
+	  {"method": "character_interact", "target": "follower_stone", "cost": {}},
+	  {"method": "event", "trigger": "betrayed_friend", "cost": {}},
+	  {"method": "character_interact", "target": "zukhna", "cost": {}}
+	]
+  },
+  {
+	"id": "lust_bronze",
+	"name": "铜纵欲",
+	"type": "LUST",
+	"rank": "BRONZE",
+	"rank_order": 2,
+	"description": "须寻更炽热的欢愉——与铜品阶之人",
+	"flavor": "欲望一旦放纵，便如燎原之火。",
+	"base_difficulty": 2,
+	"elimination_paths": [
+	  {"method": "character_interact", "target": "ansuya", "cost": {}},
+	  {"method": "character_interact", "target": "meji", "cost": {"emotion": -1}},
+	  {"method": "event", "trigger": "zaqiyi_bath", "cost": {}}
+	]
+  },
+  {
+	"id": "lust_silver",
+	"name": "银纵欲",
+	"type": "LUST",
+	"rank": "SILVER",
+	"rank_order": 3,
+	"description": "须寻尊贵的欢愉——与银品阶之人",
+	"flavor": "越禁忌的果实，越让人渴望。",
+	"base_difficulty": 3,
+	"elimination_paths": [
+	  {"method": "character_interact", "target": "saldani", "cost": {}},
+	  {"method": "character_interact", "target": "shamar", "cost": {}}
+	]
+  },
+  {
+	"id": "lust_gold",
+	"name": "金纵欲",
+	"type": "LUST",
+	"rank": "GOLD",
+	"rank_order": 4,
+	"description": "须寻至高无上的欢愉——与金品阶之人，或参与天体派对",
+	"flavor": "欲望的顶峰是毁灭，还是解脱？",
+	"base_difficulty": 4,
+	"elimination_paths": [
+	  {"method": "character_interact", "target": "shaji", "cost": {}},
+	  {"method": "event", "trigger": "celestial_party", "cost": {}}
+	]
+  },
+  {
+	"id": "luxury_stone",
+	"name": "石奢靡",
+	"type": "LUXURY",
+	"rank": "STONE",
+	"rank_order": 1,
+	"description": "须挥金如土——扩建消耗3金币",
+	"flavor": "苏丹要你证明财富不过是沙子。",
+	"base_difficulty": 1,
+	"elimination_paths": [
+	  {"method": "insight_expand", "cost": {"gold": 3}},
+	  {"method": "event", "trigger": "courtesan_event", "cost": {}}
+	]
+  },
+  {
+	"id": "luxury_bronze",
+	"name": "铜奢靡",
+	"type": "LUXURY",
+	"rank": "BRONZE",
+	"rank_order": 2,
+	"description": "须更挥霍——扩建消耗5金币",
+	"flavor": "金子如水流走，苏丹的笑容依旧冰冷。",
+	"base_difficulty": 2,
+	"elimination_paths": [
+	  {"method": "insight_expand", "cost": {"gold": 5}},
+	  {"method": "event", "trigger": "bath_dog", "cost": {}},
+	  {"method": "event", "trigger": "generous_donation", "cost": {"gold": 3}}
+	]
+  },
+  {
+	"id": "luxury_silver",
+	"name": "银奢靡",
+	"type": "LUXURY",
+	"rank": "SILVER",
+	"rank_order": 3,
+	"description": "须大肆挥霍——扩建消耗10金币，或妻子茶会",
+	"flavor": "你开始怀疑，苏丹想要的根本不是金子。",
+	"base_difficulty": 3,
+	"elimination_paths": [
+	  {"method": "insight_expand", "cost": {"gold": 10}},
+	  {"method": "event", "trigger": "wife_tea_party", "cost": {}}
+	]
+  },
+  {
+	"id": "luxury_gold",
+	"name": "金奢靡",
+	"type": "LUXURY",
+	"rank": "GOLD",
+	"rank_order": 4,
+	"description": "须以王国之财挥霍——扩建消耗20金币，或等重的黄金换金鸟",
+	"flavor": "金子永远不够，因为你欠的是灵魂。",
+	"base_difficulty": 4,
+	"elimination_paths": [
+	  {"method": "insight_expand", "cost": {"gold": 20}},
+	  {"method": "event", "trigger": "golden_bird", "cost": {}}
+	]
+  },
+  {
+	"id": "conquest_stone",
+	"name": "石征服",
+	"type": "CONQUEST",
+	"rank": "STONE",
+	"rank_order": 1,
+	"description": "须深入险境——诸地暴乱事件中征服",
+	"flavor": "苏丹要你的宝剑永远沾着血。",
+	"base_difficulty": 1,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "rebellion", "cost": {}}
+	]
+  },
+  {
+	"id": "conquest_bronze",
+	"name": "铜征服",
+	"type": "CONQUEST",
+	"rank": "BRONZE",
+	"rank_order": 2,
+	"description": "须踏上征程——登山/打狗/打狮子/狼穴等多种路径",
+	"flavor": "每一条路都通向往生。",
+	"base_difficulty": 2,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "mountain_climb", "cost": {"survival": 3}},
+	  {"method": "event", "trigger": "bath_dog", "cost": {}},
+	  {"method": "event", "trigger": "rat_event", "cost": {}},
+	  {"method": "event", "trigger": "wolf_den", "cost": {}}
+	]
+  },
+  {
+	"id": "conquest_silver",
+	"name": "银征服",
+	"type": "CONQUEST",
+	"rank": "SILVER",
+	"rank_order": 3,
+	"description": "须征服猛兽——白犀牛或哈马斯兄弟",
+	"flavor": "真正的敌人往往不在前方，而在身后。",
+	"base_difficulty": 3,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "white_rhino", "cost": {}},
+	  {"method": "event", "trigger": "hamas_brothers", "cost": {}}
+	]
+  },
+  {
+	"id": "conquest_gold",
+	"name": "金征服",
+	"type": "CONQUEST",
+	"rank": "GOLD",
+	"rank_order": 4,
+	"description": "须征服至亲——夏玛杀父线，唯一路径",
+	"flavor": "最难的征服，是征服自己的心。",
+	"base_difficulty": 4,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "kill_shamar_father", "cost": {}}
+	]
+  },
+  {
+	"id": "murder_stone",
+	"name": "石杀戮",
+	"type": "MURDER",
+	"rank": "STONE",
+	"rank_order": 1,
+	"description": "须献祭一条人命——等死的奴隶或欠钱的朋友",
+	"flavor": "苏丹要一条命。谁的命？那就是你的问题了。",
+	"base_difficulty": 1,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "dying_slave", "cost": {}},
+	  {"method": "event", "trigger": "debtor_friend", "cost": {}}
+	]
+  },
+  {
+	"id": "murder_bronze",
+	"name": "铜杀戮",
+	"type": "MURDER",
+	"rank": "BRONZE",
+	"rank_order": 2,
+	"description": "须献祭一条有价值的命——异教徒/随机杀人/寡妇弑兄",
+	"flavor": "每条命都有价码，只是有人的价码是眼泪。",
+	"base_difficulty": 2,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "captured_heretic", "cost": {}},
+	  {"method": "insight_random_kill", "cost": {}},
+	  {"method": "event", "trigger": "widow_brother", "cost": {}}
+	]
+  },
+  {
+	"id": "murder_silver",
+	"name": "银杀戮",
+	"type": "MURDER",
+	"rank": "SILVER",
+	"rank_order": 3,
+	"description": "须以巧妙手段献祭——带鳄鱼洗澡（需驯兽人+猫获贵族词条）",
+	"flavor": "杀人不必亲手，只需知道该把谁推进水里。",
+	"base_difficulty": 3,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "crocodile_bath", "cost": {"requires": ["tamer", "cat_noble_tag"]}}
+	]
+  },
+  {
+	"id": "murder_gold",
+	"name": "金杀戮",
+	"type": "MURDER",
+	"rank": "GOLD",
+	"rank_order": 4,
+	"description": "须献祭宰相——需宰相活着，被杀则无路可走",
+	"flavor": "杀一人可救天下人？这不是算术题。",
+	"base_difficulty": 4,
+	"elimination_paths": [
+	  {"method": "event", "trigger": "kill_vizier", "cost": {"requires": "vizier_alive"}}
+	]
+  }
+]
