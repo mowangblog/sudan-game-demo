@@ -398,11 +398,13 @@ func _bottom() -> void:
 	hand_container.mouse_filter=Control.MOUSE_FILTER_PASS
 	add_child(hand_container)
 	
-	# 手牌区背景（最底层，铺满整个 hand_container）
-	var bg = ColorRect.new(); bg.color = Color("0d0804", 0.85)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# 手牌区背景 — 作为 MainScene 的子节点，与 hand_container 同级，永不干涉卡牌排序
+	var bg = ColorRect.new(); bg.name="HandBg"
+	bg.set_anchors_preset(Control.PRESET_BOTTOM_WIDE); bg.offset_top=-200
+	bg.color = Color("0d0804", 0.85)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hand_container.add_child(bg)
+	add_child(bg)
+	move_child(bg, get_child_count() - 2)  # 确保 bg 在 hand_container 下面
 	
 	hand_cards.clear()
 	
