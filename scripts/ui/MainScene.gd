@@ -26,6 +26,7 @@ const CHAR_QUALITY = {"player":"SILVER", "meji":"BRONZE", "zhaqiyi":"BRONZE", "t
 const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
+var popups: PopupManager = PopupManager.new()
 
 # ============ UI 节点 ============
 var d_lbl:Label;var w_lbl:Label;var gd_lbl:Label
@@ -51,7 +52,8 @@ func _ready() -> void:
 	card_factory.setup({
 		"C":C,"SC":SC,"SC_BORDER":SC_BORDER,"SC_HOVER":SC_HOVER,"SC_GLOW":SC_GLOW,
 		"CHAR_QUALITY":CHAR_QUALITY,"AI":AI
-	}, func(d): _show_char_popup(d))
+	}, func(d): popups.show_char_popup(d))
+	popups.setup(self, {"C":C,"TC":TC,"TN":TN,"RG":RG,"AI":AI,"AN":AN})
 	_char_load()
 	_build()
 	GameManager.start_game()
@@ -292,9 +294,9 @@ func _open_rite_detail(rite:Dictionary) -> void:
 		)
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
-				_show_sultan_popup(card_data)
+				popups.show_sultan_popup(card_data)
 			else:
-				_show_char_popup(card_data)
+				popups.show_char_popup(card_data)
 		)
 	
 	vb.add_child(_sep())
@@ -437,7 +439,7 @@ func _bottom() -> void:
 	gold_card.drag_ended.connect(_on_hand_card_dropped)
 	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
 	gold_card._on_right_click = func(): _split_resource_card(gold_card, "金币", "💰", "GOLD")
-	gold_card._on_click = func(): _show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", 0))
+	gold_card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", 0))
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
@@ -560,7 +562,7 @@ func _split_resource_card(source_card: PanelContainer, name_str: String, icon: S
 	newc.drag_ended.connect(_on_hand_card_dropped)
 	newc.drag_started.connect(func(_c): hand_layout.arrange())
 	newc._on_right_click = func(): _split_resource_card(newc, name_str, icon, quality)
-	newc._on_click = func(): _show_res_popup(name_str, icon, quality, newc.get_meta("res_count", 0))
+	newc._on_click = func(): popups.show_res_popup(name_str, icon, quality, newc.get_meta("res_count", 0))
 	hand_container.add_child(newc)
 	var idx = hand_cards.find(source_card)
 	if idx != -1: hand_cards.insert(idx + 1, newc)
@@ -577,28 +579,6 @@ func _update_card_count(card: PanelContainer, count: int):
 	if card.get_meta("res_type","") == "金币":
 		ResourceManager.gold = count
 
-func _show_res_popup(name_str:String, icon:String, quality:String, count:int):
-	var popup = PanelContainer.new()
-	popup.name="ResPopup"; popup.mouse_filter=Control.MOUSE_FILTER_STOP
-	popup.custom_minimum_size=Vector2(280,160)
-	var vs = get_viewport().size
-	popup.position=Vector2((vs.x-280)/2,(vs.y-160)/2-40)
-	var ps=StyleBoxFlat.new(); ps.bg_color=Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom=3; ps.border_width_top=3; ps.border_width_left=3; ps.border_width_right=3
-	ps.border_color=C.GOLD; ps.shadow_size=12; ps.shadow_color=Color("000000cc")
-	ps.content_margin_left=16; ps.content_margin_right=16; ps.content_margin_top=12; ps.content_margin_bottom=12
-	popup.add_theme_stylebox_override("panel",ps)
-	var vb=VBoxContainer.new(); vb.add_theme_constant_override("separation",8); popup.add_child(vb)
-	var hb=HBoxContainer.new(); vb.add_child(hb)
-	var tl=Label.new(); tl.text="%s · x%d" % [name_str,count]; tl.add_theme_font_size_override("font_size",18)
-	tl.add_theme_color_override("font_color",C.GOLD); tl.size_flags_horizontal=Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	var cb=Button.new(); cb.text="✕"; cb.custom_minimum_size=Vector2(32,32); cb.pressed.connect(func(): popup.queue_free()); hb.add_child(cb)
-	vb.add_child(_sep())
-	var info=Label.new(); info.text="%s品质 · 可叠加\n右键拆分一个 · 拖两块合并" % quality
-	info.add_theme_font_size_override("font_size",12); info.add_theme_color_override("font_color",C.TEXT); vb.add_child(info)
-	add_child(popup)
-
-# --- 结算 ---
 func _next_press() -> void:
 	if GameManager.is_game_over:
 		_log("⚰️ 游戏已结束。"); _refresh(); return
@@ -607,7 +587,7 @@ func _next_press() -> void:
 		active_rites.clear()
 		TurnManager.next_day()
 		_refresh()
-		if GameManager.is_game_over: _show_game_over()
+		if GameManager.is_game_over: popups.show_game_over()
 		return
 	settle_sultan_used = false
 	_log("⚔ 开始结算 %d 个仪式..." % active_rites.size())
@@ -623,7 +603,7 @@ func _settle_next(index:int) -> void:
 		TurnManager.next_day()
 		_log("✅ 所有仪式结算完毕。")
 		_refresh()
-		if GameManager.is_game_over: _show_game_over()
+		if GameManager.is_game_over: popups.show_game_over()
 		return
 	
 	var ar = active_rites[index]
@@ -636,112 +616,6 @@ func _settle_next(index:int) -> void:
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		_settle_next(index+1)
 	)
-
-func _show_game_over() -> void:
-	var panel = PanelContainer.new()
-	panel.name = "GameOverPanel"; panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0000"); ps.set_corner_radius_all(16)
-	ps.border_width_bottom=4; ps.border_width_top=4; ps.border_width_left=4; ps.border_width_right=4
-	ps.border_color = C.FAIL; ps.shadow_size=20; ps.shadow_color=Color("aa000066")
-	ps.content_margin_left=30; ps.content_margin_right=30; ps.content_margin_top=20; ps.content_margin_bottom=20
-	panel.add_theme_stylebox_override("panel", ps)
-	panel.custom_minimum_size = Vector2(360, 230); panel.size = Vector2(360, 230)
-	var vs = get_viewport().size
-	panel.position = Vector2((vs.x - 360) / 2, (vs.y - 230) / 2 - 60)
-	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 14); panel.add_child(vb)
-	var tl = Label.new(); tl.text = "☠ 苏丹的愤怒！"; tl.add_theme_font_size_override("font_size", 22)
-	tl.add_theme_color_override("font_color", C.FAIL); tl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(tl)
-	var dl = Label.new(); dl.text = "苏丹卡到期未消除...\n你已被处决。"; dl.add_theme_font_size_override("font_size", 14)
-	dl.add_theme_color_override("font_color", C.TEXT); dl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(dl)
-	var back = Button.new(); back.text="🏠 返回主菜单"; back.custom_minimum_size=Vector2(200,40)
-	back.add_theme_font_size_override("font_size", 14); back.add_theme_color_override("font_color", C.TEXT)
-	back.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))
-	vb.add_child(back)
-	add_child(panel)
-
-# 角色卡详情弹窗
-func _show_char_popup(d:Dictionary):
-	var popup = PanelContainer.new()
-	popup.name = "CharPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	popup.custom_minimum_size = Vector2(340, 300)
-	var vs = get_viewport().size
-	popup.position = Vector2((vs.x - 340) / 2, (vs.y - 300) / 2 - 40)
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom=3; ps.border_width_top=3; ps.border_width_left=3; ps.border_width_right=3
-	ps.border_color = C.GOLD; ps.shadow_size=12; ps.shadow_color=Color("000000cc")
-	ps.content_margin_left=16; ps.content_margin_right=16; ps.content_margin_top=12; ps.content_margin_bottom=12
-	popup.add_theme_stylebox_override("panel", ps)
-	
-	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 8); popup.add_child(vb)
-	
-	var hb = HBoxContainer.new(); vb.add_child(hb)
-	var tl = Label.new(); tl.text = "👤 " + d.get("name","?")
-	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", C.GOLD)
-	tl.size_flags_horizontal=Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	var cb = Button.new(); cb.text="✕"; cb.custom_minimum_size=Vector2(32,32); cb.pressed.connect(func(): popup.queue_free())
-	hb.add_child(cb)
-	
-	var tt = Label.new(); tt.text = d.get("title",""); tt.add_theme_font_size_override("font_size", 12)
-	tt.add_theme_color_override("font_color", C.DIM); vb.add_child(tt)
-	
-	vb.add_child(_sep())
-	var desc = Label.new(); desc.text = d.get("description",""); desc.add_theme_font_size_override("font_size", 12)
-	desc.add_theme_color_override("font_color", C.TEXT); desc.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; vb.add_child(desc)
-	vb.add_child(_sep())
-	
-	# 八维属性
-	vb.add_child(_lbl("八围属性", 13, C.GOLD))
-	var grid = GridContainer.new(); grid.columns = 4; grid.add_theme_constant_override("h_separation", 12)
-	vb.add_child(grid)
-	var attrs = d.get("attributes",{})
-	for k in ["phy","com","sur","soc","cha","ste","wis","mag"]:
-		var al = Label.new(); al.text = "%s %s %d" % [AI.get(k,k), AN.get(k,k), attrs.get(k,0)]
-		al.add_theme_font_size_override("font_size", 11); al.add_theme_color_override("font_color", C.TEXT)
-		grid.add_child(al)
-	
-	vb.add_child(_sep())
-	var bonus = Label.new(); bonus.text = "📌 " + d.get("ritual_bonus",""); bonus.add_theme_font_size_override("font_size", 11)
-	bonus.add_theme_color_override("font_color", C.GOLD_HI); bonus.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; vb.add_child(bonus)
-	
-	add_child(popup)
-
-# 苏丹卡详情弹窗
-func _show_sultan_popup(d:Dictionary):
-	var popup = PanelContainer.new()
-	popup.name = "SultanPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	popup.custom_minimum_size = Vector2(380, 280)
-	var vs = get_viewport().size
-	popup.position = Vector2((vs.x - 380) / 2, (vs.y - 280) / 2 - 40)
-	var tc = TC.get(d.get("type",""), C.LUST)
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom=3; ps.border_width_top=3; ps.border_width_left=3; ps.border_width_right=3
-	ps.border_color = tc; ps.shadow_size=12; ps.shadow_color=Color(tc.r,tc.g,tc.b,0.4)
-	ps.content_margin_left=16; ps.content_margin_right=16; ps.content_margin_top=12; ps.content_margin_bottom=12
-	popup.add_theme_stylebox_override("panel", ps)
-	
-	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 8); popup.add_child(vb)
-	
-	var hb = HBoxContainer.new(); vb.add_child(hb)
-	var tl = Label.new(); tl.text = "🃏 " + d.get("name","?")
-	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", C.GOLD)
-	tl.size_flags_horizontal=Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	var cb = Button.new(); cb.text="✕"; cb.custom_minimum_size=Vector2(32,32); cb.pressed.connect(func(): popup.queue_free())
-	hb.add_child(cb)
-	
-	var info = Label.new()
-	info.text = "%s · %s | 剩余 %d 天" % [TN.get(d.get("type",""),"?"), RG.get(d.get("rank",""),"?"), GameManager.sultan_card_days_left]
-	info.add_theme_font_size_override("font_size", 13); info.add_theme_color_override("font_color", tc); vb.add_child(info)
-	
-	vb.add_child(_sep())
-	var desc = Label.new(); desc.text = d.get("description",""); desc.add_theme_font_size_override("font_size", 12)
-	desc.add_theme_color_override("font_color", C.TEXT); desc.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; vb.add_child(desc)
-	
-	if d.has("flavor"):
-		vb.add_child(_sep())
-		var fl = Label.new(); fl.text = "\"" + d.get("flavor","") + "\""; fl.add_theme_font_size_override("font_size", 11)
-		fl.add_theme_color_override("font_color", C.DIM); fl.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; vb.add_child(fl)
-	
-	add_child(popup)
 
 func _refresh() -> void:
 	d_lbl.text = "第%d天" % TurnManager.current_day
