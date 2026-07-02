@@ -795,7 +795,7 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 	# 找不到（如确认后重开再拖出），重新创建一张
 	var new_card: PanelContainer
 	if card_type == "character":
-		new_card = _make_char_card(card_data)
+		new_card = card_factory.make_char_card(card_data)
 	else:
 		# 苏丹卡：从 GameManager 取当前数据
 		var scard = GameManager.active_sultan_card
