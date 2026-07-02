@@ -604,10 +604,10 @@ func _settle_next(index:int) -> void:
 	var ar = active_rites[index]
 	if not ar.sultan_card.is_empty(): settle_sultan_used = true
 	
-	var popup = SettlementPopup.new()
-	add_child(popup)
-	popup.setup_and_show(ar.rite, ar.char, ar.sultan_card)
-	popup.settlement_done.connect(func(result:Dictionary):
+	var screen = SettlementScreen.new()
+	add_child(screen)
+	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card)
+	screen.settlement_done.connect(func(result:Dictionary):
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		_settle_next(index+1)
 	)
