@@ -489,56 +489,6 @@ func _make_insight_button() -> PanelContainer:
 	iv.add_child(hint)
 	return insight
 
-	
-	if visible_cards.size() == 0: return
-	
-	var insight = hand_container.get_node_or_null("InsightBtn")
-	var left = insight.position.x + insight.size.x + 8 if insight and is_instance_valid(insight) else 106
-	var right = sort_btn.position.x - 8 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
-	var card_y = hand_container.size.y / 2 - 76
-	var card_w = 70; var gap = 8; var n = visible_cards.size()
-	var avail = right - left
-	var stack_reveal = 28  # 堆叠区每张卡露出28px
-	
-	# 1. 全放得下 → 正常排
-	var full_w = n * card_w + (n - 1) * gap
-	if full_w <= avail:
-		var x0 = (left + right - full_w) / 2
-		for i in range(n):
-			visible_cards[i].set_rest_position(Vector2(x0 + i * (card_w + gap), card_y))
-		return
-	
-	# 2. 放不下 → 左边正常排，右边堆叠
-	# 堆叠区至少需要 stack_reveal * 1 的宽度（至少一张）
-	# 先算最多能正常排多少张
-	var norm_avail = avail - stack_reveal  # 堆叠区至少留一张的空间
-	var norm_count = 1
-	var used = card_w
-	while norm_count < n - 1:  # 至少留一张给堆叠
-		var next = used + gap + card_w
-		if next + stack_reveal > avail: break
-		used = next
-		norm_count += 1
-	
-	var stacked_n = n - norm_count
-	if stacked_n <= 0:
-		# 全挤不下，全部进堆叠
-		norm_count = 0
-		stacked_n = n
-		used = 0
-	
-	# 正常卡
-	var x = left
-	for i in range(norm_count):
-		visible_cards[i].set_rest_position(Vector2(x, card_y))
-		x += card_w + gap
-	
-	# 堆叠卡：从正常卡尾部开始，每张露 stack_reveal px
-	x = left + used + gap if norm_count > 0 else left
-	for i in range(norm_count, n):
-		visible_cards[i].set_rest_position(Vector2(x, card_y))
-		x += stack_reveal
-
 func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	var dropped_in_slot = false
 	
