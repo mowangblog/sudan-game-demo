@@ -398,23 +398,17 @@ func _bottom() -> void:
 	hand_container.mouse_filter=Control.MOUSE_FILTER_PASS
 	add_child(hand_container)
 	
-	# 卡牌区域背景（只覆盖卡牌区域，在俺寻思和下一天之间）
-	var card_zone = PanelContainer.new(); card_zone.name="CardZone"
-	card_zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var zs = StyleBoxFlat.new(); zs.bg_color=Color("0d0804",0.85); zs.set_corner_radius_all(8)
-	zs.border_width_bottom=1; zs.border_width_top=1; zs.border_width_left=1; zs.border_width_right=1
-	zs.border_color = C.GOLD_LO
-	card_zone.add_theme_stylebox_override("panel",zs)
-	hand_container.add_child(card_zone)
-	
-	# 延迟设置初始位置
-	hand_layout.update_card_zone.call_deferred()
+	# 手牌区背景（最底层，铺满整个 hand_container）
+	var bg = ColorRect.new(); bg.color = Color("0d0804", 0.85)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hand_container.add_child(bg)
 	
 	hand_cards.clear()
 	
 	# 俺寻思 — 左下角骷髅
 	var insight = _make_insight_button()
-	insight.position = Vector2(10, 50)
+	insight.position = Vector2(10, hand_container.size.y / 2 - 76)
 	hand_container.add_child(insight)
 	
 	# 角色卡
@@ -462,10 +456,9 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 61)
+		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 76)
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
-		hand_layout.update_card_zone()
 	)
 
 
@@ -642,6 +635,7 @@ func _refresh() -> void:
 		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
 		cp.add_theme_stylebox_override("panel",sb)
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
+	hand_layout.arrange()
 
 # 同步金币卡数量和 ResourceManager
 
