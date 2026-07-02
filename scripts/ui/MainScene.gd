@@ -24,6 +24,7 @@ const SC_GLOW = {"STONE":Color(0.55,0.47,0.36,0.5), "BRONZE":Color(0.65,0.74,0.3
 const CHAR_QUALITY = {"player":"SILVER", "meji":"BRONZE", "zhaqiyi":"BRONZE", "tietou":"STONE", "kuaijiao":"STONE"}
 
 const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
+const SettlementScreen = preload("res://scripts/ui/SettlementScreen.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
@@ -405,6 +406,19 @@ func _bottom() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	move_child(bg, get_child_count() - 2)  # 确保 bg 在 hand_container 下面
+
+	# 卡牌区边框 — 同样是 MainScene 子节点（hand_container 的兄弟），不受 move_child 影响
+	var cz = PanelContainer.new(); cz.name="CardZoneBorder"
+	cz.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var czs = StyleBoxFlat.new()
+	czs.bg_color = Color("0a0604", 0.4)
+	czs.border_width_bottom = 2; czs.border_width_top = 2
+	czs.border_width_left = 2; czs.border_width_right = 2
+	czs.border_color = C.GOLD_LO
+	czs.set_corner_radius_all(6)
+	cz.add_theme_stylebox_override("panel", czs)
+	add_child(cz)
+	move_child(cz, get_child_count() - 2)  # 在 HandBg 上面、hand_container 下面
 	
 	hand_cards.clear()
 	
@@ -461,8 +475,20 @@ func _bottom() -> void:
 		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 76)
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
+		_update_card_zone_border()
 	)
 
+	call_deferred("_update_card_zone_border")
+
+
+func _update_card_zone_border():
+	var cz = get_node_or_null("CardZoneBorder")
+	if not cz: return
+	var insight = hand_container.get_node_or_null("InsightBtn")
+	var left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
+	var right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
+	cz.position = Vector2(left, hand_container.position.y + 4)
+	cz.size = Vector2(right - left, hand_container.size.y - 8)
 
 func _make_insight_button() -> PanelContainer:
 	var insight = PanelContainer.new(); insight.name="InsightBtn"

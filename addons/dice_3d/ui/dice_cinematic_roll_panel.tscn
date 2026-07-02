@@ -1,0 +1,127 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/dice_3d/dice_cinematic_roll_panel.gd" id="1_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.04, 0.045, 0.055, 0.86)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5, 0.62, 0.78, 0.55)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="DiceCinematicRollPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(320, 190)
+script = ExtResource("1_panel")
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiceTypeRows" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NormalRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/DiceTypeRows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/DiceTypeRows/NormalRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Normal"
+vertical_alignment = 1
+
+[node name="MinusButton" type="Button" parent="MarginContainer/VBoxContainer/DiceTypeRows/NormalRow"]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "-"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/VBoxContainer/DiceTypeRows/NormalRow"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "1"
+
+[node name="PlusButton" type="Button" parent="MarginContainer/VBoxContainer/DiceTypeRows/NormalRow"]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "+"
+
+[node name="IconRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/DiceTypeRows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/DiceTypeRows/IconRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Icons"
+vertical_alignment = 1
+
+[node name="MinusButton" type="Button" parent="MarginContainer/VBoxContainer/DiceTypeRows/IconRow"]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "-"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/VBoxContainer/DiceTypeRows/IconRow"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="PlusButton" type="Button" parent="MarginContainer/VBoxContainer/DiceTypeRows/IconRow"]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "+"
+
+[node name="D20Row" type="HBoxContainer" parent="MarginContainer/VBoxContainer/DiceTypeRows"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/DiceTypeRows/D20Row"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "D20"
+vertical_alignment = 1
+
+[node name="MinusButton" type="Button" parent="MarginContainer/VBoxContainer/DiceTypeRows/D20Row"]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "-"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/VBoxContainer/DiceTypeRows/D20Row"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="PlusButton" type="Button" parent="MarginContainer/VBoxContainer/DiceTypeRows/D20Row"]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "+"
+
+[node name="RollButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Roll Dice"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ResultsLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+autowrap_mode = 2

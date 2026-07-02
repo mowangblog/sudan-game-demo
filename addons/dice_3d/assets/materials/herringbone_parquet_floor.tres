@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "Herringbone Parquet Floor"
+albedo_color = Color(0.18, 0.13, 0.095, 1)
+metallic_specular = 0.28
+roughness = 0.46
+uv1_scale = Vector3(2.2, 2.2, 1)
