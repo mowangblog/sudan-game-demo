@@ -36,7 +36,7 @@ func make_char_card(d: Dictionary) -> PanelContainer:
 	sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
 	card.add_theme_stylebox_override("panel", sb)
 
-	var vb = VBoxContainer.new(); vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
 
 	var nl = Label.new(); nl.text = d.get("name", "?"); nl.add_theme_font_size_override("font_size", 13)
@@ -61,7 +61,7 @@ func make_char_card(d: Dictionary) -> PanelContainer:
 
 	card._on_hover_style = func(hovered: bool):
 		var nsb = StyleBoxFlat.new(); nsb.bg_color = bg
-		var q_glow = SC_GLOW.get(quality, C.get("GOLD", Color("c8a84e")).a(0.5))
+		var q_glow = SC_GLOW.get(quality, Color("c8a84e80"))
 		var q_hover = SC_HOVER.get(quality, q_border)
 		nsb.set_corner_radius_all(10)
 		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
@@ -87,7 +87,7 @@ func make_sultan_card() -> PanelContainer:
 	sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
 	card.add_theme_stylebox_override("panel", sb)
 
-	var vb = VBoxContainer.new(); vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
 
 	var tl = Label.new(); tl.name = "TypeLbl"; tl.text = "纵欲"
@@ -143,7 +143,7 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
 		nsb.content_margin_left = 4; nsb.content_margin_right = 4; nsb.content_margin_top = 4; nsb.content_margin_bottom = 4
 		if hovered:
-			nsb.border_color = q_border; nsb.shadow_size = 12; nsb.shadow_color = SC_GLOW.get(quality, C.get("GOLD", Color("c8a84e")).a(0.5))
+			nsb.border_color = q_border; nsb.shadow_size = 12; nsb.shadow_color = SC_GLOW.get(quality, Color("c8a84e80"))
 		else:
 			nsb.border_color = q_border.darkened(0.3); nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
 		card.add_theme_stylebox_override("panel", nsb)

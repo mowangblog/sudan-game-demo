@@ -406,7 +406,7 @@ func _bottom() -> void:
 	hand_container.add_child(card_zone)
 	
 	# 延迟设置初始位置
-	call_deferred("_update_card_zone")
+	hand_layout.update_card_zone.call_deferred()
 	
 	hand_cards.clear()
 	
@@ -426,9 +426,9 @@ func _bottom() -> void:
 	
 	# 苏丹卡
 	cp = card_factory.make_sultan_card()
-	ct_lbl = cp.get_node("VBoxContainer/TypeLbl") as Label
-	cr_lbl = cp.get_node("VBoxContainer/RankLbl") as Label
-	cd_lbl = cp.get_node("VBoxContainer/DaysLbl") as Label
+	ct_lbl = cp.get_node("VB/TypeLbl") as Label
+	cr_lbl = cp.get_node("VB/RankLbl") as Label
+	cd_lbl = cp.get_node("VB/DaysLbl") as Label
 	cp.drag_ended.connect(_on_hand_card_dropped)
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
