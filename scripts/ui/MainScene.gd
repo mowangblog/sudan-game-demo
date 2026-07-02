@@ -24,6 +24,7 @@ const SC_GLOW = {"STONE":Color(0.55,0.47,0.36,0.5), "BRONZE":Color(0.65,0.74,0.3
 const CHAR_QUALITY = {"player":"SILVER", "meji":"BRONZE", "zhaqiyi":"BRONZE", "tietou":"STONE", "kuaijiao":"STONE"}
 
 const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
+var card_factory: CardFactory = CardFactory.new()
 
 # ============ UI 节点 ============
 var d_lbl:Label;var w_lbl:Label;var gd_lbl:Label
@@ -46,6 +47,10 @@ var current_rite_detail: Dictionary = {}
 
 func _ready() -> void:
 	theme = _init_theme()
+	card_factory.setup({
+		"C":C,"SC":SC,"SC_BORDER":SC_BORDER,"SC_HOVER":SC_HOVER,"SC_GLOW":SC_GLOW,
+		"CHAR_QUALITY":CHAR_QUALITY,"AI":AI
+	}, func(d): _show_char_popup(d))
 	_char_load()
 	_build()
 	GameManager.start_game()
@@ -413,19 +418,25 @@ func _bottom() -> void:
 	for cid in ["player","meji","tietou","kuaijiao","zhaqiyi"]:
 		var d = char_data_all.get(cid,{})
 		if d.is_empty(): continue
-		var card = _make_char_card(d)
+		var card = card_factory.make_char_card(d)
 		char_panels[cid] = card; card.name = "Char_"+cid
 		card.drag_ended.connect(_on_hand_card_dropped)
 		hand_container.add_child(card); hand_cards.append(card)
 	
 	# 苏丹卡
-	cp = _make_sultan_card()
+	cp = card_factory.make_sultan_card()
+	ct_lbl = cp.get_node("VBoxContainer/TypeLbl") as Label
+	cr_lbl = cp.get_node("VBoxContainer/RankLbl") as Label
+	cd_lbl = cp.get_node("VBoxContainer/DaysLbl") as Label
 	cp.drag_ended.connect(_on_hand_card_dropped)
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
 	# 资源卡（金币等可叠加）
-	var gold_card = _make_resource_card("金币", "💰", "GOLD", ResourceManager.gold)
+	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", ResourceManager.gold)
 	gold_card.drag_ended.connect(_on_hand_card_dropped)
+	gold_card.drag_started.connect(func(_c): _arrange_hand())
+	gold_card._on_right_click = func(): _split_resource_card(gold_card, "金币", "💰", "GOLD")
+	gold_card._on_click = func(): _show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", 0))
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
