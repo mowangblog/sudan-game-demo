@@ -26,8 +26,8 @@ const CHAR_QUALITY = {"player":"SILVER","meji":"BRONZE","zhaqiyi":"BRONZE","tiet
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	custom_minimum_size = Vector2(88, 130)
-	size = Vector2(88, 130)
+	custom_minimum_size = Vector2(70, 152)
+	size = Vector2(70, 152)
 	_draw_empty()
 
 var _press_pos: Vector2
@@ -62,7 +62,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 	
 	# 创建跟卡牌一样的拖拽预览（原卡牌大小）
 	var prev = PanelContainer.new()
-	prev.custom_minimum_size = Vector2(88, 130)
+	prev.custom_minimum_size = Vector2(70, 152)
 	prev.modulate = Color(1,1,1,0.85)
 	var sb = StyleBoxFlat.new()
 	sb.set_corner_radius_all(10)

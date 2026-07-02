@@ -51,31 +51,11 @@ func _ready() -> void:
 	GameManager.start_game()
 	_refresh()
 
-var _last_hovered: String = ""  # 上次 hover 的卡名，用于检测切换
-var _hover_cooldown: float = 0  # hover 重排冷却
-
 func _process(_delta: float):
-	if _hover_cooldown > 0:
-		_hover_cooldown -= _delta
-	# 拖拽中实时重排
 	for c in hand_cards:
 		if is_instance_valid(c) and c.is_dragging:
 			_arrange_hand()
 			return
-	# Hover 切换时重排（展开/堆叠），带冷却
-	if _hover_cooldown <= 0:
-		for c in hand_cards:
-			if is_instance_valid(c) and c.is_hovered:
-				if _last_hovered != c.name:
-					_last_hovered = c.name
-					_arrange_hand()
-					_hover_cooldown = 0.15  # 150ms 冷却
-				return
-		# 鼠标离开所有卡牌
-		if _last_hovered != "":
-			_last_hovered = ""
-			_arrange_hand()
-			_hover_cooldown = 0.15
 
 func _init_theme() -> Theme:
 	var t = Theme.new()
@@ -410,6 +390,18 @@ func _bottom() -> void:
 	hand_container.mouse_filter=Control.MOUSE_FILTER_PASS
 	add_child(hand_container)
 	
+	# 卡牌区域背景（只覆盖卡牌区域，在俺寻思和下一天之间）
+	var card_zone = PanelContainer.new(); card_zone.name="CardZone"
+	card_zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var zs = StyleBoxFlat.new(); zs.bg_color=Color("0d0804",0.85); zs.set_corner_radius_all(8)
+	zs.border_width_bottom=1; zs.border_width_top=1; zs.border_width_left=1; zs.border_width_right=1
+	zs.border_color = C.GOLD_LO
+	card_zone.add_theme_stylebox_override("panel",zs)
+	hand_container.add_child(card_zone)
+	
+	# 延迟设置初始位置
+	call_deferred("_update_card_zone")
+	
 	hand_cards.clear()
 	
 	# 俺寻思 — 左下角骷髅
@@ -437,30 +429,40 @@ func _bottom() -> void:
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
-	# 排序按钮
-	sort_btn = Button.new(); sort_btn.text="排序"; sort_btn.custom_minimum_size=Vector2(70,30)
-	sort_btn.add_theme_font_size_override("font_size", 11)
-	sort_btn.pressed.connect(_cycle_sort)
-	sort_btn.position = Vector2(hand_container.size.x - 230, 60)
-	hand_container.add_child(sort_btn)
-	
 	# 下一天 — 右下角
 	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
 	nb.add_theme_font_size_override("font_size", 15); nb.pressed.connect(_next_press)
 	nb.position = Vector2(hand_container.size.x - 135, 55)
 	hand_container.add_child(nb)
 	
+	# 排序按钮 — 下一天下方
+	sort_btn = Button.new(); sort_btn.text="排序"; sort_btn.custom_minimum_size=Vector2(60,24)
+	sort_btn.add_theme_font_size_override("font_size", 10)
+	sort_btn.pressed.connect(_cycle_sort)
+	sort_btn.position = Vector2(hand_container.size.x - 135, 105)
+	hand_container.add_child(sort_btn)
+	
 	_arrange_hand()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 50)
-		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 230, hand_container.size.y / 2 - 17)
-		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 22)
+		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 61)
+		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
+		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
+		_update_card_zone()
 	)
+
+func _update_card_zone():
+	var cz = hand_container.get_node_or_null("CardZone")
+	if not cz: return
+	var insight = hand_container.get_node_or_null("InsightBtn")
+	var cz_left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
+	var cz_right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
+	cz.position = Vector2(cz_left, 4)
+	cz.size = Vector2(cz_right - cz_left, hand_container.size.y - 8)
 
 func _make_insight_button() -> PanelContainer:
 	var insight = PanelContainer.new(); insight.name="InsightBtn"
-	insight.custom_minimum_size=Vector2(88,130); insight.mouse_filter=Control.MOUSE_FILTER_STOP
+	insight.custom_minimum_size=Vector2(70,152); insight.mouse_filter=Control.MOUSE_FILTER_STOP
 	var iss = StyleBoxFlat.new(); iss.bg_color=Color("1a1018"); iss.set_corner_radius_all(10)
 	iss.border_width_bottom=2; iss.border_width_top=2; iss.border_width_left=2; iss.border_width_right=2
 	iss.border_color=C.GOLD_LO.darkened(0.5); iss.shadow_size=6; iss.shadow_color=C.SHADOW
@@ -482,7 +484,6 @@ func _make_insight_button() -> PanelContainer:
 
 func _arrange_hand():
 	var visible_cards = []
-	var hovered_idx = -1
 	for i in range(hand_cards.size()):
 		var card = hand_cards[i]
 		if not is_instance_valid(card) or not card.visible: continue
@@ -490,58 +491,55 @@ func _arrange_hand():
 			if not hand_container.get_global_rect().has_point(card.global_position + card.size / 2):
 				continue
 		visible_cards.append(card)
-		if card.is_hovered: hovered_idx = visible_cards.size() - 1
 	
 	if visible_cards.size() == 0: return
 	
 	var insight = hand_container.get_node_or_null("InsightBtn")
 	var left = insight.position.x + insight.size.x + 8 if insight and is_instance_valid(insight) else 106
 	var right = sort_btn.position.x - 8 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
-	var card_y = hand_container.size.y / 2 - 65
-	var card_w = 88; var norm_gap = 8; var n = visible_cards.size()
+	var card_y = hand_container.size.y / 2 - 76
+	var card_w = 70; var gap = 8; var n = visible_cards.size()
 	var avail = right - left
+	var stack_reveal = 28  # 堆叠区每张卡露出28px
 	
-	# 卡不够直接正常排
-	var normal_total = n * card_w + (n - 1) * norm_gap
-	if normal_total <= avail and hovered_idx < 0:
-		var x0 = (left + right - normal_total) / 2
+	# 1. 全放得下 → 正常排
+	var full_w = n * card_w + (n - 1) * gap
+	if full_w <= avail:
+		var x0 = (left + right - full_w) / 2
 		for i in range(n):
-			visible_cards[i].set_rest_position(Vector2(x0 + i * (card_w + norm_gap), card_y))
+			visible_cards[i].set_rest_position(Vector2(x0 + i * (card_w + gap), card_y))
 		return
 	
-	if hovered_idx < 0:
-		# 无悬浮 → 右边压缩成牌堆（扑克牌摊开效果）
-		var max_normal = floor((avail - card_w * 0.25) / (card_w + norm_gap)) + 1
-		max_normal = max(1, min(max_normal, n))
-		var stacked_n = n - int(max_normal)
-		if stacked_n <= 0: stacked_n = n
-		var stacked_reveal = (avail - (max_normal - 1) * (card_w + norm_gap)) / float(stacked_n) if stacked_n > 0 else card_w
-		stacked_reveal = clamp(stacked_reveal, 24.0, card_w)
-		var x = left
-		for i in range(n):
-			if i < max_normal - 1:
-				visible_cards[i].set_rest_position(Vector2(x, card_y))
-				x += card_w + norm_gap
-			else:
-				visible_cards[i].set_rest_position(Vector2(x, card_y))
-				x += stacked_reveal
-	else:
-		# 悬浮时 → 悬浮位展开，其余压缩
-		var exp_span = 3  # ±当前卡
-		var exp_start = max(0, hovered_idx - exp_span)
-		var exp_end = min(n - 1, hovered_idx + exp_span)
-		var exp_n = exp_end - exp_start + 1
-		var exp_w = exp_n * card_w + (exp_n - 1) * norm_gap
-		var other_n = n - exp_n
-		var reveal = max(24.0, (avail - exp_w) / float(other_n)) if other_n > 0 else card_w
-		var x = left
-		for i in range(n):
-			if i >= exp_start and i <= exp_end:
-				visible_cards[i].set_rest_position(Vector2(x, card_y))
-				x += card_w + norm_gap
-			else:
-				visible_cards[i].set_rest_position(Vector2(x, card_y))
-				x += reveal
+	# 2. 放不下 → 左边正常排，右边堆叠
+	# 堆叠区至少需要 stack_reveal * 1 的宽度（至少一张）
+	# 先算最多能正常排多少张
+	var norm_avail = avail - stack_reveal  # 堆叠区至少留一张的空间
+	var norm_count = 1
+	var used = card_w
+	while norm_count < n - 1:  # 至少留一张给堆叠
+		var next = used + gap + card_w
+		if next + stack_reveal > avail: break
+		used = next
+		norm_count += 1
+	
+	var stacked_n = n - norm_count
+	if stacked_n <= 0:
+		# 全挤不下，全部进堆叠
+		norm_count = 0
+		stacked_n = n
+		used = 0
+	
+	# 正常卡
+	var x = left
+	for i in range(norm_count):
+		visible_cards[i].set_rest_position(Vector2(x, card_y))
+		x += card_w + gap
+	
+	# 堆叠卡：从正常卡尾部开始，每张露 stack_reveal px
+	x = left + used + gap if norm_count > 0 else left
+	for i in range(norm_count, n):
+		visible_cards[i].set_rest_position(Vector2(x, card_y))
+		x += stack_reveal
 
 func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	var dropped_in_slot = false
@@ -609,7 +607,7 @@ func _reorder_card(card: PanelContainer, global_pos: Vector2):
 # 生成角色卡（带头像，更接近原版）
 func _make_char_card(d:Dictionary) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.custom_minimum_size = Vector2(88,130); card.mouse_filter=Control.MOUSE_FILTER_STOP
+	card.custom_minimum_size = Vector2(70,152); card.mouse_filter=Control.MOUSE_FILTER_STOP
 	var quality = CHAR_QUALITY.get(d.get("id",""), "STONE")
 	var bg = SC.get(quality, Color("2a2018"))
 	var q_stars = {"STONE":"★","BRONZE":"★★","SILVER":"★★★","GOLD":"★★★★"}
@@ -663,7 +661,7 @@ func _make_char_card(d:Dictionary) -> PanelContainer:
 
 func _make_sultan_card() -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name="SC"; card.custom_minimum_size = Vector2(88,130); card.mouse_filter=Control.MOUSE_FILTER_STOP
+	card.name="SC"; card.custom_minimum_size = Vector2(70,152); card.mouse_filter=Control.MOUSE_FILTER_STOP
 	var bg = Color("2a2018")  # 默认，_refresh 时会更新
 	var sb = StyleBoxFlat.new(); sb.bg_color=bg; sb.set_corner_radius_all(10)
 	sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
@@ -716,7 +714,7 @@ func _make_sultan_card() -> PanelContainer:
 # 资源卡（金币/情报 — 可叠加、右键拆分、拖拽合并）
 func _make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name="Res_"+name_str; card.custom_minimum_size=Vector2(88,130); card.mouse_filter=Control.MOUSE_FILTER_STOP
+	card.name="Res_"+name_str; card.custom_minimum_size=Vector2(70,152); card.mouse_filter=Control.MOUSE_FILTER_STOP
 	var bg = SC.get(quality, Color("2a2018"))
 	var q_border = SC_BORDER.get(quality, C.GOLD_LO)
 	var sb = StyleBoxFlat.new(); sb.bg_color=bg; sb.set_corner_radius_all(10)
