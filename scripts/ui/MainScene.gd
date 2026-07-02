@@ -25,6 +25,7 @@ const CHAR_QUALITY = {"player":"SILVER", "meji":"BRONZE", "zhaqiyi":"BRONZE", "t
 
 const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
 var card_factory: CardFactory = CardFactory.new()
+var hand_layout: HandLayoutManager = HandLayoutManager.new()
 
 # ============ UI 节点 ============
 var d_lbl:Label;var w_lbl:Label;var gd_lbl:Label
@@ -59,7 +60,7 @@ func _ready() -> void:
 func _process(_delta: float):
 	for c in hand_cards:
 		if is_instance_valid(c) and c.is_dragging:
-			_arrange_hand()
+			hand_layout.arrange()
 			return
 
 func _init_theme() -> Theme:
@@ -372,7 +373,7 @@ func _restore_assigned_cards(slot_nodes:Array):
 		if is_instance_valid(s) and s.has_method("clear_card"):
 			s.clear_card()
 	event_detail_panel.set_meta("assigned_cards", [])
-	_arrange_hand()
+	hand_layout.arrange()
 
 func _commit_assigned_cards(slot_nodes:Array):
 	# 不再 queue_free，只保持隐藏——结算后恢复
@@ -380,14 +381,14 @@ func _commit_assigned_cards(slot_nodes:Array):
 		if is_instance_valid(s) and s.has_method("clear_card"):
 			s.clear_card()
 	event_detail_panel.set_meta("assigned_cards", [])
-	_arrange_hand()
+	hand_layout.arrange()
 
 # 结算后恢复手牌
 func _restore_hand_cards():
 	for c in hand_cards:
 		if is_instance_valid(c) and not c.visible:
 			c.visible = true
-	_arrange_hand()
+	hand_layout.arrange()
 
 func _bottom() -> void:
 	hand_container = Control.new(); hand_container.name="HandContainer"
@@ -434,7 +435,7 @@ func _bottom() -> void:
 	# 资源卡（金币等可叠加）
 	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", ResourceManager.gold)
 	gold_card.drag_ended.connect(_on_hand_card_dropped)
-	gold_card.drag_started.connect(func(_c): _arrange_hand())
+	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
 	gold_card._on_right_click = func(): _split_resource_card(gold_card, "金币", "💰", "GOLD")
 	gold_card._on_click = func(): _show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", 0))
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
@@ -449,27 +450,22 @@ func _bottom() -> void:
 	# 排序按钮 — 下一天下方
 	sort_btn = Button.new(); sort_btn.text="排序"; sort_btn.custom_minimum_size=Vector2(60,24)
 	sort_btn.add_theme_font_size_override("font_size", 10)
-	sort_btn.pressed.connect(_cycle_sort)
+	sort_btn.pressed.connect(hand_layout.cycle_sort)
 	sort_btn.position = Vector2(hand_container.size.x - 135, 105)
 	hand_container.add_child(sort_btn)
 	
-	_arrange_hand()
+	# 初始化手牌布局管理器
+	hand_layout.setup(hand_cards, hand_container, sort_btn, func(card, count): _update_card_count(card, count), CHAR_QUALITY)
+	
+	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
 		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 61)
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
-		_update_card_zone()
+		hand_layout.update_card_zone()
 	)
 
-func _update_card_zone():
-	var cz = hand_container.get_node_or_null("CardZone")
-	if not cz: return
-	var insight = hand_container.get_node_or_null("InsightBtn")
-	var cz_left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
-	var cz_right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
-	cz.position = Vector2(cz_left, 4)
-	cz.size = Vector2(cz_right - cz_left, hand_container.size.y - 8)
 
 func _make_insight_button() -> PanelContainer:
 	var insight = PanelContainer.new(); insight.name="InsightBtn"
@@ -493,15 +489,6 @@ func _make_insight_button() -> PanelContainer:
 	iv.add_child(hint)
 	return insight
 
-func _arrange_hand():
-	var visible_cards = []
-	for i in range(hand_cards.size()):
-		var card = hand_cards[i]
-		if not is_instance_valid(card) or not card.visible: continue
-		if card.is_dragging:
-			if not hand_container.get_global_rect().has_point(card.global_position + card.size / 2):
-				continue
-		visible_cards.append(card)
 	
 	if visible_cards.size() == 0: return
 	
@@ -594,7 +581,7 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	
 	if not dropped_in_slot:
 		_reorder_card(card, global_pos)
-	_arrange_hand()
+	hand_layout.arrange()
 
 func _reorder_card(card: PanelContainer, global_pos: Vector2):
 	var card_idx = hand_cards.find(card)
@@ -621,14 +608,24 @@ func _split_resource_card(source_card: PanelContainer, name_str: String, icon: S
 	_update_card_count(source_card, c2 - 1)
 	var newc = card_factory.make_resource_card(name_str, icon, quality, 1)
 	newc.drag_ended.connect(_on_hand_card_dropped)
-	newc.drag_started.connect(func(_c): _arrange_hand())
+	newc.drag_started.connect(func(_c): hand_layout.arrange())
 	newc._on_right_click = func(): _split_resource_card(newc, name_str, icon, quality)
 	newc._on_click = func(): _show_res_popup(name_str, icon, quality, newc.get_meta("res_count", 0))
 	hand_container.add_child(newc)
 	var idx = hand_cards.find(source_card)
 	if idx != -1: hand_cards.insert(idx + 1, newc)
 	else: hand_cards.append(newc)
-	_arrange_hand()
+	hand_layout.arrange()
+
+# 金币卡数量更新（同步 ResourceManager）
+func _update_card_count(card: PanelContainer, count: int):
+	card.set_meta("res_count", count)
+	card.get_meta("res_data").count = count
+	card.set_meta("drag_data", card.get_meta("res_data"))
+	var lbl = card.get_node_or_null("VB/CountLbl")
+	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
+	if card.get_meta("res_type","") == "金币":
+		ResourceManager.gold = count
 
 func _show_res_popup(name_str:String, icon:String, quality:String, count:int):
 	var popup = PanelContainer.new()
@@ -823,59 +820,6 @@ func _refresh() -> void:
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 
 # 同步金币卡数量和 ResourceManager
-func _sync_gold_card():
-	var gc = resource_cards.get("金币")
-	if gc and is_instance_valid(gc):
-		var count = ResourceManager.gold
-		_update_card_count(gc, count)
-
-func _sort_by_category(c: PanelContainer) -> int:
-	if c.name == "SC": return 1  # 苏丹卡
-	if c.get_meta("res_type", "") != "": return 0  # 资源卡最左
-	return 2  # 角色卡
-
-func _sort_by_quality(c: PanelContainer) -> int:
-	var dd = c.get_meta("drag_data", {})
-	var q = dd.get("data", {}).get("rank", "")
-	if q == "": q = dd.get("data", {}).get("quality", "")
-	if q == "":
-		var cq = CHAR_QUALITY.get(dd.get("id",""), "STONE")
-		q = cq
-	return {"GOLD":0,"SILVER":1,"BRONZE":2,"STONE":3}.get(q, 4)
-
-func _cycle_sort():
-	sort_mode = (sort_mode + 1) % 2  # 0=分类 1=品质
-	# 先合并所有同类型资源卡
-	_auto_merge_resources()
-	if sort_mode == 0:
-		hand_cards.sort_custom(func(a,b): return _sort_by_category(a) < _sort_by_category(b))
-	else:
-		hand_cards.sort_custom(func(a,b): return _sort_by_quality(a) < _sort_by_quality(b))
-	_arrange_hand()
-
-func _auto_merge_resources():
-	# 按类型合并所有金币卡
-	var merged = {}
-	for i in range(hand_cards.size()-1, -1, -1):
-		var c = hand_cards[i]
-		var rt = c.get_meta("res_type", "")
-		if rt == "" or not is_instance_valid(c): continue
-		if not rt in merged:
-			merged[rt] = c
-		else:
-			var target = merged[rt]
-			_update_card_count(target, target.get_meta("res_count",0) + c.get_meta("res_count",0))
-			c.queue_free()
-			hand_cards.remove_at(i)
-
-func _update_card_count(card: PanelContainer, count: int):
-	card.set_meta("res_count", count)
-	card.get_meta("res_data").count = count
-	card.set_meta("drag_data", card.get_meta("res_data"))
-	var lbl = card.get_node_or_null("VB/CountLbl")
-	if lbl: lbl.text = "x%d" % count if count > 1 else ""
-	if card.get_meta("res_type","") == "金币":
-		ResourceManager.gold = count
 
 func _load_rites() -> Array:
 	var f = FileAccess.open("res://data/rites.json",FileAccess.READ)
@@ -895,7 +839,7 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 			var dd = c.get_meta("drag_data", {})
 			if dd.get("type","") == card_type and dd.get("id","") == card_data.get("id",""):
 				c.visible = true
-				_arrange_hand()
+				hand_layout.arrange()
 				return
 	
 	# 找不到（如确认后重开再拖出），重新创建一张
@@ -907,17 +851,17 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 		var scard = GameManager.active_sultan_card
 		if not scard.is_empty():
 			cp.visible = true
-			_arrange_hand()
+			hand_layout.arrange()
 			return
 		else:
 			# 没有活跃苏丹卡，不创建
 			return
 	
 	new_card.drag_ended.connect(_on_hand_card_dropped)
-	new_card.drag_started.connect(func(_c): _arrange_hand())
+	new_card.drag_started.connect(func(_c): hand_layout.arrange())
 	hand_container.add_child(new_card)
 	hand_cards.append(new_card)
-	_arrange_hand()
+	hand_layout.arrange()
 
 func _find_configured_rite(rite:Dictionary):
 	for ar in active_rites:
