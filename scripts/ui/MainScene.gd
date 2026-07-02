@@ -615,175 +615,20 @@ func _reorder_card(card: PanelContainer, global_pos: Vector2):
 			var c = hand_cards[i] as Control
 			if c.get_index() != i: hand_container.move_child(c, i)
 
-# 生成角色卡（带头像，更接近原版）
-func _make_char_card(d:Dictionary) -> PanelContainer:
-	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.custom_minimum_size = Vector2(70,152); card.mouse_filter=Control.MOUSE_FILTER_STOP
-	var quality = CHAR_QUALITY.get(d.get("id",""), "STONE")
-	var bg = SC.get(quality, Color("2a2018"))
-	var q_stars = {"STONE":"★","BRONZE":"★★","SILVER":"★★★","GOLD":"★★★★"}
-	var q_border = SC_BORDER.get(quality, C.GOLD_LO)
-	var sb = StyleBoxFlat.new(); sb.bg_color=bg; sb.set_corner_radius_all(10)
-	sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-	sb.border_color=q_border; sb.content_margin_left=4; sb.content_margin_right=4
-	sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
-	card.add_theme_stylebox_override("panel",sb)
-	
-	var vb = VBoxContainer.new(); vb.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	vb.alignment=BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
-	
-	var nl = Label.new(); nl.text=d.get("name","?"); nl.add_theme_font_size_override("font_size",13)
-	nl.add_theme_color_override("font_color",C.TEXT); nl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(nl)
-	
-	# 品质星级
-	var ql = Label.new(); ql.text = q_stars.get(quality, "★")
-	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.GOLD)
-	ql.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-	
-	var attrs = d.get("attributes",{})
-	var best=""; var best_v=0
-	for k in attrs:
-		if attrs[k]>best_v: best_v=attrs[k]; best=k
-	var bl = Label.new()
-	bl.text="%s %d" % [AI.get(best,best),best_v]
-	bl.add_theme_font_size_override("font_size",10); bl.add_theme_color_override("font_color",C.GOLD)
-	bl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(bl)
-	
-	card.set_meta("drag_data", {"type":"character", "id":d.get("id",""), "name":d.get("name",""), "data":d})
-	
-	card._on_hover_style = func(hovered: bool):
-		var nsb = StyleBoxFlat.new(); nsb.bg_color=bg
-		var q_glow = SC_GLOW.get(quality, Color("c8a84e44"))
-		var q_hover = SC_HOVER.get(quality, q_border)
-		nsb.set_corner_radius_all(10)
-		nsb.border_width_bottom=2; nsb.border_width_top=2; nsb.border_width_left=2; nsb.border_width_right=2
-		nsb.content_margin_left=4; nsb.content_margin_right=4; nsb.content_margin_top=4; nsb.content_margin_bottom=4
-		if hovered:
-			nsb.border_color=q_hover; nsb.shadow_size=12; nsb.shadow_color=q_glow
-		else:
-			nsb.border_color=q_border; nsb.shadow_size=4; nsb.shadow_color=C.SHADOW
-		card.add_theme_stylebox_override("panel", nsb)
-	
-	card._on_click = func():
-		_show_char_popup(d)
-	
-	return card
-
-func _make_sultan_card() -> PanelContainer:
-	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name="SC"; card.custom_minimum_size = Vector2(70,152); card.mouse_filter=Control.MOUSE_FILTER_STOP
-	var bg = Color("2a2018")  # 默认，_refresh 时会更新
-	var sb = StyleBoxFlat.new(); sb.bg_color=bg; sb.set_corner_radius_all(10)
-	sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-	sb.border_color=C.GOLD_LO; sb.content_margin_left=4; sb.content_margin_right=4
-	sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
-	card.add_theme_stylebox_override("panel",sb)
-	
-	var vb = VBoxContainer.new(); vb.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	vb.alignment=BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
-	
-	# 类型标签
-	ct_lbl = Label.new(); ct_lbl.text="纵欲"; ct_lbl.add_theme_font_size_override("font_size",20)
-	ct_lbl.add_theme_color_override("font_color",C.GOLD); ct_lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	ct_lbl.mouse_filter=Control.MOUSE_FILTER_IGNORE; vb.add_child(ct_lbl)
-	
-	# 品质星级
-	cr_lbl = Label.new(); cr_lbl.text="★"; cr_lbl.add_theme_font_size_override("font_size",13)
-	cr_lbl.add_theme_color_override("font_color",C.GOLD); cr_lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(cr_lbl)
-	
-	# 倒计时
-	cd_lbl = Label.new(); cd_lbl.text="7天"; cd_lbl.add_theme_font_size_override("font_size",10)
-	cd_lbl.add_theme_color_override("font_color",C.DIM); cd_lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(cd_lbl)
-	
-	card._on_hover_style = func(hovered: bool):
-		var bg2 = Color("2a2018")
-		var cdata = GameManager.active_sultan_card
-		var rank = cdata.get("rank","STONE") if not cdata.is_empty() else "STONE"
-		bg2 = SC.get(rank, Color("2a2018"))
-		var q_border = SC_BORDER.get(rank, C.GOLD_LO)
-		var q_hover = SC_HOVER.get(rank, q_border)
-		var q_glow = SC_GLOW.get(rank, Color("c8a84e44"))
-		var nsb = StyleBoxFlat.new(); nsb.bg_color=bg2
-		nsb.set_corner_radius_all(10)
-		nsb.border_width_bottom=2; nsb.border_width_top=2; nsb.border_width_left=2; nsb.border_width_right=2
-		nsb.content_margin_left=4; nsb.content_margin_right=4; nsb.content_margin_top=4; nsb.content_margin_bottom=4
-		if hovered:
-			nsb.border_color=q_hover; nsb.shadow_size=12; nsb.shadow_color=q_glow
-		else:
-			nsb.border_color=q_border; nsb.shadow_size=4; nsb.shadow_color=C.SHADOW
-		card.add_theme_stylebox_override("panel", nsb)
-	
-	card._on_click = func():
-		if GameManager.active_sultan_card.is_empty(): return
-		_show_sultan_popup(GameManager.active_sultan_card)
-	
-	return card
-
-# 资源卡（金币/情报 — 可叠加、右键拆分、拖拽合并）
-func _make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
-	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name="Res_"+name_str; card.custom_minimum_size=Vector2(70,152); card.mouse_filter=Control.MOUSE_FILTER_STOP
-	var bg = SC.get(quality, Color("2a2018"))
-	var q_border = SC_BORDER.get(quality, C.GOLD_LO)
-	var sb = StyleBoxFlat.new(); sb.bg_color=bg; sb.set_corner_radius_all(10)
-	sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-	sb.border_color=q_border; sb.content_margin_left=4; sb.content_margin_right=4
-	sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
-	card.add_theme_stylebox_override("panel",sb)
-	
-	var vb = VBoxContainer.new(); vb.mouse_filter=Control.MOUSE_FILTER_IGNORE; vb.name="VB"
-	vb.alignment=BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
-	
-	var icon_lbl = Label.new(); icon_lbl.text=icon; icon_lbl.add_theme_font_size_override("font_size",32)
-	icon_lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
-	var nl = Label.new(); nl.text=name_str; nl.add_theme_font_size_override("font_size",13)
-	nl.add_theme_color_override("font_color",C.TEXT); nl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-	var ql = Label.new(); ql.text={"STONE":"★","BRONZE":"★★","SILVER":"★★★","GOLD":"★★★★"}.get(quality,"★")
-	ql.add_theme_font_size_override("font_size",13); ql.add_theme_color_override("font_color",C.GOLD)
-	ql.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-	var cnt_lbl = Label.new(); cnt_lbl.name="CountLbl"; cnt_lbl.text="x%d" % count if count > 1 else ""
-	cnt_lbl.add_theme_font_size_override("font_size",12); cnt_lbl.add_theme_color_override("font_color",C.GOLD_HI)
-	cnt_lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt_lbl)
-	
-	var res_data = {"type":"resource","id":name_str,"name":name_str,"quality":quality,"count":count,"icon":icon}
-	card.set_meta("drag_data", res_data)
-	card.set_meta("res_type", name_str)
-	card.set_meta("res_count", count)
-	card.set_meta("res_data", res_data)
-	
-	card._on_hover_style = func(hovered: bool):
-		var nsb = StyleBoxFlat.new(); nsb.bg_color=bg; nsb.set_corner_radius_all(10)
-		nsb.border_width_bottom=2; nsb.border_width_top=2; nsb.border_width_left=2; nsb.border_width_right=2
-		nsb.content_margin_left=4; nsb.content_margin_right=4; nsb.content_margin_top=4; nsb.content_margin_bottom=4
-		if hovered:
-			nsb.border_color=q_border; nsb.shadow_size=12; nsb.shadow_color=SC_GLOW.get(quality,Color("c8a84e44"))
-		else:
-			nsb.border_color=q_border.darkened(0.3); nsb.shadow_size=4; nsb.shadow_color=C.SHADOW
-		card.add_theme_stylebox_override("panel", nsb)
-	
-	card._on_click = func():
-		var c2 = card.get_meta("res_count", 0)
-		_show_res_popup(name_str, icon, quality, c2)
-	
-	# 右键拆分
-	card._on_right_click = func():
-		var c2 = card.get_meta("res_count", 0)
-		if c2 <= 1: return
-		_update_card_count(card, c2 - 1)
-		# 新卡插入到原卡右边
-		var newc = _make_resource_card(name_str, icon, quality, 1)
-		newc.drag_ended.connect(_on_hand_card_dropped)
-		newc.drag_started.connect(func(_c): _arrange_hand())
-		hand_container.add_child(newc)
-		var idx = hand_cards.find(card)
-		if idx != -1: hand_cards.insert(idx + 1, newc)
-		else: hand_cards.append(newc)
-		_arrange_hand()
-	
-	return card
+func _split_resource_card(source_card: PanelContainer, name_str: String, icon: String, quality: String):
+	var c2 = source_card.get_meta("res_count", 0)
+	if c2 <= 1: return
+	_update_card_count(source_card, c2 - 1)
+	var newc = card_factory.make_resource_card(name_str, icon, quality, 1)
+	newc.drag_ended.connect(_on_hand_card_dropped)
+	newc.drag_started.connect(func(_c): _arrange_hand())
+	newc._on_right_click = func(): _split_resource_card(newc, name_str, icon, quality)
+	newc._on_click = func(): _show_res_popup(name_str, icon, quality, newc.get_meta("res_count", 0))
+	hand_container.add_child(newc)
+	var idx = hand_cards.find(source_card)
+	if idx != -1: hand_cards.insert(idx + 1, newc)
+	else: hand_cards.append(newc)
+	_arrange_hand()
 
 func _show_res_popup(name_str:String, icon:String, quality:String, count:int):
 	var popup = PanelContainer.new()
