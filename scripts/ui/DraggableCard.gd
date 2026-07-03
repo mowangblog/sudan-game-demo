@@ -79,6 +79,7 @@ func _input(event: InputEvent) -> void:
 func _start_drag():
 	_drag_active = true
 	is_dragging = true
+	set_highlight(false)  # 拖动时停止高亮脉冲
 	_drag_card_offset = get_global_mouse_position() - global_position
 	z_index = 100
 	modulate = Color(1.0, 1.0, 1.0, 0.9)
@@ -110,3 +111,28 @@ func set_rest_position(pos: Vector2):
 	_rest_position = pos
 	if not is_dragging:
 		position = pos
+
+var _highlight_tween: Tween
+var _highlight_pos_tween: Tween
+
+func set_highlight(on: bool):
+	if _highlight_tween:
+		_highlight_tween.kill()
+		_highlight_tween = null
+	if _highlight_pos_tween:
+		_highlight_pos_tween.kill()
+		_highlight_pos_tween = null
+
+	if on:
+		# 抬升悬浮
+		_highlight_pos_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		_highlight_pos_tween.tween_property(self, "position:y", _rest_position.y - 14, 0.15)
+		# 浓金色脉冲：0.7(暗金) ↔ 1.5(亮金)
+		_highlight_tween = create_tween().set_loops()
+		_highlight_tween.tween_property(self, "modulate", Color(1.5, 1.3, 0.7, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
+		_highlight_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
+	else:
+		modulate = Color.WHITE
+		# 回到原位
+		_highlight_pos_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		_highlight_pos_tween.tween_property(self, "position:y", _rest_position.y, 0.15)

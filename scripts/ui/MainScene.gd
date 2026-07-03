@@ -36,6 +36,7 @@ var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
 var hand_container: Control
 var event_detail_panel: PanelContainer
 var event_detail_vb: VBoxContainer
+var _rite_popup: PanelContainer   # 当前打开的仪式弹窗
 var hand_cards: Array = []
 var char_panels:Dictionary={};var char_data_all:Dictionary={}
 var resource_cards: Dictionary = {}  # {"金": card_node, "情报": card_node}
@@ -92,7 +93,6 @@ func _build() -> void:
 	_bg()
 	_status()
 	_map()
-	_event_detail_panel()
 	_bottom()
 
 func _bg() -> void:
@@ -117,7 +117,7 @@ func _map() -> void:
 	var map = PanelContainer.new()
 	map.name = "MapPanel"
 	map.set_anchors_preset(Control.PRESET_FULL_RECT)
-	map.offset_top = 45; map.offset_bottom = -200; map.offset_right = -340
+	map.offset_top = 32; map.offset_bottom = -200
 	var ps = StyleBoxFlat.new(); ps.bg_color = C.BG_MID; ps.set_corner_radius_all(10)
 	ps.border_width_bottom=2; ps.border_width_top=2; ps.border_width_left=2; ps.border_width_right=2
 	ps.border_color = C.GOLD_LO; ps.shadow_size=6; ps.shadow_color=C.SHADOW
@@ -184,130 +184,138 @@ func _loc_node(loc:Dictionary, all_rites:Array) -> Control:
 	
 	return pn
 
-# 右侧事件/仪式详情面板
-func _event_detail_panel() -> void:
-	event_detail_panel = PanelContainer.new()
-	event_detail_panel.name = "EventDetailPanel"
-	event_detail_panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	event_detail_panel.offset_top = 45; event_detail_panel.offset_bottom = -200; event_detail_panel.offset_left = -340
-	var ps = StyleBoxFlat.new(); ps.bg_color = C.BG_PANEL; ps.set_corner_radius_all(10)
-	ps.border_width_bottom=2; ps.border_width_top=2; ps.border_width_left=2; ps.border_width_right=2
-	ps.border_color = C.GOLD_LO; ps.shadow_size=6; ps.shadow_color=C.SHADOW
-	ps.content_margin_left=14; ps.content_margin_right=14
-	ps.content_margin_top=10; ps.content_margin_bottom=10
-	event_detail_panel.add_theme_stylebox_override("panel", ps)
-	add_child(event_detail_panel)
-	
-	var sc = ScrollContainer.new(); sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	event_detail_panel.add_child(sc)
-	
-	event_detail_vb = VBoxContainer.new()
-	event_detail_vb.add_theme_constant_override("separation", 10)
-	event_detail_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	event_detail_vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	sc.add_child(event_detail_vb)
-	
-	# 默认空状态
-	var empty_lbl = Label.new(); empty_lbl.text = "🃏\n点击左侧地图中的仪式\n查看详情并配置卡牌"
-	empty_lbl.add_theme_font_size_override("font_size", 14)
-	empty_lbl.add_theme_color_override("font_color", C.DIM)
-	empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	empty_lbl.name = "EmptyHint"
-	event_detail_vb.add_child(empty_lbl)
+func _close_rite_popup() -> void:
+	_clear_all_highlights()
+	if _rite_popup and is_instance_valid(_rite_popup):
+		_rite_popup.queue_free()
+		_rite_popup = null
 
-func _open_rite_detail(rite:Dictionary) -> void:
+func _open_rite_detail(rite: Dictionary) -> void:
+	_close_rite_popup()
+	
+	var popup = PanelContainer.new()
+	popup.name = "RitePopup"
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# 尺寸和定位：参考 SettlementScreen，大弹窗居中
+	var vs = get_viewport().size
+	var pw = min(vs.x - 60, 960); var ph = min(vs.y - 260, 480)
+	popup.custom_minimum_size = Vector2(pw, ph)
+	popup.size = Vector2(pw, ph)
+	popup.position = Vector2((vs.x - pw) / 2, max(40, vs.y * 0.05))
+	
+	# 外层样式（金边框+阴影，和 SettlementScreen 一致）
+	var ops = StyleBoxFlat.new()
+	ops.bg_color = C.BG_PANEL; ops.set_corner_radius_all(12)
+	ops.border_width_bottom=3; ops.border_width_top=3
+	ops.border_width_left=3; ops.border_width_right=3
+	ops.border_color = C.GOLD; ops.shadow_size=16; ops.shadow_color=C.SHADOW
+	ops.content_margin_left=12; ops.content_margin_right=12
+	ops.content_margin_top=10; ops.content_margin_bottom=10
+	popup.add_theme_stylebox_override("panel", ops)
+	
+	# 左右分栏
+	var split = HSplitContainer.new()
+	split.split_offset = 440  # 左侧卡槽区占大头
+	popup.add_child(split)
+	
+	# === 左侧：卡槽区 ===
+	var left = PanelContainer.new()
+	var lps = StyleBoxFlat.new()
+	lps.bg_color = Color("0d0804"); lps.set_corner_radius_all(8)
+	lps.border_width_bottom=1; lps.border_width_top=1; lps.border_width_left=1; lps.border_width_right=1
+	lps.border_color = C.GOLD_LO
+	lps.content_margin_left=14; lps.content_margin_right=14; lps.content_margin_top=12; lps.content_margin_bottom=12
+	left.add_theme_stylebox_override("panel", lps)
+	split.add_child(left)
+	
+	var lvb = VBoxContainer.new()
+	lvb.add_theme_constant_override("separation", 12)
+	lvb.alignment = BoxContainer.ALIGNMENT_CENTER
+	lvb.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left.add_child(lvb)
+
 	current_rite_detail = rite
-	
-	# 清空现有内容
-	for c in event_detail_vb.get_children():
-		c.queue_free()
-	
-	var vb = event_detail_vb
-	
-	# 检查是否已配置
 	var existing = _find_configured_rite(rite)
 	var is_edit = existing != null
-	
-	# 标题行 + 状态标记
-	var hb = HBoxContainer.new(); vb.add_child(hb)
+	var check = rite.get("check",{})
+	var out = rite.get("outcomes",{}).get("success",{})
+	var slots = rite.get("slots",[])
+	var slot_nodes = []
+
+	# — 标题 —
 	var tl = Label.new()
 	tl.text = "📜 " + rite.get("name","") + (" (已配置)" if is_edit else "")
 	tl.add_theme_font_size_override("font_size", 18)
 	tl.add_theme_color_override("font_color", C.GREEN if is_edit else C.GOLD)
-	tl.size_flags_horizontal=Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	
-	# 描述
-	var dl = Label.new(); dl.text = rite.get("description",""); dl.add_theme_font_size_override("font_size", 12)
-	dl.add_theme_color_override("font_color", C.TEXT); dl.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	vb.add_child(dl)
-	vb.add_child(_sep())
-	
-	# 检定信息
-	var check = rite.get("check",{})
-	var ck_txt = "检定："
-	if check.type == "solo":
-		ck_txt += "%s · 需%d成功" % [AN.get(check.attribute,"?"), check.required_successes]
-	elif check.type == "combined":
-		var ans = []
-		for a in check.get("attributes",[]): ans.append(AN.get(a,a))
-		ck_txt += "、".join(ans) + " · 需%d成功" % check.required_successes
-	var ck_lbl = Label.new(); ck_lbl.text = ck_txt; ck_lbl.add_theme_font_size_override("font_size", 11)
-	ck_lbl.add_theme_color_override("font_color", C.DIM); vb.add_child(ck_lbl)
-	
-	var out = rite.get("outcomes",{}).get("success",{})
-	var rw_txt = "成功奖励："
-	if out.has("gold"): rw_txt += "💰%+d " % out.gold
-	if out.has("power"): rw_txt += "权%+d " % out.power
-	if out.has("good"): rw_txt += "善%+d " % out.good
-	if out.has("evil"): rw_txt += "恶%+d " % out.evil
-	if out.has("hero"): rw_txt += "侠%+d " % out.hero
-	if out.has("spirit"): rw_txt += "灵%+d " % out.spirit
-	var rw_lbl = Label.new(); rw_lbl.text = rw_txt; rw_lbl.add_theme_font_size_override("font_size", 11)
-	rw_lbl.add_theme_color_override("font_color", C.GREEN); vb.add_child(rw_lbl)
-	
-	vb.add_child(_sep())
-	vb.add_child(_lbl("🃏 拖入卡牌", 13, C.GOLD))
-	
-	var slot_nodes = []
-	var slots = rite.get("slots",[])
-	
-	var slot_row = HBoxContainer.new()
-	slot_row.add_theme_constant_override("separation", 12)
-	slot_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_child(slot_row)
-	
+	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lvb.add_child(tl)
+
+	# — 卡槽：横向排列，自动换行 —
+	var slot_flow = FlowContainer.new()
+	slot_flow.alignment = FlowContainer.ALIGNMENT_CENTER
+	slot_flow.add_theme_constant_override("h_separation", 16)
+	slot_flow.add_theme_constant_override("v_separation", 10)
+	lvb.add_child(slot_flow)
+
 	for i in range(slots.size()):
 		var slot_cfg = slots[i]
+		# 每个卡槽是一个 VBox（标签 + 槽位）
+		var slot_box = VBoxContainer.new()
+		slot_box.add_theme_constant_override("separation", 4)
+		slot_box.alignment = BoxContainer.ALIGNMENT_CENTER
+		slot_flow.add_child(slot_box)
+
+		var sc_lbl = Label.new()
+		var label_text = "角色卡槽" if slot_cfg.type == "character" else "苏丹卡槽"
+		if slot_cfg.get("optional", false): label_text += "（可选）"
+		sc_lbl.text = "🃏 " + label_text
+		sc_lbl.add_theme_font_size_override("font_size", 10)
+		sc_lbl.add_theme_color_override("font_color", C.DIM)
+		sc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		slot_box.add_child(sc_lbl)
+
 		var slot = _create_slot_ui(i, slot_cfg)
-		slot_row.add_child(slot)
-		# 先加进场景树，再回显卡牌
+		slot.custom_minimum_size = Vector2(70, 152)
+		slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		slot_box.add_child(slot)
+
 		if is_edit:
 			if slot_cfg.type == "character" and not existing.char.is_empty():
 				slot._drop_data(Vector2.ZERO, {"type":"character","data":existing.char})
 			elif slot_cfg.type == "sultan_card" and not existing.sultan_card.is_empty():
 				slot._drop_data(Vector2.ZERO, {"type":"sultan_card","data":existing.sultan_card})
 		slot_nodes.append(slot)
-		# 连接槽位信号
 		slot.card_removed.connect(func(idx, card_data):
-			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data)
-		)
+			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
 				popups.show_sultan_popup(card_data)
 			else:
-				popups.show_char_popup(card_data)
-		)
-	
-	vb.add_child(_sep())
-	
-	var btn_hb = HBoxContainer.new(); btn_hb.alignment=BoxContainer.ALIGNMENT_CENTER
-	btn_hb.add_theme_constant_override("separation", 16); vb.add_child(btn_hb)
-	
+				popups.show_char_popup(card_data))
+		# 点击空槽位 → 高亮符合条件的卡牌
+		slot.empty_slot_clicked.connect(func(_idx):
+			_clear_all_highlights()
+			for card in hand_cards:
+				if not is_instance_valid(card) or not card.visible:
+					continue
+				var drag_data = card.get_meta("drag_data", {})
+				if drag_data.is_empty():
+					continue
+				if slot._can_drop_data(Vector2.ZERO, drag_data):
+					card.set_highlight(true))
+
+	# — 确认/取消按钮 —
+	var btn_hb = HBoxContainer.new()
+	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_hb.add_theme_constant_override("separation", 16)
+	var spacer = Control.new(); spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lvb.add_child(spacer)
+	lvb.add_child(btn_hb)
+
 	var confirm_btn = Button.new()
 	confirm_btn.text = "确认"
-	confirm_btn.custom_minimum_size=Vector2(100,38); confirm_btn.add_theme_font_size_override("font_size", 13)
+	confirm_btn.custom_minimum_size = Vector2(100, 38); confirm_btn.add_theme_font_size_override("font_size", 13)
 	confirm_btn.pressed.connect(func():
 		var char_data = {}; var sultan_card_data = {}
 		for sn in slot_nodes:
@@ -327,38 +335,97 @@ func _open_rite_detail(rite:Dictionary) -> void:
 			active_rites.append(entry)
 		_log("✅ 已配置「%s」" % rite.get("name",""))
 		_commit_assigned_cards(slot_nodes)
-		_clear_event_detail()
-		_refresh()
-	)
+		_close_rite_popup()
+		_refresh())
 	btn_hb.add_child(confirm_btn)
-	
-	var cancel_btn = Button.new(); cancel_btn.text="取消"
-	cancel_btn.custom_minimum_size=Vector2(100,38); cancel_btn.add_theme_font_size_override("font_size", 13)
+
+	var cancel_btn = Button.new(); cancel_btn.text = "取消"
+	cancel_btn.custom_minimum_size = Vector2(100, 38); cancel_btn.add_theme_font_size_override("font_size", 13)
 	cancel_btn.pressed.connect(func():
 		if is_edit:
-			# 已配置→取消配置
 			var idx = active_rites.find(existing)
 			if idx != -1: active_rites.remove_at(idx)
 			_log("🗑 已取消「%s」" % rite.get("name",""))
 		_restore_assigned_cards(slot_nodes)
-		_clear_event_detail()
-		_refresh()
-	)
+		_close_rite_popup()
+		_refresh())
 	btn_hb.add_child(cancel_btn)
-	
-	event_detail_panel.set_meta("slot_nodes", slot_nodes)
-	event_detail_panel.set_meta("assigned_cards", [])
 
-func _clear_event_detail():
-	for c in event_detail_vb.get_children():
-		c.queue_free()
-	var empty_lbl = Label.new(); empty_lbl.text = "🃏\n点击左侧地图中的仪式\n查看详情并配置卡牌"
-	empty_lbl.add_theme_font_size_override("font_size", 14)
-	empty_lbl.add_theme_color_override("font_color", C.DIM)
-	empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	empty_lbl.name = "EmptyHint"
-	event_detail_vb.add_child(empty_lbl)
+	# === 右侧：描述/检定/奖励区 ===
+	var right = PanelContainer.new()
+	var rps = StyleBoxFlat.new()
+	rps.bg_color = Color("0d0804"); rps.set_corner_radius_all(8)
+	rps.border_width_bottom=1; rps.border_width_top=1; rps.border_width_left=1; rps.border_width_right=1
+	rps.border_color = C.GOLD_LO
+	rps.content_margin_left=14; rps.content_margin_right=14; rps.content_margin_top=12; rps.content_margin_bottom=12
+	right.add_theme_stylebox_override("panel", rps)
+	split.add_child(right)
+
+	var rsc = ScrollContainer.new()
+	rsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rsc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(rsc)
+
+	var rvb = VBoxContainer.new()
+	rvb.add_theme_constant_override("separation", 12)
+	rvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rsc.add_child(rvb)
+
+	# 关闭按钮
+	var close_row = HBoxContainer.new()
+	close_row.alignment = BoxContainer.ALIGNMENT_END
+	rvb.add_child(close_row)
+	var close_btn = Button.new()
+	close_btn.text = "✕"; close_btn.custom_minimum_size = Vector2(28, 28)
+	close_btn.add_theme_font_size_override("font_size", 14)
+	close_btn.pressed.connect(_close_rite_popup)
+	close_row.add_child(close_btn)
+
+	# 描述
+	var dl = Label.new(); dl.text = rite.get("description","")
+	dl.add_theme_font_size_override("font_size", 13); dl.add_theme_color_override("font_color", C.TEXT)
+	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; rvb.add_child(dl)
+	rvb.add_child(_sep())
+
+	# 检定信息
+	var ck_txt = "检定："
+	if check.type == "solo":
+		ck_txt += "%s · 需%d成功" % [AN.get(check.attribute,"?"), check.required_successes]
+	elif check.type == "combined":
+		var ans = []
+		for a in check.get("attributes",[]): ans.append(AN.get(a,a))
+		ck_txt += "、".join(ans) + " · 需%d成功" % check.required_successes
+	var ck_lbl = Label.new(); ck_lbl.text = ck_txt
+	ck_lbl.add_theme_font_size_override("font_size", 12); ck_lbl.add_theme_color_override("font_color", C.DIM)
+	rvb.add_child(ck_lbl)
+
+	# 成功奖励
+	var rw_txt = "成功奖励："
+	if out.has("gold"): rw_txt += "💰%+d " % out.gold
+	if out.has("power"): rw_txt += "权%+d " % out.power
+	if out.has("good"): rw_txt += "善%+d " % out.good
+	if out.has("evil"): rw_txt += "恶%+d " % out.evil
+	if out.has("hero"): rw_txt += "侠%+d " % out.hero
+	if out.has("spirit"): rw_txt += "灵%+d " % out.spirit
+	var rw_lbl = Label.new(); rw_lbl.text = rw_txt
+	rw_lbl.add_theme_font_size_override("font_size", 12); rw_lbl.add_theme_color_override("font_color", C.GREEN)
+	rvb.add_child(rw_lbl)
+
+	# 失败后果
+	rvb.add_child(_sep())
+	var fail_out = rite.get("outcomes",{}).get("fail",{})
+	var fail_text = fail_out.get("narrative", fail_out.get("description", "无特殊惩罚"))
+	var fl = Label.new(); fl.text = "失败：" + fail_text
+	fl.add_theme_font_size_override("font_size", 11); fl.add_theme_color_override("font_color", C.DIM)
+	fl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; rvb.add_child(fl)
+
+	rvb.add_child(_sep())
+	rvb.add_child(_lbl("🃏 将卡牌拖入左侧卡槽", 12, C.GOLD))
+
+	popup.set_meta("slot_nodes", slot_nodes)
+	popup.set_meta("assigned_cards", [])
+	add_child(popup)
+	_rite_popup = popup
 
 func _create_slot_ui(index:int, slot_cfg:Dictionary) -> Node:
 	var slot = preload("res://scripts/ui/RiteSlotDrop.gd").new()
@@ -369,21 +436,22 @@ func _create_slot_ui(index:int, slot_cfg:Dictionary) -> Node:
 	return slot
 
 func _restore_assigned_cards(slot_nodes:Array):
-	var assigned = event_detail_panel.get_meta("assigned_cards", [])
+	if not _rite_popup: return
+	var assigned = _rite_popup.get_meta("assigned_cards", [])
 	for c in assigned:
 		if is_instance_valid(c): c.visible = true
 	for s in slot_nodes:
 		if is_instance_valid(s) and s.has_method("clear_card"):
 			s.clear_card()
-	event_detail_panel.set_meta("assigned_cards", [])
+	_rite_popup.set_meta("assigned_cards", [])
 	hand_layout.arrange()
 
 func _commit_assigned_cards(slot_nodes:Array):
-	# 不再 queue_free，只保持隐藏——结算后恢复
+	if not _rite_popup: return
 	for s in slot_nodes:
 		if is_instance_valid(s) and s.has_method("clear_card"):
 			s.clear_card()
-	event_detail_panel.set_meta("assigned_cards", [])
+	_rite_popup.set_meta("assigned_cards", [])
 	hand_layout.arrange()
 
 # 结算后恢复手牌
@@ -422,9 +490,11 @@ func _bottom() -> void:
 	
 	hand_cards.clear()
 	
-	# 俺寻思 — 左下角骷髅
+	# 俺寻思 — 左下角骷髅，高度和手牌区一致
 	var insight = _make_insight_button()
-	insight.position = Vector2(10, hand_container.size.y / 2 - 76)
+	insight.position = Vector2(10, 0)
+	insight.size.x = 86  # 稍宽一点
+	insight.size.y = hand_container.size.y  # 和手牌区同高
 	hand_container.add_child(insight)
 	
 	# 角色卡
@@ -472,7 +542,7 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(insight): insight.position = Vector2(10, hand_container.size.y / 2 - 76)
+		if is_instance_valid(insight): insight.size.y = hand_container.size.y
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
 		_update_card_zone_border()
@@ -492,22 +562,22 @@ func _update_card_zone_border():
 
 func _make_insight_button() -> PanelContainer:
 	var insight = PanelContainer.new(); insight.name="InsightBtn"
-	insight.custom_minimum_size=Vector2(70,152); insight.mouse_filter=Control.MOUSE_FILTER_STOP
+	insight.custom_minimum_size=Vector2(70, 152); insight.mouse_filter=Control.MOUSE_FILTER_STOP
 	var iss = StyleBoxFlat.new(); iss.bg_color=Color("1a1018"); iss.set_corner_radius_all(10)
 	iss.border_width_bottom=2; iss.border_width_top=2; iss.border_width_left=2; iss.border_width_right=2
 	iss.border_color=C.GOLD_LO.darkened(0.5); iss.shadow_size=6; iss.shadow_color=C.SHADOW
 	insight.add_theme_stylebox_override("panel",iss)
-	# 点击也保留，拖入也生效
+	# 单击 → 提示拖入卡牌
 	insight.gui_input.connect(func(e):
 		if e is InputEventMouseButton and e.pressed and e.button_index==MOUSE_BUTTON_LEFT:
-			_do_insight()
+			_log("💀 俺寻思：将卡牌拖入此处以探索/处理")
 	)
 	var iv = VBoxContainer.new(); iv.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	iv.alignment=BoxContainer.ALIGNMENT_CENTER; insight.add_child(iv)
-	var lbl = Label.new(); lbl.text="💀\n俺寻思"; lbl.add_theme_font_size_override("font_size",14)
+	var lbl = Label.new(); lbl.text="💀\n俺\n寻\n思"; lbl.add_theme_font_size_override("font_size",14)
 	lbl.add_theme_color_override("font_color",C.GOLD); lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	iv.add_child(lbl)
-	var hint = Label.new(); hint.text="拖入卡牌"; hint.add_theme_font_size_override("font_size",9)
+	var hint = Label.new(); hint.text="拖入\n卡牌"; hint.add_theme_font_size_override("font_size",9)
 	hint.add_theme_color_override("font_color",C.DIM); hint.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	iv.add_child(hint)
 	return insight
@@ -518,7 +588,7 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	# 1. 检查是否拖到了俺寻思
 	var insight = hand_container.get_node_or_null("InsightBtn")
 	if insight and insight.get_global_rect().has_point(global_pos):
-		_do_insight()
+		_do_insight_with_card(card)
 		dropped_in_slot = true
 	
 	# 2. 资源卡合并 — 拖到同类型资源卡上
@@ -536,9 +606,9 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 					dropped_in_slot = true
 					break
 	
-	# 3. 检查仪式详情面板中的卡槽
-	if not dropped_in_slot:
-		var slot_nodes = event_detail_panel.get_meta("slot_nodes", [])
+	# 3. 检查仪式弹窗中的卡槽
+	if not dropped_in_slot and _rite_popup and is_instance_valid(_rite_popup):
+		var slot_nodes = _rite_popup.get_meta("slot_nodes", [])
 		for slot in slot_nodes:
 			if is_instance_valid(slot) and slot.has_method("_can_drop_data"):
 				if slot.get_global_rect().has_point(global_pos):
@@ -546,9 +616,9 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 					if slot._can_drop_data(global_pos, data):
 						slot._drop_data(global_pos, data)
 						card.visible = false
-						var assigned = event_detail_panel.get_meta("assigned_cards", [])
+						var assigned = _rite_popup.get_meta("assigned_cards", [])
 						assigned.append(card)
-						event_detail_panel.set_meta("assigned_cards", assigned)
+						_rite_popup.set_meta("assigned_cards", assigned)
 						dropped_in_slot = true
 						break
 	
@@ -709,6 +779,11 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 	hand_cards.append(new_card)
 	hand_layout.arrange()
 
+func _clear_all_highlights():
+	for card in hand_cards:
+		if is_instance_valid(card) and card.has_method("set_highlight"):
+			card.set_highlight(false)
+
 func _find_configured_rite(rite:Dictionary):
 	for ar in active_rites:
 		if ar.rite.get("id", -1) == rite.get("id", -2):
@@ -742,23 +817,79 @@ func _log(msg:String) -> void:
 	_refresh()
 	print("[MainScene]", msg)
 
-func _do_insight() -> void:
-	var card = GameManager.active_sultan_card
-	if card.is_empty(): _log("俺寻思：暂无卡牌可探索。"); return
+func _do_insight_with_card(card: PanelContainer) -> void:
+	var drag_data = card.get_meta("drag_data", {})
+	var card_name = drag_data.get("name", "卡牌")
+	
+	# 隐藏卡牌
+	card.visible = false
+	hand_layout.arrange()
+	
+	# 思考动画：俺寻思按钮脉冲闪烁 1.5s
+	var insight = hand_container.get_node_or_null("InsightBtn")
+	if insight and is_instance_valid(insight):
+		var t = create_tween().set_loops(3)
+		t.tween_property(insight, "modulate", Color(1.3, 1.3, 1.0), 0.25)
+		t.tween_property(insight, "modulate", Color.WHITE, 0.25)
+		_log("💀 俺寻思：「%s」...思考中..." % card_name)
+	
+	await get_tree().create_timer(1.5).timeout
+	
+	# 停止动画
+	if insight and is_instance_valid(insight):
+		insight.modulate = Color.WHITE
+	
+	# 结算
 	var discoveries = [
-		"在角落发现了被遗忘的宝箱...（金币+5）",
-		"密信揭示了贵族的秘密...（权势+1）",
-		"流浪猫带路发现了隐藏道具...（金骰子+1）",
-		"不小心惊动了卫兵...（金币-2）",
-		"在旧书中看到禁断的诗...（灵视+1）",
+		{"msg":"在角落发现了被遗忘的宝箱...","gold":5},
+		{"msg":"密信揭示了贵族的秘密...","power":1},
+		{"msg":"流浪猫带路发现了隐藏道具...","gold_dice":1},
+		{"msg":"不小心惊动了卫兵...","gold":-2},
+		{"msg":"在旧书中看到禁断的诗...","spirit":1},
 	]
-	var idx = randi()%discoveries.size()
+	var idx = randi() % discoveries.size()
 	var result = discoveries[idx]
-	_log("俺寻思：%s" % result.split("（")[0])
-	match idx:
-		0: ResourceManager.add_gold(5)
-		1: ResourceManager.modify_reputation("power",1)
-		2: ResourceManager.modify_gold_dice(1)
-		3: ResourceManager.add_gold(-2)
-		4: ResourceManager.modify_reputation("spirit",1)
+	
+	_log("💀 俺寻思：%s" % result.msg)
+	if result.has("gold"): ResourceManager.add_gold(result.gold)
+	if result.has("power"): ResourceManager.modify_reputation("power", result.power)
+	if result.has("spirit"): ResourceManager.modify_reputation("spirit", result.spirit)
+	if result.has("gold_dice"): ResourceManager.modify_gold_dice(result.gold_dice)
+	
+	# 弹出反馈
+	_show_insight_result(result.msg)
 	_refresh()
+	
+	# 归还卡牌
+	card.visible = true
+	hand_layout.arrange()
+
+func _show_insight_result(msg: String):
+	var popup = PanelContainer.new()
+	popup.name = "InsightResult"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	popup.custom_minimum_size = Vector2(280, 0)
+	var ps = StyleBoxFlat.new()
+	ps.bg_color = C.BG_PANEL; ps.set_corner_radius_all(10)
+	ps.border_width_bottom=2; ps.border_width_top=2; ps.border_width_left=2; ps.border_width_right=2
+	ps.border_color = C.GOLD; ps.shadow_size=12; ps.shadow_color=C.SHADOW
+	ps.content_margin_left=20; ps.content_margin_right=20; ps.content_margin_top=14; ps.content_margin_bottom=14
+	popup.add_theme_stylebox_override("panel", ps)
+	var vb = VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 8); vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	popup.add_child(vb)
+	var skull = Label.new(); skull.text="💀 俺寻思"
+	skull.add_theme_font_size_override("font_size", 18); skull.add_theme_color_override("font_color", C.GOLD)
+	skull.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(skull)
+	var msg_lbl = Label.new(); msg_lbl.text=msg
+	msg_lbl.add_theme_font_size_override("font_size", 14); msg_lbl.add_theme_color_override("font_color", C.TEXT)
+	msg_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; msg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vb.add_child(msg_lbl)
+	add_child(popup)
+	popup.reset_size()
+	await get_tree().process_frame
+	# 限定在地图区域：状态栏下方、手牌区上方，居中
+	var map_top = 45
+	var map_bottom = get_viewport().size.y - 200 - 16  # 手牌区上方留 16px
+	popup.position = Vector2((get_viewport().size.x - popup.size.x) / 2, (map_top + map_bottom - popup.size.y) / 2)
+	await get_tree().create_timer(2.0).timeout
+	popup.queue_free()

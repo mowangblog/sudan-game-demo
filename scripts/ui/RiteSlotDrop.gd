@@ -6,6 +6,7 @@ extends PanelContainer
 signal card_dropped(slot_index: int, card_data: Dictionary)
 signal card_removed(slot_index: int, card_data: Dictionary)
 signal card_clicked(card_data: Dictionary)
+signal empty_slot_clicked(slot_index: int)
 
 @export var slot_index: int = 0
 @export var slot_type: String = "character"
@@ -48,10 +49,12 @@ func _gui_input(event: InputEvent):
 				# 不 accept，让 DnD 系统也能收到
 		else:
 			if event.button_index == MOUSE_BUTTON_LEFT and _pressing:
-				if current_card.is_empty(): return
 				var dist = (event.position - _press_pos).length()
 				if dist < 6:  # 没拖动=点击
-					card_clicked.emit(current_card)
+					if current_card.is_empty():
+						empty_slot_clicked.emit(slot_index)
+					else:
+						card_clicked.emit(current_card)
 				_pressing = false
 
 func _get_drag_data(at_position: Vector2) -> Variant:
