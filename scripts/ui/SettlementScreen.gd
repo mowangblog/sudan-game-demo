@@ -238,14 +238,12 @@ func _start_stage():
 
 	_pending_required = required
 
-	# 用 SVG 点阵纹理创建骰子定义
-	# D6 面值顺序对齐物理点阵（之前只有1点不对，其他都对）
-	# +Y=2, -Y=5, +Z=6, -Z=1, +X=3, -X=4
+	# 直角立方体 + SVG 点阵贴面，确保看到的点数 = 面值
 	var def = DiceDieDefinition3D.custom("DotDie", [
+		DiceFace3D.new_face(1, &"one",   NUMBER_1, "One"),
+		DiceFace3D.new_face(6, &"six",   NUMBER_6, "Six"),
 		DiceFace3D.new_face(2, &"two",   NUMBER_2, "Two"),
 		DiceFace3D.new_face(5, &"five",  NUMBER_5, "Five"),
-		DiceFace3D.new_face(6, &"six",   NUMBER_6, "Six"),
-		DiceFace3D.new_face(1, &"one",   NUMBER_1, "One"),
 		DiceFace3D.new_face(3, &"three", NUMBER_3, "Three"),
 		DiceFace3D.new_face(4, &"four",  NUMBER_4, "Four"),
 	])
@@ -369,8 +367,8 @@ func _layout_dice_grid(dice: Array) -> void:
 
 func _on_3d_dice_finished(_results: Dictionary):
 	await get_tree().process_frame
+	var cam_pos = Vector3(0, 6.0, 0.5)  # 摄像机位置
 
-	# 读取实际落定面值，4-6→金色，1-3→保持白色
 	var success_count := 0
 	var fail_count := 0
 	var gold_mat = StandardMaterial3D.new()
@@ -384,13 +382,30 @@ func _on_3d_dice_finished(_results: Dictionary):
 		var die: DiceDie3D = result.die
 		if not is_instance_valid(die):
 			continue
-		if result.value >= 4:
+		# 用摄像机方向计算实际可见面值（不用 addon 的，俯视角下 addon 算的可能不对）
+		var actual_val = _compute_visible_face(die, cam_pos)
+		if actual_val >= 4:
 			success_count += 1
 			die.body_material = gold_mat
 		else:
 			fail_count += 1
 
 	_on_dice_settled(success_count, _pending_required, success_count, fail_count)
+
+func _compute_visible_face(die: DiceDie3D, cam_pos: Vector3) -> int:
+	var die_pos = die.global_transform.origin
+	var to_cam = (cam_pos - die_pos).normalized()
+	var best_val = 0
+	var best_dot = -2.0
+	for slot in die.get_face_slots():
+		var local_n = die.get_local_face_normal(slot)
+		var world_n = (die.global_transform.basis * local_n).normalized()
+		var dot = world_n.dot(to_cam)
+		if dot > best_dot:
+			best_dot = dot
+			var face = die.get_face(slot)
+			if face: best_val = face.value
+	return best_val
 
 
 func _on_dice_settled(success_count: int, required: int, succ: int, fail: int):
