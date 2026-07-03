@@ -34,7 +34,8 @@ var char_data: Dictionary = {}
 var sultan_card_data: Dictionary = {}
 
 var narrative_vb: VBoxContainer
-var stage_lbl: Label
+var _stage_log: VBoxContainer
+var _tw_label: Label
 var dice_vb: VBoxContainer
 var char_lbl: Label
 var attr_lbl: Label
@@ -42,10 +43,18 @@ var dice_tray: Control
 var _dice_roller: DiceCinematicRoller3D
 var _dice_svc: SubViewportContainer
 var _pending_required: int = 0
+var _stages: Array = []
+var _stage_idx: int = 0
+var _current_stage: Dictionary = {}
+var _total_rewards: Dictionary = {}
+var _typewrite_timer: Timer
+var _typewrite_full: String = ""
+var _typewrite_cb: Callable
+var _typewrite_pos: int = 0
+var _stage_all_success: bool = true
 var check_lbl: Label
 var result_lbl: Label
 var count_lbl: Label
-var result_text: Label
 var next_btn: Button
 
 func _ready():
@@ -175,17 +184,10 @@ func _build_layout():
 
 	narrative_vb.add_child(HSeparator.new())
 
-	stage_lbl = Label.new()
-	stage_lbl.add_theme_font_size_override("font_size", 14)
-	stage_lbl.add_theme_color_override("font_color", TEXT)
-	stage_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	narrative_vb.add_child(stage_lbl)
-
-	result_text = Label.new()
-	result_text.add_theme_font_size_override("font_size", 13)
-	result_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	result_text.visible = false
-	narrative_vb.add_child(result_text)
+	# 阶段日志容器（所有 stage 文本累积显示）
+	_stage_log = VBoxContainer.new()
+	_stage_log.add_theme_constant_override("separation", 10)
+	narrative_vb.add_child(_stage_log)
 
 	next_btn = Button.new()
 	next_btn.text = "继续 ▶"; next_btn.custom_minimum_size = Vector2(120, 36)
@@ -207,69 +209,172 @@ func _start_settlement():
 	else:
 		char_lbl.text = "无角色"
 		attr_lbl.text = ""
-	_start_stage()
 
-func _start_stage():
-	var check = rite_data.get("check", {})
-	var dice_count = _calc_dice_count(char_data, check)
-	var required = check.get("required_successes", 1)
+	# 兼容旧仪式：无 stages 则自动生成
+	if rite_data.has("stages") and not rite_data.stages.is_empty():
+		_stages = rite_data.stages
+	else:
+		_stages = _auto_stage(rite_data)
+	_total_rewards = rite_data.get("rewards", {}).duplicate()
+	_stage_idx = 0
+	_stage_all_success = true
+	_process_stage()
 
-	var atype = "solo" if check.has("attribute") else check.get("type", "solo")
-	var attr_name = ""
+func _auto_stage(rite: Dictionary) -> Array:
+	var s := {}
+	var c = rite.get("check", {})
+	if not c.is_empty():
+		s["check"] = c
+		s["text"] = rite.get("description", "")
+		s["success_text"] = rite.get("outcomes",{}).get("success",{}).get("narrative","")
+		s["failure_text"] = rite.get("outcomes",{}).get("fail",{}).get("narrative","")
+		s["on_failure"] = "end"
+	else:
+		s["text"] = rite.get("description","")
+		s["check"] = null
+	return [s]
+
+func _process_stage():
+	if _stage_idx >= _stages.size():
+		_finish_settlement(); return
+	var stage = _stages[_stage_idx]
+	result_lbl.visible = false; count_lbl.visible = false; check_lbl.text = ""
+	# 清除上一阶段的骰子
+	if _dice_roller:
+		_dice_roller.reset_all()
+		for d in _dice_roller.get_registered_dice():
+			_dice_roller.remove_die(d)
+	next_btn.visible = false
+
+	# 分隔线 + 阶段文本标签
+	if _stage_idx > 0:
+		_stage_log.add_child(HSeparator.new())
+	var stg_lbl = Label.new()
+	stg_lbl.add_theme_font_size_override("font_size", 14)
+	stg_lbl.add_theme_color_override("font_color", TEXT)
+	stg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_stage_log.add_child(stg_lbl)
+
+	_typewrite_on_label(stg_lbl, stage.get("text",""), func():
+		var c = stage.get("check")
+		if c != null and not c.is_empty():
+			_do_check(stage, c)
+		else:
+			var ok_lbl = Label.new()
+			ok_lbl.add_theme_font_size_override("font_size", 13)
+			ok_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			ok_lbl.add_theme_color_override("font_color", DIM)
+			_stage_log.add_child(ok_lbl)
+			_typewrite_on_label(ok_lbl, stage.get("success_text",""), func():
+				next_btn.visible = true))
+
+func _do_check(stage: Dictionary, check: Dictionary):
+	_current_stage = stage
+	var dc = _calc_dice_count(char_data, check)
+	var req = check.get("required_successes", 1)
+	var atype = "solo" if check.has("attribute") else check.get("type","solo")
+	var an_name = ""
 	if atype == "solo":
 		var an_map = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}
-		attr_name = an_map.get(check.get("attribute",""), "")
-	check_lbl.text = "%s检定 | 🎲×%d 需✅×%d" % [attr_name, dice_count, required]
-
-	var narrative = rite_data.get("description", "仪式开始...")
-	stage_lbl.text = "—" + narrative + "—"
-
+		an_name = an_map.get(check.get("attribute",""), "")
+	check_lbl.text = "%s检定 🎲×%d 需✅×%d" % [an_name, dc, req]
+	_pending_required = req
 	_setup_3d_dice()
 
-	# 投骰：每颗骰子随机 1-6 面值
 	var faces: Array[int] = []
-	for _i in range(dice_count):
+	for _i in range(dc):
 		faces.append(randi() % 6 + 1)
+	if ResourceManager.gold_dice > 0 and dc >= 1:
+		ResourceManager.gold_dice -= 1; faces.append(6)
 
-	# 金骰子：额外追加一颗，必为6
-	if ResourceManager.gold_dice > 0 and dice_count >= 1:
-		ResourceManager.gold_dice -= 1
-		faces.append(6)
-
-	_pending_required = required
-
-	# 直角立方体 + SVG 点阵贴面，确保看到的点数 = 面值
 	var def = DiceDieDefinition3D.custom("DotDie", [
-		DiceFace3D.new_face(1, &"one",   NUMBER_1, "One"),
-		DiceFace3D.new_face(6, &"six",   NUMBER_6, "Six"),
-		DiceFace3D.new_face(2, &"two",   NUMBER_2, "Two"),
-		DiceFace3D.new_face(5, &"five",  NUMBER_5, "Five"),
-		DiceFace3D.new_face(3, &"three", NUMBER_3, "Three"),
-		DiceFace3D.new_face(4, &"four",  NUMBER_4, "Four"),
+		DiceFace3D.new_face(1,&"one",NUMBER_1,"One"), DiceFace3D.new_face(6,&"six",NUMBER_6,"Six"),
+		DiceFace3D.new_face(2,&"two",NUMBER_2,"Two"), DiceFace3D.new_face(5,&"five",NUMBER_5,"Five"),
+		DiceFace3D.new_face(3,&"three",NUMBER_3,"Three"), DiceFace3D.new_face(4,&"four",NUMBER_4,"Four"),
 	])
-	def.edge_length = 0.65
-	def.body_shape = DiceDie3D.BodyShape.ROUNDED
+	def.edge_length=0.65; def.body_shape=DiceDie3D.BodyShape.ROUNDED
 
-	var white_mat = StandardMaterial3D.new()
-	white_mat.albedo_color = Color("e8e0d8")
-	white_mat.roughness = 0.4
-
-	var dice_to_roll: Array[DiceDie3D] = []
-	var requested_results = []
+	var wm = StandardMaterial3D.new(); wm.albedo_color=Color("e8e0d8"); wm.roughness=0.4
+	var dice_to_roll: Array[DiceDie3D] = []; var req_res = []
 	for i in range(faces.size()):
-		var die = _dice_roller.create_die(def)
-		die.body_material = white_mat
-		dice_to_roll.append(die)
-		requested_results.append(faces[i])
-
+		var die = _dice_roller.create_die(def); die.body_material=wm
+		dice_to_roll.append(die); req_res.append(faces[i])
 	_layout_dice_grid(dice_to_roll)
 	await get_tree().create_timer(0.1).timeout
-	_dice_roller.roll_dice(dice_to_roll, requested_results)
+	_dice_roller.roll_dice(dice_to_roll, req_res, {"per_die_delay":randf_range(0.01,0.08)})
 
-	result_lbl.visible = false
-	count_lbl.visible = false
-	result_text.visible = false
-	next_btn.visible = false
+func _on_dice_settled_stage(_results: Dictionary):
+	await get_tree().process_frame
+	var cam_pos = Vector3(0,6.0,0.5)
+	var sc:=0; var fc:=0
+	var gm = StandardMaterial3D.new(); gm.albedo_color=Color("e8c84a"); gm.roughness=0.35; gm.metallic=0.3
+	for r in _results.values():
+		if not r is DiceRollResult: continue
+		var die: DiceDie3D = r.die
+		if not is_instance_valid(die): continue
+		if _compute_visible_face(die,cam_pos) >= 4:
+			sc+=1; die.body_material=gm
+		else:
+			fc+=1
+
+	var ok = sc >= _pending_required
+	result_lbl.visible=true
+	result_lbl.text="✅ 成功" if ok else "❌ 失败"
+	result_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
+	if not ok: _stage_all_success=false
+	count_lbl.visible=true
+	count_lbl.text="成功×%d  失败×%d  |  需×%d" % [sc,fc,_pending_required]
+	count_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
+
+	# 在 stage_log 中追加结果文本（打字机）
+	var res_lbl = Label.new()
+	res_lbl.add_theme_font_size_override("font_size", 13)
+	res_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	res_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
+	_stage_log.add_child(res_lbl)
+	_typewrite_on_label(res_lbl, _current_stage.get("success_text" if ok else "failure_text",""), func():
+		if not ok and _current_stage.get("on_failure","")=="end":
+			_stages=_stages.slice(0,_stage_idx+1)
+		next_btn.visible=true)
+
+func _on_next():
+	_stage_idx+=1
+	if _stage_idx < _stages.size():
+		_process_stage()
+	else:
+		_finish_settlement()
+
+func _finish_settlement():
+	if not _total_rewards.is_empty():
+		if _total_rewards.has("gold"): ResourceManager.add_gold(_total_rewards.gold)
+		if _total_rewards.has("power"): ResourceManager.modify_reputation("power",_total_rewards.power)
+		if _total_rewards.has("good"): ResourceManager.modify_reputation("good",_total_rewards.good)
+		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)
+		if _total_rewards.has("hero"): ResourceManager.modify_reputation("hero",_total_rewards.hero)
+		if _total_rewards.has("spirit"): ResourceManager.modify_reputation("spirit",_total_rewards.spirit)
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success})
+	queue_free()
+
+# 打字机效果
+func _typewrite_on_label(lbl: Label, text: String, cb: Callable):
+	_tw_label=lbl; _typewrite_full=text; _typewrite_cb=cb; _typewrite_pos=0; lbl.text=""
+	if _typewrite_timer==null:
+		_typewrite_timer=Timer.new(); _typewrite_timer.one_shot=false; _typewrite_timer.wait_time=0.03
+		add_child(_typewrite_timer); _typewrite_timer.timeout.connect(_tw_tick)
+	_typewrite_timer.start()
+	if not lbl.gui_input.is_connected(_tw_skip):
+		lbl.gui_input.connect(_tw_skip)
+
+func _tw_tick():
+	if _typewrite_pos < _typewrite_full.length():
+		_typewrite_pos+=1; _tw_label.text=_typewrite_full.substr(0,_typewrite_pos)
+	else:
+		_typewrite_timer.stop(); _typewrite_cb.call()
+
+func _tw_skip(_e):
+	if _typewrite_timer: _typewrite_timer.stop()
+	_tw_label.text=_typewrite_full
+	if _typewrite_cb.is_valid(): _typewrite_cb.call()
 
 
 func _setup_3d_dice():
@@ -333,7 +438,7 @@ func _setup_3d_dice():
 		_dice_roller.per_die_delay = 0.06
 		_dice_roller.dice_spacing = 1.0
 		_dice_roller.spin_clearance = 1.1
-		_dice_roller.all_dice_finished.connect(_on_3d_dice_finished)
+		_dice_roller.all_dice_finished.connect(_on_dice_settled_stage)
 		root_3d.add_child(_dice_roller)
 
 		_dice_svc = SubViewportContainer.new()
@@ -365,33 +470,6 @@ func _layout_dice_grid(dice: Array) -> void:
 		die.sleeping = true
 
 
-func _on_3d_dice_finished(_results: Dictionary):
-	await get_tree().process_frame
-	var cam_pos = Vector3(0, 6.0, 0.5)  # 摄像机位置
-
-	var success_count := 0
-	var fail_count := 0
-	var gold_mat = StandardMaterial3D.new()
-	gold_mat.albedo_color = Color("e8c84a")
-	gold_mat.roughness = 0.35
-	gold_mat.metallic = 0.3
-
-	for result in _results.values():
-		if not result is DiceRollResult:
-			continue
-		var die: DiceDie3D = result.die
-		if not is_instance_valid(die):
-			continue
-		# 用摄像机方向计算实际可见面值（不用 addon 的，俯视角下 addon 算的可能不对）
-		var actual_val = _compute_visible_face(die, cam_pos)
-		if actual_val >= 4:
-			success_count += 1
-			die.body_material = gold_mat
-		else:
-			fail_count += 1
-
-	_on_dice_settled(success_count, _pending_required, success_count, fail_count)
-
 func _compute_visible_face(die: DiceDie3D, cam_pos: Vector3) -> int:
 	var die_pos = die.global_transform.origin
 	var to_cam = (cam_pos - die_pos).normalized()
@@ -406,43 +484,6 @@ func _compute_visible_face(die: DiceDie3D, cam_pos: Vector3) -> int:
 			var face = die.get_face(slot)
 			if face: best_val = face.value
 	return best_val
-
-
-func _on_dice_settled(success_count: int, required: int, succ: int, fail: int):
-	var is_success = success_count >= required
-
-	result_lbl.visible = true
-	if is_success:
-		result_lbl.text = "✅ 成功"
-		result_lbl.add_theme_color_override("font_color", GREEN)
-	else:
-		result_lbl.text = "❌ 失败"
-		result_lbl.add_theme_color_override("font_color", FAIL)
-
-	count_lbl.visible = true
-	count_lbl.text = "成功 × %d   失败 × %d  |  需 × %d" % [succ, fail, required]
-	if is_success:
-		count_lbl.add_theme_color_override("font_color", GREEN)
-	else:
-		count_lbl.add_theme_color_override("font_color", FAIL)
-
-	result_text.visible = true
-	var outcomes = rite_data.get("outcomes", {})
-	var outcome = outcomes.get("success" if is_success else "fail", {})
-	result_text.text = outcome.get("narrative", outcome.get("description", ""))
-	if is_success:
-		result_text.add_theme_color_override("font_color", GREEN)
-	else:
-		result_text.add_theme_color_override("font_color", FAIL)
-
-	if outcome.has("gold"): ResourceManager.add_gold(outcome.gold)
-	if outcome.has("power"): ResourceManager.modify_reputation("power", outcome.power)
-	if outcome.has("good"): ResourceManager.modify_reputation("good", outcome.good)
-	if outcome.has("evil"): ResourceManager.modify_reputation("evil", outcome.evil)
-	if outcome.has("hero"): ResourceManager.modify_reputation("hero", outcome.hero)
-	if outcome.has("spirit"): ResourceManager.modify_reputation("spirit", outcome.spirit)
-
-	next_btn.visible = true
 
 func _calc_dice_count(cd: Dictionary, check: Dictionary) -> int:
 	if cd.is_empty(): return 1
@@ -459,15 +500,3 @@ func _calc_dice_count(cd: Dictionary, check: Dictionary) -> int:
 		elif attr_list.size() == 1:
 			total = attrs.get(attr_list[0], 0)
 	return clamp(total, 1, 8)
-
-func _on_next():
-	var success = result_lbl.text.contains("成功")
-	settlement_done.emit({
-		"rite": rite_data,
-		"char": char_data,
-		"sultan_card": sultan_card_data,
-		"success": success,
-		"success_count": 0,
-		"required": 0,
-	})
-	queue_free()

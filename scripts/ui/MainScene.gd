@@ -389,12 +389,12 @@ func _open_rite_detail(rite: Dictionary) -> void:
 
 	# 检定信息
 	var ck_txt = "检定："
-	if check.type == "solo":
-		ck_txt += "%s · 需%d成功" % [AN.get(check.attribute,"?"), check.required_successes]
-	elif check.type == "combined":
+	if check.get("type", "solo") == "solo":
+		ck_txt += "%s · 需%d成功" % [AN.get(check.get("attribute",""),"?"), check.get("required_successes",1)]
+	elif check.get("type") == "combined":
 		var ans = []
 		for a in check.get("attributes",[]): ans.append(AN.get(a,a))
-		ck_txt += "、".join(ans) + " · 需%d成功" % check.required_successes
+		ck_txt += "、".join(ans) + " · 需%d成功" % check.get("required_successes",1)
 	var ck_lbl = Label.new(); ck_lbl.text = ck_txt
 	ck_lbl.add_theme_font_size_override("font_size", 12); ck_lbl.add_theme_color_override("font_color", C.DIM)
 	rvb.add_child(ck_lbl)

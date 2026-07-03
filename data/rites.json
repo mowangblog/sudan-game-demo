@@ -223,5 +223,92 @@
 	  "fail": {
 		"narrative": "[角色]在各个暗巷中徘徊了一整夜，\n但所有的线索都指向了死胡同。\n『他们藏得太深了...』"}
 	}
+  },
+  {
+	"id": 100,
+	"name": "废弃神殿",
+	"description": "探索被诅咒的远古神殿，多阶段检定测试仪式。",
+	"location": "wilderness",
+	"slots": [{"type": "character", "required_tags": [], "optional": false}],
+	"time_limit": 0, "duration": 2, "auto_start": false, "repeatable": true,
+	"stages": [
+	  {
+		"text": "神殿入口笼罩着诡异的雾气，你握紧武器向前迈进。",
+		"check": {"type": "solo", "attribute": "phy", "required_successes": 3},
+		"success_text": "你屏住呼吸穿过雾气，前方豁然开朗——神殿大厅展现在眼前。",
+		"failure_text": "迷雾中传来低沉的咆哮——你被发现了！",
+		"on_failure": "end"
+	  },
+	  {
+		"text": "神殿深处，古老的符文在地面闪烁着幽光。",
+		"check": {"type": "solo", "attribute": "wis", "required_successes": 2},
+		"success_text": "你辨认出这是远古传送阵的启动咒文，指尖触碰符文的瞬间，能量涌动全身。",
+		"failure_text": "符文突然熄灭，你感到一阵眩晕——但也并非一无所获。",
+		"on_failure": "penalty"
+	  },
+	  {
+		"text": "传送阵的光芒越来越亮，整个神殿开始震动...",
+		"check": null,
+		"success_text": "光芒闪过，你出现在一个堆满财宝的密室中。",
+		"failure_text": ""
+	  }
+	],
+	"rewards": {"gold": 15, "power": 2, "spirit": 1}
+  },
+  {
+	"id": 101,
+	"name": "后巷交易",
+	"description": "在暗巷中与神秘商人进行交易——利益与风险并存。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"stages": [
+	  {
+		"text": "昏暗的巷子尽头，一个披着斗篷的身影朝你招了招手。",
+		"check": {"type": "solo", "attribute": "ste", "required_successes": 1},
+		"success_text": "你悄无声息地接近——没有人跟踪你，交易可以开始了。",
+		"failure_text": "身后的脚步声惊动了神秘商人，他警惕地后退了半步。",
+		"on_failure": "penalty"
+	  },
+	  {
+		"text": "『这可不是普通的货色』，商人从斗篷下取出一件闪着微光的器物。",
+		"check": {"type": "solo", "attribute": "wis", "required_successes": 2},
+		"success_text": "你一眼认出这是稀有的魔法器具——价值远超市价。",
+		"failure_text": "你看不出这器物的真假，小心地摇了摇头。",
+		"on_failure": "end"
+	  }
+	],
+	"rewards": {"gold": 8, "spirit": 1}
+  },
+  {
+	"id": 102,
+	"name": "密林狩猎",
+	"description": "深入密林追踪一头传说中的野兽，但林中的危险不止于此。",
+	"location": "wilderness",
+	"slots": [{"type": "character", "required_tags": [], "optional": false}],
+	"time_limit": 0, "duration": 2, "auto_start": false, "repeatable": true,
+	"stages": [
+	  {
+		"text": "密林中雾气弥漫，你循着巨大的爪印深入林中。",
+		"check": {"type": "solo", "attribute": "sur", "required_successes": 2},
+		"success_text": "多年的野外经验让你在密林中如鱼得水，爪印越来越清晰了。",
+		"failure_text": "密林让你迷失了方向——你在一棵巨大的榕树下打转了许久。",
+		"on_failure": "penalty"
+	  },
+	  {
+		"text": "前方传来树木折断的声响——那东西就在不远处！",
+		"check": {"type": "combined", "attributes": ["com", "sur"], "required_successes": 3},
+		"success_text": "你精准地射中了野兽的后腿，它踉跄着倒在了溪水边。",
+		"failure_text": "野兽发现了你的行踪，咆哮着冲了过来——你只能仓皇撤退。",
+		"on_failure": "end"
+	  },
+	  {
+		"text": "野兽已经倒下，但你要决定如何处理这丰厚的战利品。",
+		"check": null,
+		"success_text": "你剥下了珍贵的毛皮，割取了值钱的兽角——但这林中似乎还藏着别的什么东西...",
+		"failure_text": ""
+	  }
+	],
+	"rewards": {"gold": 12, "power": 1}
   }
 ]
