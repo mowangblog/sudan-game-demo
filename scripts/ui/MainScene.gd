@@ -831,13 +831,13 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 	hand_layout.arrange()
 
 func _animate_card_enter(card: Control):
-	var start_y = card.position.y - 60
-	card.position.y = start_y
-	card.modulate.a = 0.3
+	var target = card.position.y
+	card.position.y = target - 80  # 上方起点
+	card.modulate.a = 0.0
 	var t = create_tween()
 	t.set_parallel()
-	t.tween_property(card, "position:y", start_y + 60, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	t.tween_property(card, "modulate:a", 1.0, 0.25)
+	t.tween_property(card, "position:y", target, 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(card, "modulate:a", 1.0, 0.2)
 
 
 func _clear_all_highlights():
