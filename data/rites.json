@@ -76,7 +76,7 @@
 	},
 	{
 		"id": 3,
-		"name": "欢愉之馆",
+		"name": "书店",
 		"description": "城中的欢愉场所。可用于消耗纵欲卡。",
 		"location": "market",
 		"slots": [
