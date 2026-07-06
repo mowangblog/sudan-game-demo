@@ -149,24 +149,21 @@ func _map() -> void:
 	map.add_child(map_area)
 	_map_area = map_area
 	_all_rites = _load_rites()
-	_rite_seed = 42
-	
-	var init_done := false
-	map_area.resized.connect(func():
-		if init_done or map_area.size.x <= 0: return
-		init_done = true
-		# 常驻仪式固定位置（百分比）
-		var perm_pos = {1: Vector2(0.05, 0.05), 2: Vector2(0.55, 0.05), 3: Vector2(0.30, 0.60), 4: Vector2(0.05, 0.75)}
-		for rite in _all_rites:
-			if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
-			var rid = rite.get("id", -1)
-			var p = perm_pos.get(rid, Vector2(0.5, 0.5))
-			var btn = _make_rite_btn(rite)
-			var px = p.x * map_area.size.x; var py = p.y * map_area.size.y
-			btn.set_meta("rite_pct", p)
-			btn.set_meta("rite_id", rid)
-			btn.position = Vector2(px, py)
-			map_area.add_child(btn)
+	call_deferred("_place_permanent_rites")
+
+
+func _place_permanent_rites():
+	if not _map_area or _map_area.size.x <= 0: return
+	var perm_pos = {1: Vector2(0.05, 0.05), 2: Vector2(0.55, 0.05), 3: Vector2(0.30, 0.60), 4: Vector2(0.05, 0.75)}
+	for rite in _all_rites:
+		if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
+		var rid = rite.get("id", -1)
+		var p = perm_pos.get(rid, Vector2(0.5, 0.5))
+		var btn = _make_rite_btn(rite)
+		btn.set_meta("rite_pct", p)
+		btn.set_meta("rite_id", rid)
+		btn.position = Vector2(p.x * _map_area.size.x, p.y * _map_area.size.y)
+		_map_area.add_child(btn)
 	)
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
