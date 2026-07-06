@@ -175,18 +175,18 @@ func _map() -> void:
 
 func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 	var btn = _make_rite_btn(rite)
-	var bx = area.size.x
-	if bx <= 0: bx = 800  # 布局未完成用默认值
+	var aw = area.size.x
+	if aw <= 0: aw = get_viewport().size.x - 80
 	var px: float; var py: float; var ok := false
-	var bw: float = 132; var bh: float = 36; var pad: float = 8
-	for _attempt in range(50):
+	var bw: float = 140; var bh: float = 44; var pad: float = 12
+	for _attempt in range(100):
 		_rite_seed = (_rite_seed * 16807) % 2147483647
 		px = 0.08 + (float(_rite_seed % 900) / 900.0) * 0.82
 		_rite_seed = (_rite_seed * 16807) % 2147483647
 		py = 0.05 + (float(_rite_seed % 900) / 900.0) * 0.88
 		ok = true
 		for pp in placed:
-			if abs(px - pp.x) < (bw + pad) / bx and abs(py - pp.y) < (bh + pad) / bx:
+			if abs(px - pp.x) * aw < bw + pad and abs(py - pp.y) * aw < bh + pad:
 				ok = false; break
 		if ok: break
 	placed.append(Vector2(px, py))
