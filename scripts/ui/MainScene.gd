@@ -831,9 +831,13 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 	hand_layout.arrange()
 
 func _animate_card_enter(card: Control):
-	card.position.y = -200
+	var start_y = card.position.y - 60
+	card.position.y = start_y
+	card.modulate.a = 0.3
 	var t = create_tween()
-	t.tween_property(card, "position:y", 0, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+	t.set_parallel()
+	t.tween_property(card, "position:y", start_y + 60, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	t.tween_property(card, "modulate:a", 1.0, 0.25)
 
 
 func _clear_all_highlights():
