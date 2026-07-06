@@ -17,6 +17,7 @@ var active_sultan_card: Dictionary = {}  # 当前活跃的苏丹卡
 var sultan_card_days_left: int = 0       # 苏丹卡剩余天数
 var is_game_over: bool = false
 var ending_type: String = ""
+var renovation_done: bool = false  # 装修完成标记(仅一次)
 
 
 func _ready() -> void:
@@ -33,6 +34,7 @@ func start_game() -> void:
 	ending_type = ""
 	active_sultan_card = {}
 	sultan_card_days_left = 0
+	renovation_done = false
 	state = GameState.WEEK_START
 	# 重置其他单例
 	ResourceManager.reset()

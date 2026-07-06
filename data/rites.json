@@ -430,7 +430,7 @@
 	"location": "palace",
 	"slots": [{"type": "character", "required_tags": ["scholar"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
 	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
-	"insight_trigger": {"type": "resource", "subtype": "情报"},
+	"insight_trigger": {"type": "resource", "subtype": "秘密"},
 	"check": {"type": "solo", "attribute": "wis", "required_successes": 1},
 	"outcomes": {
 	  "success": {"spirit": 1, "gold": 1,
@@ -446,13 +446,81 @@
 	"location": "palace",
 	"slots": [{"type": "character", "required_tags": ["follower"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
 	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
-	"insight_trigger": {"type": "resource", "subtype": "情报"},
+	"insight_trigger": {"type": "resource", "subtype": "秘密"},
 	"check": {"type": "solo", "attribute": "cha", "required_successes": 1},
 	"outcomes": {
 	  "success": {"gold": 2, "power": 1,
 		"narrative": "丝绸长袍、水晶杯盏、悠扬的鲁特琴声——[角色]在宴会上的表演惊艳了在座的每一位贵族。一位贵妇甚至摘下自己的宝石胸针送给[角色]作为赞赏。『明日来宫里一趟，我有个差事要托付给你。』金币+2，权势+1。"},
 	  "fail": {"gold": 1,
 		"narrative": "虽然混进了宴会，但[角色]的表演不幸被一位迟到的公爵打断了。贵族们只是礼貌性地鼓了鼓掌，随即转头继续他们的觥筹交错。情报打了水漂，但至少混到了一份餐后的甜点。金币+1。"}
+	}
+  },
+  {
+	"id": 209,
+	"name": "稍加整修",
+	"description": "用石奢靡卡稍加整修住所。消耗3金币。",
+	"location": "palace",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUXURY"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "LUXURY", "filter_rank": "STONE", "consume": true},
+	"check": null,
+	"s2_gold": 3,
+	"outcomes": {
+	  "success": {"gold": -3,
+		"narrative": "工匠们花了一天时间修补了破损的墙壁，更换了漏风的窗户。虽然只是简单的修缮，但至少不再是风吹雨打的破屋子了。石奢靡卡在锤子的敲击声中化为碎片。"},
+	  "fail": {"gold": 0,
+		"narrative": "你不打算花这笔钱，亲手焚毁了自己的住所——只为取悦苏丹。奢靡卡得以消解，虽然家没了，但心情愉悦的苏丹已经许诺给你一个更好的。获得临时帐篷和妻子的不满。"}
+	}
+  },
+  {
+	"id": 210,
+	"name": "全面整修",
+	"description": "用铜奢靡卡全面整修住所。消耗5金币。",
+	"location": "palace",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUXURY"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "LUXURY", "filter_rank": "BRONZE", "consume": true},
+	"check": null,
+	"s2_gold": 5,
+	"outcomes": {
+	  "success": {"gold": -5,
+		"narrative": "工匠团队在住所里忙活了一整天，更换了全新的石材地板，粉刷了墙壁，还添置了几件像样的家具。住所终于有了家的样子。铜奢靡卡在地板的最后一锤中化为齑粉。"},
+	  "fail": {"gold": 0,
+		"narrative": "你决定不给工匠支付报酬，而是亲自点燃了这座破旧的小屋。火光照亮了夜空，苏丹在阳台上欣赏着你为他献上的焰火秀。奢靡卡消解了，但你失去了住所。"}
+	}
+  },
+  {
+	"id": 211,
+	"name": "扩建",
+	"description": "用银奢靡卡扩建住所。消耗10金币。",
+	"location": "palace",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUXURY"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "LUXURY", "filter_rank": "SILVER", "consume": true},
+	"check": null,
+	"s2_gold": 10,
+	"outcomes": {
+	  "success": {"gold": -10,
+		"narrative": "新的翼楼拔地而起，大理石柱和彩绘拱顶让这座建筑焕然一新。路过的贵族纷纷驻足赞叹。银奢靡卡在建筑师的最终验收中碎裂消散。"},
+	  "fail": {"gold": 0,
+		"narrative": "你看着空荡荡的钱袋，又看了看这座宏伟的蓝图，最终做出了一个疯狂的决定——点燃了旧居所。苏丹大悦，而你在瓦砾中等待着新家的允诺。"}
+	}
+  },
+  {
+	"id": 212,
+	"name": "大兴土木",
+	"description": "用金奢靡卡建造奇观。消耗20金币。",
+	"location": "palace",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUXURY"], "optional": false}, {"type": "resource", "required_tags": [], "optional": false}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "LUXURY", "filter_rank": "GOLD", "consume": true},
+	"check": null,
+	"s2_gold": 20,
+	"outcomes": {
+	  "success": {"gold": -20,
+		"narrative": "七天之内，一座镀金穹顶的奇观在废墟上拔地而起。喷泉、花园、大理石雕塑——连苏丹都亲自前来参观，并赞不绝口。金奢靡卡在奠基仪式上被砌入了基石之中。"},
+	  "fail": {"gold": 0,
+		"narrative": "20枚金币的代价太过沉重，你宁愿选择另一条路。一把火点燃了旧日的一切，苏丹在火光中微笑着点头——这对他来说，一样美妙。"}
 	}
   }
 ]

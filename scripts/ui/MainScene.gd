@@ -525,14 +525,14 @@ func _bottom() -> void:
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
-	# 情报卡
-	var intel_card = card_factory.make_resource_card("情报", "📜", "BRONZE", ResourceManager.intel)
+	# 情报卡（原版分为秘密/洞察/机遇等类型，MVP用秘密代替）
+	var intel_card = card_factory.make_resource_card("秘密", "📜", "BRONZE", ResourceManager.intel)
 	intel_card.drag_ended.connect(_on_hand_card_dropped)
 	intel_card.drag_started.connect(func(_c): hand_layout.arrange())
-	intel_card._on_right_click = func(): _split_resource_card(intel_card, "情报", "📜", "BRONZE")
-	intel_card._on_click = func(): popups.show_res_popup("情报", "📜", "BRONZE", intel_card.get_meta("res_count", 0))
+	intel_card._on_right_click = func(): _split_resource_card(intel_card, "秘密", "📜", "BRONZE")
+	intel_card._on_click = func(): popups.show_res_popup("秘密", "📜", "BRONZE", intel_card.get_meta("res_count", 0))
 	hand_container.add_child(intel_card); hand_cards.append(intel_card)
-	resource_cards["情报"] = intel_card
+	resource_cards["秘密"] = intel_card
 	
 	# 下一天 — 右下角
 	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
@@ -680,7 +680,7 @@ func _update_card_count(card: PanelContainer, count: int):
 	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
 	if card.get_meta("res_type","") == "金币":
 		ResourceManager.gold = count
-	if card.get_meta("res_type","") == "情报":
+	if card.get_meta("res_type","") == "秘密":
 		ResourceManager.intel = count
 
 func _next_press() -> void:
@@ -705,7 +705,13 @@ func _settle_next(index:int) -> void:
 		if settle_sultan_used:
 			GameManager.consume_sultan_card(0)
 			_log("🃏 苏丹卡已消耗。")
-		_restore_hand_cards()  # 人物卡回到手牌
+		_restore_hand_cards()
+		# 检查是否有装修仪式完成
+		for ar in active_rites:
+			if ar.rite.has("s2_gold") and ar.rite.get("insight_trigger",{}).get("subtype","") == "LUXURY":
+				if not ar.char.is_empty():  # 有人执行了
+					GameManager.renovation_done = true
+					_log("🏠 装修已完成！")
 		active_rites.clear()
 		TurnManager.next_day()
 		_log("✅ 所有仪式结算完毕。")
@@ -969,11 +975,20 @@ func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
 		var it = rite.get("insight_trigger", {})
 		if it.is_empty(): continue
 		if it.get("type","") != card_type: continue
+		# 装修只能做一次
+		if it.get("subtype","") == "LUXURY" and GameManager.renovation_done:
+			continue
 		var subtype = it.get("subtype","")
 		if subtype != "":
-			if card_type == "sultan_card" and drag_data.get("data",{}).get("type","") != subtype: continue
-			if card_type == "resource" and drag_data.get("id","") != subtype: continue
-		# 杀戮卡固定返回残忍的牺牲（不让玩家选）
+			if card_type == "sultan_card":
+				var cd = drag_data.get("data",{})
+				if cd.get("type","") != subtype: continue
+				var filter_rank = it.get("filter_rank","")
+				if filter_rank != "" and cd.get("rank","").to_upper() != filter_rank:
+					continue
+			elif card_type == "resource" and drag_data.get("id","") != subtype:
+				continue
+		# 杀戮卡固定返回残忍的牺牲
 		if card_type == "sultan_card" and subtype == "MURDER" and rite.id != 204:
 			continue
 		matched.append(rite)
