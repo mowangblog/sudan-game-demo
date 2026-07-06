@@ -76,7 +76,7 @@
 	},
 	{
 		"id": 3,
-		"name": "书店",
+		"name": "欢愉之馆",
 		"description": "城中的欢愉场所。可用于消耗纵欲卡。",
 		"location": "market",
 		"slots": [
@@ -1441,5 +1441,21 @@
 			}
 		},
 		"category": "insight"
+	},
+	{
+		"id": 16,
+		"name": "书店营业",
+		"description": "在垂钓者书店寻访书籍。每次1金币购入一本随机书。",
+		"category": "permanent",
+		"time_limit": 0,
+		"duration": 1,
+		"slots": [
+			{
+				"type": "character",
+				"required": false
+			}
+		],
+		"gold_cost": 1,
+		"rarity": 5
 	}
 ]
