@@ -47,7 +47,7 @@ var sort_btn: Button
 var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
-var _insight_used_types: Array[String] = []  # 本回合已寻思的卡牌类型
+var _insight_used_keys: Array[String] = []  # 本回合已寻思：角色用id，其他用类型
 var current_rite_detail: Dictionary = {}
 
 func _ready() -> void:
@@ -672,7 +672,7 @@ func _update_card_count(card: PanelContainer, count: int):
 		ResourceManager.gold = count
 
 func _next_press() -> void:
-	_insight_used_types.clear()  # 重置寻思追踪
+	_insight_used_keys.clear()  # 重置寻思追踪
 	if GameManager.is_game_over:
 		_log("⚰️ 游戏已结束。"); _refresh(); return
 	if active_rites.size() == 0:
@@ -824,16 +824,17 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 	var card_type = drag_data.get("type", "")
 	var card_name = drag_data.get("name", "卡牌")
 	
-	# 本回合已寻思过此类型 → 即时提示
-	if card_type in _insight_used_types:
+	# 重复检查：角色按id、其他按类型
+	var repeat_key = drag_data.get("id","") if card_type == "character" else card_type
+	if repeat_key in _insight_used_keys:
 		_show_insight_bubble("暂时想不出\n更好的办法了。")
 		return
-	_insight_used_types.append(card_type)
+	_insight_used_keys.append(repeat_key)
 	
-	# 角色卡
+	# 角色卡：思考→气泡
 	if card_type == "character":
 		card.visible = false; hand_layout.arrange()
-		_do_think_animation(card_name)
+		await _do_think_animation()
 		_insight_char_bubble(drag_data)
 		card.visible = true; hand_layout.arrange()
 		return
@@ -842,7 +843,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 	var matched = _find_insight_rites(card_type, drag_data)
 	if matched.is_empty():
 		card.visible = false; hand_layout.arrange()
-		_do_think_animation(card_name)
+		await _do_think_animation()
 		_show_insight_bubble("暂时想不出\n更好的办法了。")
 		card.visible = true; hand_layout.arrange()
 		return
@@ -850,7 +851,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 	# 有匹配 → 加入地图
 	var picked = matched[randi() % matched.size()]
 	card.visible = false; hand_layout.arrange()
-	_do_think_animation(card_name)
+	await _do_think_animation()
 	
 	# 消耗检查
 	var consumed := false
@@ -865,7 +866,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 		card.visible = true; hand_layout.arrange()
 
 
-func _do_think_animation(card_name: String) -> void:
+func _do_think_animation() -> void:
 	var insight = hand_container.get_node_or_null("InsightBtn")
 	if insight and is_instance_valid(insight):
 		var t = create_tween().set_loops(3)
@@ -890,12 +891,19 @@ func _show_insight_bubble(text: String) -> void:
 	add_child(bubble)
 	bubble.reset_size()
 	await get_tree().process_frame
+	var vs = get_viewport().size
 	var insight = hand_container.get_node_or_null("InsightBtn")
+	var x: float = 0.0; var y: float = 0.0
 	if insight and is_instance_valid(insight):
 		var r = insight.get_global_rect()
-		bubble.position = Vector2(r.position.x + r.size.x / 2 - bubble.size.x / 2, r.position.y - bubble.size.y - 8)
+		x = r.position.x + r.size.x / 2 - bubble.size.x / 2
+		y = r.position.y - bubble.size.y - 8
 	else:
-		bubble.position = Vector2(50, get_viewport().size.y - 240)
+		x = 50; y = vs.y - 240
+	# 限制在屏幕内
+	x = clampf(x, 4, vs.x - bubble.size.x - 4)
+	y = maxf(y, 4)
+	bubble.position = Vector2(x, y)
 	await get_tree().create_timer(2.0).timeout
 	bubble.queue_free()
 
