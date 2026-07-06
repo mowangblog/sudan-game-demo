@@ -48,8 +48,24 @@ func _begin_day() -> void:
 	update_rite_timers()
 	# 3. 结算用时为0的仪式
 	settle_pending_rites()
-	# 4. 通知新一天开始
+	# 4. 随机生成新仪式
+	_spawn_daily_rites()
+	# 5. 通知新一天开始
 	EventBus.day_started.emit(current_day, current_week)
+
+
+func _spawn_daily_rites() -> void:
+	var normal_rites: Array = []
+	for r in DataManager.rites:
+		if r.get("category","") != "normal": continue
+		if r.get("insight_trigger"): continue
+		normal_rites.append(r)
+	if normal_rites.is_empty(): return
+	var count = 1 + (randi() % 2)  # 每天1-2个新仪式
+	for _i in range(count):
+		var idx = randi() % normal_rites.size()
+		var rite = normal_rites[idx]
+		EventBus.rite_appeared.emit(rite.duplicate())
 
 
 func _start_new_week() -> void:

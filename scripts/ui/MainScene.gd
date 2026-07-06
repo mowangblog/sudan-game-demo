@@ -47,7 +47,12 @@ var sort_btn: Button
 var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
-var _insight_used_keys: Array[String] = []  # 本回合已寻思：角色用id，其他用类型
+var _insight_used_keys: Array[String] = []
+var _rite_grid: GridContainer
+var _all_rites: Array = []
+
+# 常驻仪式 id 列表
+const PERMANENT_RITE_IDS = [1, 2, 3, 4, 15]  # 本回合已寻思：角色用id，其他用类型
 var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉杀戮
 var current_rite_detail: Dictionary = {}
 
@@ -60,6 +65,11 @@ func _ready() -> void:
 	popups.setup(self, {"C":C,"TC":TC,"TN":TN,"RG":RG,"AI":AI,"AN":AN})
 	_char_load()
 	_build()
+	EventBus.rite_appeared.connect(func(rite: Dictionary):
+		if _get_rite_by_id(rite.get("id",-1)) == null:
+			active_rites.append({"rite":rite,"char":{},"sultan_card":{}})
+		_regenerate_map()
+	)
 	GameManager.start_game()
 	_refresh()
 
@@ -114,7 +124,7 @@ func _status() -> void:
 		gd_lbl,_sl("│",C.GOLD_LO),g_lbl,e_lbl,p_lbl,h_lbl,s_lbl]:
 		b.add_child(x)
 
-# 左侧地图 — 使用 Control 手动定位，更像原版
+# 左侧地图 — 仪式节点直接散布，无地点分组
 func _map() -> void:
 	var map = PanelContainer.new()
 	map.name = "MapPanel"
@@ -126,65 +136,58 @@ func _map() -> void:
 	ps.content_margin_left=12; ps.content_margin_right=12; ps.content_margin_top=10; ps.content_margin_bottom=10
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
-	
-	var map_area = Control.new(); map_area.name = "MapArea"; map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
-	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
-	map.add_child(map_area)
-	
-	var all_rites = _load_rites()
-	var locs = [
-		{"id":"palace",    "n":"🏛 宫廷",   "pos":Vector2(0.5, 0.15), "c":Color("3d3020")},
-		{"id":"market",    "n":"🏪 市场",   "pos":Vector2(0.7, 0.35), "c":Color("2d3525")},
-		{"id":"slums",     "n":"🏚 贫民窟", "pos":Vector2(0.3, 0.35), "c":Color("2a2018")},
-		{"id":"barracks",  "n":"⚔ 军营",   "pos":Vector2(0.2, 0.60), "c":Color("25282a")},
-		{"id":"temple",    "n":"🕌 寺庙",   "pos":Vector2(0.5, 0.60), "c":Color("252a30")},
-		{"id":"wilderness","n":"🌲 野外",   "pos":Vector2(0.8, 0.60), "c":Color("242a20")},
-	]
-	
-	for loc in locs:
-		var node = _loc_node(loc, all_rites)
-		node.set_anchors_preset(Control.PRESET_CENTER)
-		node.position = Vector2(loc.pos.x * map_area.size.x, loc.pos.y * map_area.size.y) - node.size / 2
-		map_area.add_child(node)
-	
-	# 尺寸变化时重新定位
-	map_area.resized.connect(func():
-		for c in map_area.get_children():
-			var loc_pos = c.get_meta("loc_pos", Vector2(0.5,0.5))
-			c.position = Vector2(loc_pos.x * map_area.size.x, loc_pos.y * map_area.size.y) - c.size / 2
-	)
 
-func _loc_node(loc:Dictionary, all_rites:Array) -> Control:
-	var pn = PanelContainer.new()
-	pn.custom_minimum_size = Vector2(140, 110)
-	pn.set_meta("loc_pos", loc.pos)
-	
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color(loc.c); ps.set_corner_radius_all(12)
-	ps.border_width_bottom=2; ps.border_width_top=2; ps.border_width_left=2; ps.border_width_right=2
-	ps.border_color = C.GOLD_LO; ps.shadow_size=5; ps.shadow_color=C.SHADOW
-	ps.content_margin_left=8; ps.content_margin_right=8; ps.content_margin_top=6; ps.content_margin_bottom=6
-	pn.add_theme_stylebox_override("panel", ps)
-	pn.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	var vb = VBoxContainer.new(); pn.add_child(vb)
-	var title = Label.new(); title.text = loc.n; title.add_theme_font_size_override("font_size", 14)
-	title.add_theme_color_override("font_color", C.GOLD); title.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(title)
-	
-	var loc_rites = []
-	for r in all_rites:
-		if r.get("location","") == loc.id and not r.has("insight_trigger"):
-			loc_rites.append(r)
-	
-	for rite in loc_rites:
-		var is_cfg = _find_configured_rite(rite) != null
-		var btn = Button.new()
-		btn.text = ("✅ " if is_cfg else "  ") + rite.get("name","?")
-		btn.custom_minimum_size = Vector2(0, 24); btn.add_theme_font_size_override("font_size", 10)
-		btn.pressed.connect(_open_rite_detail.bind(rite))
-		vb.add_child(btn)
-	
-	return pn
+	var map_area = ScrollContainer.new()
+	map_area.name = "MapArea"
+	map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_area.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	map.add_child(map_area)
+
+	_rite_grid = GridContainer.new()
+	_rite_grid.columns = 6
+	_rite_grid.add_theme_constant_override("h_separation", 6)
+	_rite_grid.add_theme_constant_override("v_separation", 6)
+	map_area.add_child(_rite_grid)
+
+	# 一次性加载所有仪式数据
+	_all_rites = _load_rites()
+	_regenerate_map()
+
+func _regenerate_map():
+	if not _rite_grid: return
+	for c in _rite_grid.get_children():
+		c.queue_free()
+	# 常驻仪式
+	for rite in _all_rites:
+		if rite.id in PERMANENT_RITE_IDS:
+			_rite_grid.add_child(_make_rite_node(rite))
+	# 活跃的动态仪式
+	for ar in active_rites:
+		var rite = ar.get("rite", ar)
+		if rite.get("category","") == "insight" or (rite.get("id",0) not in PERMANENT_RITE_IDS):
+			_rite_grid.add_child(_make_rite_node(rite))
+
+func _make_rite_node(rite: Dictionary) -> Control:
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(100, 60)
+	btn.text = rite.get("name", "?")
+	btn.add_theme_font_size_override("font_size", 10)
+	btn.add_theme_color_override("font_color", C.GOLD)
+	var sb = StyleBoxFlat.new(); sb.bg_color = Color("2a2018"); sb.set_corner_radius_all(8)
+	sb.border_width_bottom=1; sb.border_color=C.GOLD_LO
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.pressed.connect(func(): _on_rite_node_clicked(rite))
+	return btn
+
+func _on_rite_node_clicked(rite: Dictionary):
+	var existing = _get_rite_by_id(rite.get("id", -1))
+	if existing:
+		_log("「%s」已配置角色:%s" % [rite.get("name",""), existing.char.get("name","无")])
+	else:
+		var entry = {"rite": rite, "char": {}, "sultan_card": {}}
+		active_rites.append(entry)
+		_regenerate_map()
+		_log("📋 「%s」已加入今日计划" % rite.get("name","?"))
 
 func _close_rite_popup() -> void:
 	_clear_all_highlights()
@@ -756,6 +759,7 @@ func _refresh() -> void:
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
+	_regenerate_map()
 
 # 同步金币卡数量和 ResourceManager
 
