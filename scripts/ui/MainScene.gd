@@ -48,7 +48,8 @@ var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []
-var _rite_grid: GridContainer
+var _perm_flow: FlowContainer
+var _dyn_flow: FlowContainer
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
@@ -137,36 +138,46 @@ func _map() -> void:
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
 
-	var map_area = Control.new()
+	var map_area = VBoxContainer.new()
 	map_area.name = "MapArea"
 	map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_area.add_theme_constant_override("separation", 8)
 	map.add_child(map_area)
 
-	_rite_grid = GridContainer.new()
-	_rite_grid.columns = 6
-	_rite_grid.add_theme_constant_override("h_separation", 6)
-	_rite_grid.add_theme_constant_override("v_separation", 6)
-	_rite_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_rite_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	map_area.add_child(_rite_grid)
+	# 常驻仪式行
+	var perm_lbl = Label.new(); perm_lbl.text = "📍 常驻"; perm_lbl.add_theme_font_size_override("font_size", 11)
+	perm_lbl.add_theme_color_override("font_color", C.GOLD_LO)
+	map_area.add_child(perm_lbl)
+	_perm_flow = FlowContainer.new()
+	_perm_flow.add_theme_constant_override("h_separation", 6)
+	_perm_flow.add_theme_constant_override("v_separation", 6)
+	map_area.add_child(_perm_flow)
 
-	# 一次性加载所有仪式数据
+	# 动态仪式行
+	var dyn_lbl = Label.new(); dyn_lbl.text = "📋 今日"; dyn_lbl.add_theme_font_size_override("font_size", 11)
+	dyn_lbl.add_theme_color_override("font_color", C.GOLD_LO)
+	map_area.add_child(dyn_lbl)
+	_dyn_flow = FlowContainer.new()
+	_dyn_flow.add_theme_constant_override("h_separation", 6)
+	_dyn_flow.add_theme_constant_override("v_separation", 6)
+	map_area.add_child(_dyn_flow)
+
 	_all_rites = _load_rites()
 	_regenerate_map()
 
 func _regenerate_map():
-	if not _rite_grid: return
-	for c in _rite_grid.get_children():
-		c.queue_free()
-	# 常驻仪式
+	if not _perm_flow: return
+	for c in _perm_flow.get_children(): c.queue_free()
+	for c in _dyn_flow.get_children(): c.queue_free()
+
 	for rite in _all_rites:
 		if rite.id in PERMANENT_RITE_IDS:
-			_rite_grid.add_child(_make_rite_node(rite))
-	# 活跃的动态仪式
+			_perm_flow.add_child(_make_rite_node(rite))
+
 	for ar in active_rites:
 		var rite = ar.get("rite", ar)
 		if rite.get("category","") == "insight" or (rite.get("id",0) not in PERMANENT_RITE_IDS):
-			_rite_grid.add_child(_make_rite_node(rite))
+			_dyn_flow.add_child(_make_rite_node(rite))
 
 func _make_rite_node(rite: Dictionary) -> Control:
 	var btn = Button.new()
