@@ -784,6 +784,11 @@ func _refresh_intel_cards():
 				card._on_click = func(): popups.show_res_popup(nm, it.icon, it.q, card.get_meta("res_count", 0))
 				hand_container.add_child(card); hand_cards.append(card)
 				resource_cards[nm] = card
+				# 入场动画
+				card.scale = Vector2(0.3, 0.3); card.modulate.a = 0.5
+				var t = create_tween()
+				t.tween_property(card, "scale", Vector2.ONE, 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+				t.parallel().tween_property(card, "modulate:a", 1.0, 0.25)
 			else:
 				card.set_meta("res_count", cnt)
 				if card.has_meta("res_data"): card.get_meta("res_data").count = cnt

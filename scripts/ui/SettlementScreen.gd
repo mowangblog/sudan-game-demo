@@ -232,7 +232,18 @@ func _start_settlement():
 	_total_rewards = rite_data.get("rewards", {}).duplicate()
 	_stage_idx = 0
 	_stage_all_success = true
-	_process_stage()
+	_animate_entrance()
+
+
+func _animate_entrance():
+	var vs = get_viewport().size
+	var target_y = position.y
+	position.y = vs.y
+	modulate.a = 0.0
+	var t = create_tween()
+	t.tween_property(self, "position:y", target_y, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	t.parallel().tween_property(self, "modulate:a", 1.0, 0.3)
+	t.tween_callback(func(): _process_stage())
 
 func _auto_stage(rite: Dictionary) -> Array:
 	var s := {}
@@ -424,7 +435,23 @@ func _apply_roll_rewards():
 				var intel_data = tier.intel
 				if intel_data.size() >= 2:
 					ResourceManager.add_intel(intel_data[0], intel_data[1])
-				break  # 只应用最高档
+					_show_intel_notification(intel_data[0], intel_data[1])
+				break
+
+func _show_intel_notification(type_name: String, grade: String):
+	var grade_texts = {"STONE": "石", "COPPER": "铜", "SILVER": "银"}
+	var gtxt = grade_texts.get(grade, grade)
+	var lbl = Label.new()
+	lbl.text = "+%s情报 %s" % [gtxt, type_name]
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", Color(0.91, 0.78, 0.29))
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(lbl)
+	lbl.position = Vector2(size.x / 2 - 60, size.y / 2)
+	var t = create_tween()
+	t.tween_property(lbl, "position:y", size.y / 2 - 60, 1.0)
+	t.parallel().tween_property(lbl, "modulate:a", 0.0, 1.0)
+	t.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
 
 # 打字机效果
 func _typewrite_on_label(lbl: Label, text: String, cb: Callable):
