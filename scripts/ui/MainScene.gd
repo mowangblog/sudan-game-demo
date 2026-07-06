@@ -172,7 +172,7 @@ func _loc_node(loc:Dictionary, all_rites:Array) -> Control:
 	
 	var loc_rites = []
 	for r in all_rites:
-		if r.get("location","") == loc.id:
+		if r.get("location","") == loc.id and not r.has("insight_trigger"):
 			loc_rites.append(r)
 	
 	for rite in loc_rites:
@@ -700,6 +700,13 @@ func _settle_next(index:int) -> void:
 		return
 	
 	var ar = active_rites[index]
+	
+	# 俺寻思事件必须有角色才结算
+	if ar.get("insight", false) and ar.char.is_empty():
+		_log("⚠ 「%s」缺少角色，跳过结算。" % ar.rite.get("name","?"))
+		_settle_next(index + 1)
+		return
+	
 	if not ar.sultan_card.is_empty(): settle_sultan_used = true
 	
 	var screen = SettlementScreen.new()
@@ -909,7 +916,7 @@ func _show_insight_bubble(text: String) -> void:
 
 
 func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed: bool):
-	var entry = {"rite": rite, "char": {}, "sultan_card": {}}
+	var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
 	if drag_data.get("type","") == "character" and not consumed:
 		entry.char = drag_data
 	active_rites.append(entry)
