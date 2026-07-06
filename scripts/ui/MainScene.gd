@@ -182,7 +182,7 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 		py = randf_range(0.05, 0.93)
 		ok = true
 		for pp in placed:
-			if abs(px - pp.x) * aw < 152 and abs(py - pp.y) * aw < 56:
+			if abs(px - pp.x) * aw < 160 and abs(py - pp.y) * aw < 60:
 				ok = false; break
 		if ok: break
 	placed.append(Vector2(px, py))
