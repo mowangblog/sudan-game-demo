@@ -64,10 +64,6 @@ func _ready() -> void:
 	popups.setup(self, {"C":C,"TC":TC,"TN":TN,"RG":RG,"AI":AI,"AN":AN})
 	_char_load()
 	_build()
-	EventBus.rite_appeared.connect(func(rite: Dictionary):
-		if _get_rite_by_id(rite.get("id",-1)) == null:
-			active_rites.append({"rite":rite,"char":{},"sultan_card":{}})
-	)
 	GameManager.start_game()
 	_refresh()
 
@@ -134,73 +130,46 @@ func _map() -> void:
 	ps.content_margin_left=12; ps.content_margin_right=12; ps.content_margin_top=10; ps.content_margin_bottom=10
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
-
-	var vb = VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 4)
-	map.add_child(vb)
-
-	_all_rites = _load_rites()
 	
-	var perm_hb = HBoxContainer.new()
-	perm_hb.add_theme_constant_override("separation", 4)
-	vb.add_child(perm_hb)
-	for rite in _all_rites:
-		if rite.get("category","") == "permanent":
-			var btn = _make_rite_btn(rite)
-			perm_hb.add_child(btn)
+	var map_area = Control.new(); map_area.name = "MapArea"; map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
+	map.add_child(map_area)
 	
-	var dyn_hb = HBoxContainer.new()
-	dyn_hb.add_theme_constant_override("separation", 4)
-	vb.add_child(dyn_hb)
-	for ar in active_rites:
-		var rite = ar.get("rite", ar)
-		if rite.get("category","") != "permanent":
-			var btn = _make_rite_btn(rite)
-			dyn_hb.add_child(btn)
+	var all_rites = _load_rites()
+	var x: float = 12; var y: float = 8
+	for rite in all_rites:
+		if rite.has("insight_trigger"): continue
+		var btn = _make_rite_btn(rite)
+		btn.position = Vector2(x, y)
+		x += 146
+		if x + 140 > map_area.size.x - 12:
+			x = 12; y += 50
+		map_area.add_child(btn)
+	
+	map_area.resized.connect(func():
+		for c in map_area.get_children(): c.position = Vector2(0,0)
+		var rx: float = 12; var ry: float = 8
+		for c in map_area.get_children():
+			c.position = Vector2(rx, ry)
+			rx += 146
+			if rx + 140 > map_area.size.x - 12:
+				rx = 12; ry += 50
+	)
 
 
 func _make_rite_btn(rite: Dictionary) -> Button:
 	var btn = Button.new()
 	btn.text = rite.get("name","?")
-	btn.custom_minimum_size = Vector2(100, 40)
+	btn.custom_minimum_size = Vector2(130, 34)
 	btn.add_theme_font_size_override("font_size", 10)
 	btn.add_theme_color_override("font_color", C.GOLD)
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color("1a0f0a")
-	sb.set_corner_radius_all(6)
-	sb.border_width_bottom = 2
-	sb.border_color = C.GOLD_LO
+	var sb = StyleBoxFlat.new(); sb.bg_color = Color("1a0f0a"); sb.set_corner_radius_all(6)
+	sb.border_width_bottom = 2; sb.border_color = C.GOLD_LO
 	btn.add_theme_stylebox_override("normal", sb)
-	btn.pressed.connect(func(): _on_rite_node_clicked(rite))
+	btn.pressed.connect(_open_rite_detail.bind(rite))
 	return btn
 
-func _make_rite_node(rite: Dictionary) -> Control:
-	var btn = Button.new()
-	btn.custom_minimum_size = Vector2(100, 60)
-	btn.text = rite.get("name", "?")
-	btn.add_theme_font_size_override("font_size", 10)
-	btn.add_theme_color_override("font_color", C.GOLD)
-	var sb = StyleBoxFlat.new(); sb.bg_color = Color("2a2018"); sb.set_corner_radius_all(8)
-	sb.border_width_bottom=1; sb.border_color=C.GOLD_LO
-	btn.add_theme_stylebox_override("normal", sb)
-	btn.pressed.connect(func(): _on_rite_node_clicked(rite))
-	return btn
 
-func _on_rite_node_clicked(rite: Dictionary):
-	var existing = _get_rite_by_id(rite.get("id", -1))
-	if existing:
-		_log("「%s」已配置角色:%s" % [rite.get("name",""), existing.char.get("name","无")])
-	else:
-		var entry = {"rite": rite, "char": {}, "sultan_card": {}}
-		active_rites.append(entry)
-		_log("📋 「%s」已加入今日计划" % rite.get("name","?"))
-
-
-func _get_rite_by_id(rite_id: int):
-	for ar in active_rites:
-		if ar.rite.get("id", -1) == rite_id:
-			return ar
-	return null
 
 func _close_rite_popup() -> void:
 	_clear_all_highlights()
