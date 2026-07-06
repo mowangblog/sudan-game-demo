@@ -136,15 +136,27 @@ func _map() -> void:
 	map.add_child(map_area)
 	
 	var all_rites = _load_rites()
+	var placed_positions: Array[Vector2] = []
 	var seed_val: int = 42
+	var btn_w: float = 132; var btn_h: float = 36; var pad: float = 8
+	
 	for i in range(all_rites.size()):
 		var rite = all_rites[i]
 		if rite.has("insight_trigger"): continue
 		var btn = _make_rite_btn(rite)
-		seed_val = (seed_val * 16807 + 0) % 2147483647
-		var px = 0.08 + (float(seed_val % 1000) / 1000.0) * 0.82
-		seed_val = (seed_val * 16807 + 0) % 2147483647
-		var py = 0.05 + (float(seed_val % 1000) / 1000.0) * 0.88
+		var px: float; var py: float
+		var ok := false
+		for _attempt in range(50):
+			seed_val = (seed_val * 16807 + 0) % 2147483647
+			px = 0.08 + (float(seed_val % 1000) / 1000.0) * 0.82
+			seed_val = (seed_val * 16807 + 0) % 2147483647
+			py = 0.05 + (float(seed_val % 1000) / 1000.0) * 0.88
+			ok = true
+			for pp in placed_positions:
+				if abs(px - pp.x) < (btn_w + pad) / map_area.size.x and abs(py - pp.y) < (btn_h + pad) / map_area.size.y:
+					ok = false; break
+			if ok: break
+		placed_positions.append(Vector2(px, py))
 		btn.set_meta("rite_pos", Vector2(px, py))
 		btn.position = Vector2(px * map_area.size.x, py * map_area.size.y) - btn.size / 2
 		map_area.add_child(btn)
