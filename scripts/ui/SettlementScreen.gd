@@ -246,6 +246,9 @@ func _auto_stage(rite: Dictionary) -> Array:
 	else:
 		s["text"] = rite.get("description","")
 		s["check"] = null
+	# 复制 roll_rewards
+	if rite.has("roll_rewards"):
+		s["roll_rewards"] = rite.roll_rewards
 	return [s]
 
 func _process_stage():
