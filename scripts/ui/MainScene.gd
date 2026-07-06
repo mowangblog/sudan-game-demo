@@ -70,8 +70,11 @@ func _ready() -> void:
 		if _map_area:
 			var existing = []
 			for c in _map_area.get_children():
-				var rp = c.get_meta("rite_pos")
-				if rp: existing.append(rp)
+				var rp = c.get_meta("rite_pct")
+				if rp:
+					var w = _map_area.size.x; if w <= 0: w = 1000
+					var h = _map_area.size.y; if h <= 0: h = 500
+					existing.append(Vector2(rp.x * w, rp.y * h))
 			_place_rite_btn(rite, _map_area, existing)
 	)
 	GameManager.start_game()
@@ -159,9 +162,9 @@ func _map() -> void:
 	)
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
-			var rp = c.get_meta("rite_pos")
+			var rp = c.get_meta("rite_pct")
 			if rp:
-				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
+				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y)
 			var lbl = c.get_meta("char_label")
 			if lbl and is_instance_valid(lbl):
 				lbl.position = Vector2(c.position.x, c.position.y - 14)
@@ -175,20 +178,24 @@ func _map() -> void:
 
 func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 	var btn = _make_rite_btn(rite)
-	var aw = area.size.x; if aw <= 0: aw = 1000
+	var w = area.size.x; if w <= 0: w = 1000
+	var h = area.size.y; if h <= 0: h = 500
+	var bw: float = 140; var bh: float = 40; var gap: float = 10
 	var px: float; var py: float; var ok := false
 	for _attempt in range(100):
-		px = randf_range(0.08, 0.90)
-		py = randf_range(0.05, 0.93)
+		px = randf_range(gap, w - bw - gap)
+		py = randf_range(gap, h - bh - gap)
 		ok = true
+		var r = Rect2(px - gap, py - gap, bw + gap * 2, bh + gap * 2)
 		for pp in placed:
-			if abs(px - pp.x) * aw < 160 and abs(py - pp.y) * aw < 60:
+			if r.has_point(Vector2(pp.x + bw / 2, pp.y + bh / 2)):
 				ok = false; break
 		if ok: break
+	# 转百分比存储
 	placed.append(Vector2(px, py))
-	btn.set_meta("rite_pos", Vector2(px, py))
+	btn.set_meta("rite_pct", Vector2(px / w, py / h))
 	btn.set_meta("rite_id", rite.get("id", -1))
-	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
+	btn.position = Vector2(px, py)
 	area.add_child(btn)
 	
 	# 倒计时标签
