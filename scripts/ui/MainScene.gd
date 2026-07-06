@@ -145,15 +145,18 @@ func _map() -> void:
 	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
 	map.add_child(map_area)
 	_map_area = map_area
-	
-	var all_rites = _load_rites()
+	_all_rites = _load_rites()
 	_rite_seed = 42
-	var placed: Array[Vector2] = []
-
-	for rite in all_rites:
-		if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
-			_place_rite_btn(rite, map_area, placed)
 	
+	var init_done := false
+	map_area.resized.connect(func():
+		if init_done or map_area.size.x <= 0: return
+		init_done = true
+		var placed: Array[Vector2] = []
+		for rite in _all_rites:
+			if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
+				_place_rite_btn(rite, map_area, placed)
+	)
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
 			var rp = c.get_meta("rite_pos")
@@ -172,6 +175,8 @@ func _map() -> void:
 
 func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 	var btn = _make_rite_btn(rite)
+	var bx = area.size.x
+	if bx <= 0: bx = 800  # 布局未完成用默认值
 	var px: float; var py: float; var ok := false
 	var bw: float = 132; var bh: float = 36; var pad: float = 8
 	for _attempt in range(50):
@@ -181,7 +186,7 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 		py = 0.05 + (float(_rite_seed % 900) / 900.0) * 0.88
 		ok = true
 		for pp in placed:
-			if abs(px - pp.x) < (bw + pad) / area.size.x and abs(py - pp.y) < (bh + pad) / area.size.y:
+			if abs(px - pp.x) < (bw + pad) / bx and abs(py - pp.y) < (bh + pad) / bx:
 				ok = false; break
 		if ok: break
 	placed.append(Vector2(px, py))
