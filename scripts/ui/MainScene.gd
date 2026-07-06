@@ -149,10 +149,35 @@ func _map() -> void:
 	var all_rites = _load_rites()
 	_rite_seed = 42
 	var placed: Array[Vector2] = []
+	
+	# 固定位置的常驻仪式
+	var perm_positions = {
+		1: Vector2(0.12, 0.10),  # 治理家业 - 左上
+		2: Vector2(0.55, 0.10),  # 上朝觐见 - 右上
+		3: Vector2(0.35, 0.55),  # 欢愉之馆 - 中下(第2天)
+		4: Vector2(0.12, 0.75),  # 浴场 - 左下
+	}
 
 	for rite in all_rites:
-		if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
-			_place_rite_btn(rite, map_area, placed)
+		if rite.get("category","") != "permanent": continue
+		if rite.has("insight_trigger"): continue
+		var rid = rite.get("id", -1)
+		if rid == 3: continue  # 欢愉之馆第2天再出现
+		var pos = perm_positions.get(rid)
+		if pos:
+			_place_rite_btn_at(rite, map_area, placed, pos)
+
+	# 欢愉之馆第2天常驻
+	var day2_triggered := false
+	EventBus.day_started.connect(func(_d: int, _w: int):
+		if day2_triggered: return
+		if TurnManager.current_day >= 2:
+			day2_triggered = true
+			for rite in all_rites:
+				if rite.get("id", -1) == 3:
+					_place_rite_btn_at(rite, map_area, [], Vector2(0.35, 0.55))
+					break
+	)
 	
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
@@ -172,7 +197,7 @@ func _map() -> void:
 
 
 func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
-	var btn = _make_rite_btn(rite)
+	# 随机位置 + 防遮挡
 	var px: float; var py: float; var ok := false
 	var bw: float = 132; var bh: float = 36; var pad: float = 8
 	for _attempt in range(50):
@@ -186,11 +211,16 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 				ok = false; break
 		if ok: break
 	placed.append(Vector2(px, py))
-	btn.set_meta("rite_pos", Vector2(px, py))
+	_place_rite_btn_at(rite, area, placed, Vector2(px, py))
+
+
+func _place_rite_btn_at(rite: Dictionary, area: Control, placed: Array, pos: Vector2) -> void:
+	var btn = _make_rite_btn(rite)
+	btn.set_meta("rite_pos", pos)
 	btn.set_meta("rite_id", rite.get("id", -1))
-	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
+	btn.position = Vector2(pos.x * area.size.x, pos.y * area.size.y) - btn.size / 2
 	area.add_child(btn)
-	
+
 	# 倒计时标签
 	var tl = rite.get("time_limit", 0)
 	if tl > 0:
