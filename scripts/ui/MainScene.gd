@@ -163,6 +163,10 @@ func _map() -> void:
 			if lbl and is_instance_valid(lbl):
 				lbl.position = Vector2(c.position.x, c.position.y - 14)
 				lbl.custom_minimum_size.x = c.size.x
+			var cd = c.get_meta("cd_label")
+			if cd and is_instance_valid(cd):
+				cd.position = Vector2(c.position.x, c.position.y + c.size.y + 2)
+				cd.custom_minimum_size.x = c.size.x
 	)
 
 
@@ -185,6 +189,20 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 	btn.set_meta("rite_id", rite.get("id", -1))
 	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
 	area.add_child(btn)
+	
+	# 倒计时标签
+	var tl = rite.get("time_limit", 0)
+	if tl > 0:
+		var cl = Label.new()
+		cl.text = "%d天" % tl
+		cl.add_theme_font_size_override("font_size", 9)
+		cl.add_theme_color_override("font_color", Color.RED)
+		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cl.position = Vector2(btn.position.x, btn.position.y + btn.size.y + 2)
+		cl.custom_minimum_size.x = btn.size.x
+		cl.set_meta("countdown", tl)
+		btn.set_meta("cd_label", cl)
+		area.add_child(cl)
 
 
 func _make_rite_btn(rite: Dictionary) -> Button:
@@ -736,6 +754,7 @@ func _next_press() -> void:
 		_log("⚔ 无事发生，推进一天。")
 		active_rites.clear()
 		TurnManager.next_day()
+		_update_countdown_labels()
 		_refresh()
 		if GameManager.is_game_over: popups.show_game_over()
 		return
@@ -758,6 +777,7 @@ func _settle_next(index:int) -> void:
 		active_rites.clear()
 		_reset_all_rite_btn_labels()
 		TurnManager.next_day()
+		_update_countdown_labels()
 		_log("✅ 所有仪式结算完毕。")
 		_refresh()
 		if GameManager.is_game_over: popups.show_game_over()
@@ -817,6 +837,19 @@ func _load_rites() -> Array:
 	var d = JSON.parse_string(f.get_as_text()); f.close()
 	if d == null: return []
 	return d
+
+func _update_countdown_labels():
+	if not _map_area: return
+	for c in _map_area.get_children():
+		var cd = c.get_meta("cd_label")
+		if not cd or not is_instance_valid(cd): continue
+		var remaining = cd.get_meta("countdown", 0) - 1
+		cd.set_meta("countdown", remaining)
+		if remaining <= 0:
+			cd.queue_free()
+		else:
+			cd.text = "%d天" % remaining
+
 
 func _refresh_intel_cards():
 	var types = [
@@ -1038,6 +1071,13 @@ func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed:
 		entry["insight_kill_rank"] = kill_rank
 		entry["insight_kill_used"] = false
 	active_rites.append(entry)
+	# 添加到地图上
+	if _map_area:
+		var existing = []
+		for c in _map_area.get_children():
+			var rp = c.get_meta("rite_pos")
+			if rp: existing.append(rp)
+		_place_rite_btn(rite, _map_area, existing)
 	_refresh()
 	_show_insight_bubble("「%s」\n出现在地图上" % rite.get("name", "?"))
 
