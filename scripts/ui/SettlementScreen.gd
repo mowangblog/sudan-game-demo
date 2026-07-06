@@ -52,6 +52,10 @@ var _typewrite_full: String = ""
 var _typewrite_cb: Callable
 var _typewrite_pos: int = 0
 var _stage_all_success: bool = true
+var _rerolls_remaining: int = 0
+var _reroll_btn: Button
+var _pending_check: Dictionary = {}
+var _pending_char: Dictionary = {}
 var check_lbl: Label
 var result_lbl: Label
 var count_lbl: Label
@@ -156,6 +160,15 @@ func _build_layout():
 	count_lbl.visible = false
 	dice_vb.add_child(count_lbl)
 
+	# 重投按钮
+	_reroll_btn = Button.new()
+	_reroll_btn.text = "🔄 重投"
+	_reroll_btn.custom_minimum_size = Vector2(100, 32)
+	_reroll_btn.add_theme_font_size_override("font_size", 12)
+	_reroll_btn.visible = false
+	_reroll_btn.pressed.connect(_on_reroll_pressed)
+	dice_vb.add_child(_reroll_btn)
+
 	# === 右侧：叙事区 ===
 	var right = ScrollContainer.new()
 	split.add_child(right)
@@ -239,6 +252,7 @@ func _process_stage():
 		_finish_settlement(); return
 	var stage = _stages[_stage_idx]
 	result_lbl.visible = false; count_lbl.visible = false; check_lbl.text = ""
+	_reroll_btn.visible = false
 	# 清除上一阶段的骰子
 	if _dice_roller:
 		_dice_roller.reset_all()
@@ -270,6 +284,17 @@ func _process_stage():
 
 func _do_check(stage: Dictionary, check: Dictionary):
 	_current_stage = stage
+	_pending_check = check
+	_pending_char = char_data
+	
+	# 计算可重投次数（S2 情报奖励）
+	_rerolls_remaining = 0
+	if stage.has("check"):  # 有检定的 stage
+		for nm in ResourceManager.INTEL_EFFECTS:
+			if ResourceManager.get_intel_count(nm) > 0:
+				var bonus = ResourceManager.get_intel_bonus(nm)
+				_rerolls_remaining += bonus.get("rerolls", 0)
+	
 	var dc = _calc_dice_count(char_data, check)
 	var req = check.get("required_successes", 1)
 	var atype = "solo" if check.has("attribute") else check.get("type","solo")
@@ -277,14 +302,22 @@ func _do_check(stage: Dictionary, check: Dictionary):
 	if atype == "solo":
 		var an_map = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}
 		an_name = an_map.get(check.get("attribute",""), "")
-	check_lbl.text = "%s检定 🎲×%d 需✅×%d" % [an_name, dc, req]
+	
+	var extra = ""
+	if _rerolls_remaining > 0:
+		extra = "  🔄×%d" % _rerolls_remaining
+	check_lbl.text = "%s检定 🎲×%d 需✅×%d%s" % [an_name, dc, req, extra]
 	_pending_required = req
 	_setup_3d_dice()
+	_do_roll_dice(dc)
 
+
+func _do_roll_dice(dice_count: int) -> void:
+	_reroll_btn.visible = false
 	var faces: Array[int] = []
-	for _i in range(dc):
+	for _i in range(dice_count):
 		faces.append(randi() % 6 + 1)
-	if ResourceManager.gold_dice > 0 and dc >= 1:
+	if ResourceManager.gold_dice > 0 and dice_count >= 1:
 		ResourceManager.gold_dice -= 1; faces.append(6)
 
 	var def = DiceDieDefinition3D.custom("DotDie", [
@@ -293,7 +326,6 @@ func _do_check(stage: Dictionary, check: Dictionary):
 		DiceFace3D.new_face(3,&"three",NUMBER_3,"Three"), DiceFace3D.new_face(4,&"four",NUMBER_4,"Four"),
 	])
 	def.edge_length=0.65; def.body_shape=DiceDie3D.BodyShape.ROUNDED
-
 	var wm = StandardMaterial3D.new(); wm.albedo_color=Color("e8e0d8"); wm.roughness=0.4
 	var dice_to_roll: Array[DiceDie3D] = []; var req_res = []
 	for i in range(faces.size()):
@@ -302,6 +334,22 @@ func _do_check(stage: Dictionary, check: Dictionary):
 	_layout_dice_grid(dice_to_roll)
 	await get_tree().create_timer(0.1).timeout
 	_dice_roller.roll_dice(dice_to_roll, req_res, {"per_die_delay":randf_range(0.01,0.08)})
+
+
+func _on_reroll_pressed():
+	_rerolls_remaining -= 1
+	for nm in ResourceManager.INTEL_EFFECTS:
+		if ResourceManager.get_intel_count(nm) > 0:
+			if ResourceManager.intel_silver.has(nm) and ResourceManager.intel_silver[nm] > 0:
+				ResourceManager.intel_silver[nm] -= 1
+			elif ResourceManager.intel_copper.has(nm) and ResourceManager.intel_copper[nm] > 0:
+				ResourceManager.intel_copper[nm] -= 1
+			elif ResourceManager.intel_stone.has(nm) and ResourceManager.intel_stone[nm] > 0:
+				ResourceManager.intel_stone[nm] -= 1
+			break
+	_reroll_btn.text = "🔄 重投 ×%d" % _rerolls_remaining
+	_setup_3d_dice()
+	_do_roll_dice(_calc_dice_count(_pending_char, _pending_check))
 
 func _on_dice_settled_stage(_results: Dictionary):
 	await get_tree().process_frame
@@ -333,9 +381,13 @@ func _on_dice_settled_stage(_results: Dictionary):
 	res_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
 	_stage_log.add_child(res_lbl)
 	_typewrite_on_label(res_lbl, _current_stage.get("success_text" if ok else "failure_text",""), func():
-		if not ok and _current_stage.get("on_failure","")=="end":
-			_stages=_stages.slice(0,_stage_idx+1)
-		next_btn.visible=true)
+		if not ok and _rerolls_remaining > 0:
+			_reroll_btn.visible = true
+			_reroll_btn.text = "🔄 重投 ×%d" % _rerolls_remaining
+		else:
+			if not ok and _current_stage.get("on_failure","")=="end":
+				_stages=_stages.slice(0,_stage_idx+1)
+			next_btn.visible=true)
 
 func _on_next():
 	_stage_idx+=1
