@@ -525,24 +525,8 @@ func _bottom() -> void:
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
-	hand_container.add_child(gold_card); hand_cards.append(gold_card)
-	resource_cards["金币"] = gold_card
-	
-	# 情报卡（多种类型，使用时不消耗）
-	var intel_types = [
-		{"name": "秘密", "icon": "📜", "q": "BRONZE"},
-		{"name": "洞察", "icon": "🔍", "q": "BRONZE"},
-	]
-	for it in intel_types:
-		var count = ResourceManager.get_intel_count(it.name)
-		var ic = card_factory.make_resource_card(it.name, it.icon, it.q, count)
-		ic.drag_ended.connect(_on_hand_card_dropped)
-		ic.drag_started.connect(func(_c): hand_layout.arrange())
-		var nm = it.name
-		ic._on_right_click = func(): _split_resource_card(ic, nm, it.icon, it.q)
-		ic._on_click = func(): popups.show_res_popup(nm, it.icon, it.q, ic.get_meta("res_count", 0))
-		hand_container.add_child(ic); hand_cards.append(ic)
-		resource_cards[nm] = ic
+	# 情报卡（按需创建，初始可见）
+	_refresh_intel_cards()
 	
 	# 下一天 — 右下角
 	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
@@ -783,15 +767,31 @@ func _load_rites() -> Array:
 	return d
 
 func _refresh_intel_cards():
-	for nm in ResourceManager.INTEL_EFFECTS:
+	var types = [
+		{"name": "秘密", "icon": "📜", "q": "BRONZE"},
+		{"name": "洞察", "icon": "🔍", "q": "BRONZE"},
+	]
+	for it in types:
+		var nm = it.name
 		var card = resource_cards.get(nm)
-		if card and is_instance_valid(card):
-			var cnt = ResourceManager.get_intel_count(nm)
-			card.set_meta("res_count", cnt)
-			card.get_meta("res_data").count = cnt
-			var lbl = card.get_node_or_null("VB/CountLbl")
-			if lbl: lbl.text = ("x%d" % cnt) if cnt > 0 else ""
-			card.visible = cnt > 0
+		var cnt = ResourceManager.get_intel_count(nm)
+		if cnt > 0:
+			if not is_instance_valid(card):
+				card = card_factory.make_resource_card(nm, it.icon, it.q, cnt)
+				card.drag_ended.connect(_on_hand_card_dropped)
+				card.drag_started.connect(func(_c): hand_layout.arrange())
+				card._on_right_click = func(): _split_resource_card(card, nm, it.icon, it.q)
+				card._on_click = func(): popups.show_res_popup(nm, it.icon, it.q, card.get_meta("res_count", 0))
+				hand_container.add_child(card); hand_cards.append(card)
+				resource_cards[nm] = card
+			else:
+				card.set_meta("res_count", cnt)
+				if card.has_meta("res_data"): card.get_meta("res_data").count = cnt
+				card.get_node_or_null("VB/CountLbl").text = ("x%d" % cnt) if cnt > 1 else ""
+				card.visible = true
+		else:
+			if is_instance_valid(card):
+				card.visible = false
 
 func slot_type_to_str(t: String) -> String:
 	return "character" if t == "character" else "sultan_card"
