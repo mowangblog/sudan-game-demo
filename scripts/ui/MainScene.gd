@@ -189,6 +189,13 @@ func _on_rite_node_clicked(rite: Dictionary):
 		_regenerate_map()
 		_log("📋 「%s」已加入今日计划" % rite.get("name","?"))
 
+
+func _get_rite_by_id(rite_id: int):
+	for ar in active_rites:
+		if ar.rite.get("id", -1) == rite_id:
+			return ar
+	return null
+
 func _close_rite_popup() -> void:
 	_clear_all_highlights()
 	if _rite_popup and is_instance_valid(_rite_popup):
