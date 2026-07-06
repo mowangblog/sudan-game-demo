@@ -525,14 +525,24 @@ func _bottom() -> void:
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
-	# 情报卡（原版分为秘密/洞察/机遇等类型，MVP用秘密代替）
-	var intel_card = card_factory.make_resource_card("秘密", "📜", "BRONZE", ResourceManager.intel)
-	intel_card.drag_ended.connect(_on_hand_card_dropped)
-	intel_card.drag_started.connect(func(_c): hand_layout.arrange())
-	intel_card._on_right_click = func(): _split_resource_card(intel_card, "秘密", "📜", "BRONZE")
-	intel_card._on_click = func(): popups.show_res_popup("秘密", "📜", "BRONZE", intel_card.get_meta("res_count", 0))
-	hand_container.add_child(intel_card); hand_cards.append(intel_card)
-	resource_cards["秘密"] = intel_card
+	hand_container.add_child(gold_card); hand_cards.append(gold_card)
+	resource_cards["金币"] = gold_card
+	
+	# 情报卡（多种类型，使用时不消耗）
+	var intel_types = [
+		{"name": "秘密", "icon": "📜", "q": "BRONZE"},
+		{"name": "洞察", "icon": "🔍", "q": "BRONZE"},
+	]
+	for it in intel_types:
+		var count = ResourceManager.get_intel_count(it.name)
+		var ic = card_factory.make_resource_card(it.name, it.icon, it.q, count)
+		ic.drag_ended.connect(_on_hand_card_dropped)
+		ic.drag_started.connect(func(_c): hand_layout.arrange())
+		var nm = it.name
+		ic._on_right_click = func(): _split_resource_card(ic, nm, it.icon, it.q)
+		ic._on_click = func(): popups.show_res_popup(nm, it.icon, it.q, ic.get_meta("res_count", 0))
+		hand_container.add_child(ic); hand_cards.append(ic)
+		resource_cards[nm] = ic
 	
 	# 下一天 — 右下角
 	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
@@ -680,8 +690,8 @@ func _update_card_count(card: PanelContainer, count: int):
 	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
 	if card.get_meta("res_type","") == "金币":
 		ResourceManager.gold = count
-	if card.get_meta("res_type","") == "秘密":
-		ResourceManager.intel = count
+	if ResourceManager.INTEL_EFFECTS.has(card.get_meta("res_type","")):
+		# 情报卡不追踪计数，由 ResourceManager 管理
 
 func _next_press() -> void:
 	_insight_used_keys.clear()
@@ -763,11 +773,24 @@ func _refresh() -> void:
 		cp.add_theme_stylebox_override("panel",sb)
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
+	_refresh_intel_cards()
 
 # 同步金币卡数量和 ResourceManager
 
 func _load_rites() -> Array:
 	var f = FileAccess.open("res://data/rites.json",FileAccess.READ)
+
+
+func _refresh_intel_cards():
+	for nm in ResourceManager.INTEL_EFFECTS:
+		var card = resource_cards.get(nm)
+		if card and is_instance_valid(card):
+			var cnt = ResourceManager.get_intel_count(nm)
+			card.set_meta("res_count", cnt)
+			card.get_meta("res_data").count = cnt
+			var lbl = card.get_node_or_null("VB/CountLbl")
+			if lbl: lbl.text = ("x%d" % cnt) if cnt > 0 else ""
+			card.visible = cnt > 0
 	if f == null: return []
 	var d = JSON.parse_string(f.get_as_text()); f.close()
 	if d == null: return []
@@ -986,8 +1009,12 @@ func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
 				var filter_rank = it.get("filter_rank","")
 				if filter_rank != "" and cd.get("rank","").to_upper() != filter_rank:
 					continue
-			elif card_type == "resource" and drag_data.get("id","") != subtype:
-				continue
+			elif card_type == "resource":
+				var res_id = drag_data.get("id","")
+				if subtype == "INTEL":
+					if not ResourceManager.INTEL_EFFECTS.has(res_id): continue
+				elif res_id != subtype:
+					continue
 		# 杀戮卡固定返回残忍的牺牲
 		if card_type == "sultan_card" and subtype == "MURDER" and rite.id != 204:
 			continue

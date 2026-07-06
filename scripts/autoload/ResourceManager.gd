@@ -20,15 +20,49 @@ var reputations: Dictionary = {
 }
 
 var gold_dice: int = 3                 # 金骰子 — 检定后每颗+1成功
-var intel: int = 0                      # 情报
+var intel_stone: Dictionary = {}        # {类型:数量} 石情报
+var intel_copper: Dictionary = {}       # {类型:数量} 铜情报
+var intel_silver: Dictionary = {}       # {类型:数量} 银情报
+
+# 情报效果定义: {attr_bonus, rerolls}
+const INTEL_EFFECTS = {
+	"秘密": {"attrs": {"cha": 1, "soc": 1}, "rerolls": 1},
+	"洞察": {"attrs": {"wis": 1}, "rerolls": 1},
+	"战术": {"attrs": {"com": 1}, "rerolls": 1},
+	"秘氛": {"attrs": {"ste": 1}, "rerolls": 1},
+	"机遇": {"attrs": {"sur": 1}, "rerolls": 1},
+	"内幕": {"attrs": {"pow": 1}, "rerolls": 1},
+	"预兆": {"attrs": {"mag": 1}, "rerolls": 1},
+}
 
 func reset() -> void:
 	gold = 20
 	gold_dice = 3
-	intel = 0
+	intel_stone = {}; intel_copper = {}; intel_silver = {}
 	reputations = {
 		"good": 0, "evil": 0, "power": 0, "hero": 0, "spirit": 0
 	}
+
+func add_intel(type_name: String, grade: String, amount: int = 1) -> void:
+	var target = intel_stone if grade == "STONE" else (intel_copper if grade == "COPPER" else intel_silver)
+	if not target.has(type_name): target[type_name] = 0
+	target[type_name] += amount
+
+func get_intel_count(type_name: String) -> int:
+	return intel_stone.get(type_name, 0) + intel_copper.get(type_name, 0) + intel_silver.get(type_name, 0)
+
+func get_intel_bonus(type_name: String) -> Dictionary:
+	var grade_mult := 1
+	if intel_silver.get(type_name, 0) > 0: grade_mult = 3
+	elif intel_copper.get(type_name, 0) > 0: grade_mult = 2
+	var eff = INTEL_EFFECTS.get(type_name, {})
+	var bonus: Dictionary = {"rerolls": 0}
+	if eff.has("attrs"):
+		for k in eff.attrs:
+			bonus[k] = eff.attrs[k] * grade_mult
+	if eff.has("rerolls"):
+		bonus["rerolls"] = eff.rerolls * grade_mult
+	return bonus
 
 
 ## === 五声望阈值表（已验证原版数据） ===

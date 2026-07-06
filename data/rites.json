@@ -430,7 +430,7 @@
 	"location": "palace",
 	"slots": [{"type": "character", "required_tags": ["scholar"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
 	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
-	"insight_trigger": {"type": "resource", "subtype": "秘密"},
+	"insight_trigger": {"type": "resource", "subtype": "INTEL"},
 	"check": {"type": "solo", "attribute": "wis", "required_successes": 1},
 	"outcomes": {
 	  "success": {"spirit": 1, "gold": 1,
@@ -446,7 +446,7 @@
 	"location": "palace",
 	"slots": [{"type": "character", "required_tags": ["follower"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
 	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
-	"insight_trigger": {"type": "resource", "subtype": "秘密"},
+	"insight_trigger": {"type": "resource", "subtype": "INTEL"},
 	"check": {"type": "solo", "attribute": "cha", "required_successes": 1},
 	"outcomes": {
 	  "success": {"gold": 2, "power": 1,
