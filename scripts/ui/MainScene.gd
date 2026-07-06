@@ -160,8 +160,6 @@ func _rebuild_map_nodes():
 			if x + 100 > _map_inner.size.x:
 				x = 8.0; y += 55.0
 			_map_inner.add_child(node)
-
-
 	y += 55.0
 	for ar in active_rites:
 		var rite = ar.get("rite", ar)
