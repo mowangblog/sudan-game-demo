@@ -156,6 +156,7 @@ func _map() -> void:
 	
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
+			if not is_instance_valid(c): continue
 			var rp = c.get_meta("rite_pos")
 			if rp:
 				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
@@ -848,8 +849,20 @@ func _update_countdown_labels():
 		cd.set_meta("countdown", remaining)
 		if remaining <= 0:
 			cd.queue_free()
+			var lbl = c.get_meta("char_label")
+			if lbl and is_instance_valid(lbl): lbl.queue_free()
+			var rid = c.get_meta("rite_id", -1)
+			_remove_rite_from_active(rid)
+			c.queue_free()
 		else:
 			cd.text = "%d天" % remaining
+
+
+func _remove_rite_from_active(rite_id: int):
+	for i in range(active_rites.size() - 1, -1, -1):
+		if active_rites[i].rite.get("id", -1) == rite_id:
+			active_rites.remove_at(i)
+			break
 
 
 func _refresh_intel_cards():
