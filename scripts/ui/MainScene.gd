@@ -47,6 +47,7 @@ var sort_btn: Button
 var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
+var _insight_used_types: Array[String] = []  # 本回合已寻思的卡牌类型
 var current_rite_detail: Dictionary = {}
 
 func _ready() -> void:
@@ -490,12 +491,11 @@ func _bottom() -> void:
 	
 	hand_cards.clear()
 	
-	# 俺寻思 — 左下角骷髅，高度和手牌区一致
+	# 俺寻思 — 左下角地图区域独立悬浮
 	var insight = _make_insight_button()
-	insight.position = Vector2(10, 0)
-	insight.size.x = 86  # 稍宽一点
-	insight.size.y = hand_container.size.y  # 和手牌区同高
-	hand_container.add_child(insight)
+	insight.position = Vector2(10, get_viewport().size.y - 200 - 10 - 112)  # 手牌区上方
+	insight.size.x = 86; insight.size.y = 112
+	add_child(insight)
 	
 	# 角色卡
 	for cid in ["player","meji","tietou","kuaijiao","zhaqiyi"]:
@@ -542,7 +542,6 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(insight): insight.size.y = hand_container.size.y
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
 		_update_card_zone_border()
@@ -554,8 +553,7 @@ func _bottom() -> void:
 func _update_card_zone_border():
 	var cz = get_node_or_null("CardZoneBorder")
 	if not cz: return
-	var insight = hand_container.get_node_or_null("InsightBtn")
-	var left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
+	var left: float = 8  # 固定左边距，俺寻思已移出
 	var right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
 	cz.position = Vector2(left, hand_container.position.y + 4)
 	cz.size = Vector2(right - left, hand_container.size.y - 8)
@@ -586,7 +584,7 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	var dropped_in_slot = false
 	
 	# 1. 检查是否拖到了俺寻思
-	var insight = hand_container.get_node_or_null("InsightBtn")
+	var insight = get_node_or_null("InsightBtn")
 	if insight and insight.get_global_rect().has_point(global_pos):
 		_do_insight_with_card(card)
 		dropped_in_slot = true
@@ -671,6 +669,7 @@ func _update_card_count(card: PanelContainer, count: int):
 		ResourceManager.gold = count
 
 func _next_press() -> void:
+	_insight_used_types.clear()  # 重置寻思追踪
 	if GameManager.is_game_over:
 		_log("⚰️ 游戏已结束。"); _refresh(); return
 	if active_rites.size() == 0:
@@ -819,50 +818,103 @@ func _log(msg:String) -> void:
 
 func _do_insight_with_card(card: PanelContainer) -> void:
 	var drag_data = card.get_meta("drag_data", {})
+	var card_type = drag_data.get("type", "")
 	var card_name = drag_data.get("name", "卡牌")
 	
-	# 隐藏卡牌
+	# 本回合已寻思过此类型 → 提示
+	if card_type in _insight_used_types:
+		_log("💀 俺寻思：对「%s」暂时想不出更好的办法了。" % card_name)
+		return
+	_insight_used_types.append(card_type)
+	
+	# 角色卡 → 显示气泡文字，不触发事件
+	if card_type == "character":
+		_insight_char_bubble(drag_data)
+		return
+	
+	# 查找匹配的 insight_trigger 仪式
+	var matched = _find_insight_rites(card_type, drag_data)
+	if matched.is_empty():
+		_log("💀 俺寻思：对这「%s」暂时想不出更好的办法了。" % card_name)
+		return
+	
+	# 随机选一个
+	var picked = matched[randi() % matched.size()]
+	
+	# 隐藏卡牌 + 思考动画
 	card.visible = false
 	hand_layout.arrange()
 	
-	# 思考动画：俺寻思按钮脉冲闪烁 1.5s
-	var insight = hand_container.get_node_or_null("InsightBtn")
+	var insight = get_node_or_null("InsightBtn")
 	if insight and is_instance_valid(insight):
 		var t = create_tween().set_loops(3)
 		t.tween_property(insight, "modulate", Color(1.3, 1.3, 1.0), 0.25)
 		t.tween_property(insight, "modulate", Color.WHITE, 0.25)
 		_log("💀 俺寻思：「%s」...思考中..." % card_name)
 	
-	await get_tree().create_timer(1.5).timeout
-	
-	# 停止动画
+	await get_tree().create_timer(1.0).timeout
 	if insight and is_instance_valid(insight):
 		insight.modulate = Color.WHITE
 	
-	# 结算
-	var discoveries = [
-		{"msg":"在角落发现了被遗忘的宝箱...","gold":5},
-		{"msg":"密信揭示了贵族的秘密...","power":1},
-		{"msg":"流浪猫带路发现了隐藏道具...","gold_dice":1},
-		{"msg":"不小心惊动了卫兵...","gold":-2},
-		{"msg":"在旧书中看到禁断的诗...","spirit":1},
-	]
-	var idx = randi() % discoveries.size()
-	var result = discoveries[idx]
+	# 如果触发标记为消耗，则消耗卡牌
+	var consumed := false
+	if picked.get("insight_trigger",{}).get("consume", false):
+		if card_type == "sultan_card":
+			GameManager.consume_sultan_card(0)
+			card.queue_free(); hand_cards.erase(card)
+			_log("🃏 苏丹卡已消耗。")
+			consumed = true
 	
-	_log("💀 俺寻思：%s" % result.msg)
-	if result.has("gold"): ResourceManager.add_gold(result.gold)
-	if result.has("power"): ResourceManager.modify_reputation("power", result.power)
-	if result.has("spirit"): ResourceManager.modify_reputation("spirit", result.spirit)
-	if result.has("gold_dice"): ResourceManager.modify_gold_dice(result.gold_dice)
+	# 启动结算
+	_settle_insight_rite(picked, drag_data)
 	
-	# 弹出反馈
-	_show_insight_result(result.msg)
-	_refresh()
-	
-	# 归还卡牌
-	card.visible = true
-	hand_layout.arrange()
+	# 归还卡牌(未消耗的情况)
+	if not consumed:
+		card.visible = true
+		hand_layout.arrange()
+
+
+func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
+	var all = DataManager.rites
+	var matched: Array = []
+	for rite in all:
+		var it = rite.get("insight_trigger", {})
+		if it.is_empty(): continue
+		if it.get("type","") != card_type: continue
+		var subtype = it.get("subtype","")
+		if subtype != "":
+			if card_type == "sultan_card" and drag_data.get("data",{}).get("type","") != subtype: continue
+			if card_type == "resource" and drag_data.get("id","") != subtype: continue
+		matched.append(rite)
+	return matched
+
+
+func _insight_char_bubble(drag_data: Dictionary):
+	var cid = drag_data.get("id","")
+	var bubbles = {
+		"player": "嗯？",
+		"meji": "我的挚爱，我的坚定盟友。",
+		"zhaqiyi": "我的学生，很有潜力的年轻人。",
+		"tietou": "一个沉默寡言的铁匠。",
+		"kuaijiao": "路边的消息，往往最值钱。",
+	}
+	_log("💀 俺寻思：「%s」—— %s" % [drag_data.get("name","角色"), bubbles.get(cid, drag_data.get("name","角色"))])
+
+
+func _settle_insight_rite(rite: Dictionary, drag_data: Dictionary):
+	var cd = {}
+	var sd = {}
+	if drag_data.get("type","") == "character":
+		cd = drag_data
+	elif drag_data.get("type","") == "sultan_card":
+		sd = drag_data
+	var screen = SettlementScreen.new()
+	add_child(screen)
+	screen.setup_and_show(rite, cd, sd)
+	screen.settlement_done.connect(func(result: Dictionary):
+		_log("  俺寻思：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
+		_refresh()
+	)
 
 func _show_insight_result(msg: String):
 	var popup = PanelContainer.new()

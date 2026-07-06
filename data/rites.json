@@ -310,5 +310,101 @@
 	  }
 	],
 	"rewards": {"gold": 12, "power": 1}
+  },
+  {
+	"id": 200,
+	"name": "宫廷事务",
+	"description": "在宫廷中处理琐事赚取金币。",
+	"location": "palace",
+	"slots": [{"type": "character", "required_tags": [], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "金币"},
+	"check": {"type": "solo", "attribute": "soc", "required_successes": 1},
+	"outcomes": {
+	  "success": {"gold": 5,
+		"narrative": "你在宫廷的走廊里步履从容，与几位贵族谈笑风生间便处理好了几件积压的政务。内务官低头呈上了一袋金币——这是今日的酬金。"},
+	  "fail": {"gold": 1,
+		"narrative": "宫廷里今日格外冷清，你等了许久也只接到了一件无足轻重的小差事。赚到的铜板还不够买杯茶。"}
+	}
+  },
+  {
+	"id": 201,
+	"name": "出卖苦力",
+	"description": "雇佣强壮的角色出卖体力换取金币。",
+	"location": "market",
+	"slots": [{"type": "character", "required_tags": ["strong"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "金币"},
+	"check": {"type": "solo", "attribute": "phy", "required_successes": 1},
+	"outcomes": {
+	  "success": {"gold": 4,
+		"narrative": "码头上的监工打量着[角色]，满意地点了点头。一个下午的苦力活下来，虽然腰酸背痛，但手中沉甸甸的钱袋让人欣慰。"},
+	  "fail": {"gold": 1,
+		"narrative": "今天码头上没什么大活，[角色]只搬了几箱轻货就没人再招呼了。赚的还不够填饱肚子。"}
+	}
+  },
+  {
+	"id": 202,
+	"name": "酒馆拳斗",
+	"description": "在地下拳场靠拳头赚钱。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": ["warrior"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "金币"},
+	"check": {"type": "solo", "attribute": "com", "required_successes": 2},
+	"outcomes": {
+	  "success": {"gold": 4,
+		"narrative": "地下赌场的呐喊声震耳欲聋。[角色]的拳头如铁锤般砸下，对手轰然倒地。庄家黑着脸递上一袋赌金。"},
+	  "fail": {"gold": 2,
+		"narrative": "对手实在太过强壮，[角色]虽然拼尽全力，但最终被一拳击中腹部，踉跄着退下了擂台。不过看客们的打赏还算慷慨。"}
+	}
+  },
+  {
+	"id": 203,
+	"name": "狩猎游戏",
+	"description": "接受贵族的狩猎邀请，赢得赏金。",
+	"location": "wilderness",
+	"slots": [{"type": "character", "required_tags": [], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 2, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "金币"},
+	"check": {"type": "solo", "attribute": "sur", "required_successes": 2},
+	"outcomes": {
+	  "success": {"gold": 6, "power": 1,
+		"narrative": "[角色]的箭矢精准地穿过了猎物的咽喉。一同狩猎的贵族们纷纷投来钦佩的目光——这次狩猎大会的头筹，非你莫属。金币+6，权势+1。"},
+	  "fail": {"gold": 2,
+		"narrative": "密林中的猎物比想象中要狡猾得多。[角色]追踪了半天，最终只猎到了一只瘦弱的野兔。贵族们礼貌性地笑了笑，但眼神中的失望难以掩饰。"}
+	}
+  },
+  {
+	"id": 204,
+	"name": "残忍的牺牲",
+	"description": "用一条生命向黑暗力量献祭。消耗苏丹杀戮卡。",
+	"location": "slums",
+	"slots": [{"type": "sultan_card", "required_tags": ["MURDER"], "optional": false}, {"type": "character", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "MURDER", "consume": true},
+	"check": {"type": "solo", "attribute": "com", "required_successes": 2},
+	"outcomes": {
+	  "success": {"evil": 2, "spirit": 2,
+		"narrative": "匕首落下，鲜血渗入地面的符文阵中。黑暗力量如潮水般涌入你的身体——灵视骤然增强，你甚至能看到空气中游荡的亡魂。杀戮卡在仪式完成的那一刻化为灰烬。恶名+2，灵视+2。"},
+	  "fail": {"evil": 1,
+		"narrative": "仪式进行到一半，受害者挣脱了束缚。虽然最终你还是控制住了局面，但能量的流动被打乱了。杀戮卡的光芒黯淡下来。恶名+1。"}
+	}
+  },
+  {
+	"id": 205,
+	"name": "荣誉杀戮",
+	"description": "以决斗的方式名正言顺地除掉敌人。消耗苏丹杀戮卡。",
+	"location": "barracks",
+	"slots": [{"type": "sultan_card", "required_tags": ["MURDER"], "optional": false}, {"type": "character", "required_tags": ["warrior"], "optional": false}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "MURDER", "consume": true},
+	"check": {"type": "solo", "attribute": "com", "required_successes": 3},
+	"outcomes": {
+	  "success": {"power": 2,
+		"narrative": "校场之上，[角色]手持长剑，在众目睽睽之下以一场干净利落的决斗结束了对手的生命。没有人能质疑这场正义的处决。杀戮卡化为齑粉。权势+2。"},
+	  "fail": {"power": 1,
+		"narrative": "决斗进行得异常艰难，对手垂死挣扎，给[角色]留下了几道触目惊心的伤痕。虽然最终还是赢了，但围观者的表情从尊重变成了恐惧。权势+1。"}
+	}
   }
 ]
