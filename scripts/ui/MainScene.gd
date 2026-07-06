@@ -812,6 +812,7 @@ func _refresh() -> void:
 	s_lbl.text = "灵%d" % ResourceManager.reputations.spirit
 	
 	var card = GameManager.active_sultan_card
+	if not is_instance_valid(cp): return
 	cp.visible = not card.is_empty()
 	if not card.is_empty():
 		ct_lbl.text = TN.get(card.get("type",""),"？")
