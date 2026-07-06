@@ -406,5 +406,53 @@
 	  "fail": {"power": 1,
 		"narrative": "决斗进行得异常艰难，对手垂死挣扎，给[角色]留下了几道触目惊心的伤痕。虽然最终还是赢了，但围观者的表情从尊重变成了恐惧。权势+1。"}
 	}
+  },
+  {
+	"id": 206,
+	"name": "黑吃黑",
+	"description": "在暗巷中截获黑市交易的情报，抢在别人之前下手。",
+	"location": "slums",
+	"slots": [{"type": "character", "required_tags": ["stealth"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "金币"},
+	"check": {"type": "solo", "attribute": "ste", "required_successes": 1},
+	"outcomes": {
+	  "success": {"gold": 4, "power": 1,
+		"narrative": "夜幕降临，[角色]在暗巷阴影中伏击了刚从赌场出来的黑市掮客。一场短促而激烈的搏斗后，钱袋到手——额外还有一张写满名字的名单，足以让几个地下势力对[角色]言听计从。金币+4，权势+1。"},
+	  "fail": {"gold": 1,
+		"narrative": "[角色]在暗巷中埋伏了半宿，目标却始终没有出现。看来情报有误——或者有人在更高处提前截了胡。只找到几个散落的铜板。金币+1。"}
+	}
+  },
+  {
+	"id": 207,
+	"name": "皇家图书馆",
+	"description": "利用情报换取进入皇家图书馆的机会。",
+	"location": "palace",
+	"slots": [{"type": "character", "required_tags": ["scholar"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "情报"},
+	"check": {"type": "solo", "attribute": "wis", "required_successes": 1},
+	"outcomes": {
+	  "success": {"spirit": 1, "gold": 1,
+		"narrative": "皇家图书馆的穹顶高耸入云，[角色]在浩如烟海的古籍中度过了一个充实的午后。一本蒙尘的古卷记载了一段被遗忘的历史——原来苏丹王室的起源隐藏着不为人知的秘密。灵视+1，金币+1。"},
+	  "fail": {"gold": 0,
+		"narrative": "图书馆的管理员面无表情地摇了摇头。『没有特许令，这些书不能外借——不，也不准翻阅。』情报白费了，但至少没有被轰出去。"}
+	}
+  },
+  {
+	"id": 208,
+	"name": "在宴会上演出",
+	"description": "利用情报混入贵族的宴会，靠才艺获得赏赐。",
+	"location": "palace",
+	"slots": [{"type": "character", "required_tags": ["follower"], "optional": false}, {"type": "resource", "required_tags": [], "optional": true}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": true,
+	"insight_trigger": {"type": "resource", "subtype": "情报"},
+	"check": {"type": "solo", "attribute": "cha", "required_successes": 1},
+	"outcomes": {
+	  "success": {"gold": 2, "power": 1,
+		"narrative": "丝绸长袍、水晶杯盏、悠扬的鲁特琴声——[角色]在宴会上的表演惊艳了在座的每一位贵族。一位贵妇甚至摘下自己的宝石胸针送给[角色]作为赞赏。『明日来宫里一趟，我有个差事要托付给你。』金币+2，权势+1。"},
+	  "fail": {"gold": 1,
+		"narrative": "虽然混进了宴会，但[角色]的表演不幸被一位迟到的公爵打断了。贵族们只是礼貌性地鼓了鼓掌，随即转头继续他们的觥筹交错。情报打了水漂，但至少混到了一份餐后的甜点。金币+1。"}
+	}
   }
 ]

@@ -48,6 +48,7 @@ var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []  # 本回合已寻思：角色用id，其他用类型
+var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉杀戮
 var current_rite_detail: Dictionary = {}
 
 func _ready() -> void:
@@ -524,6 +525,15 @@ func _bottom() -> void:
 	hand_container.add_child(gold_card); hand_cards.append(gold_card)
 	resource_cards["金币"] = gold_card
 	
+	# 情报卡
+	var intel_card = card_factory.make_resource_card("情报", "📜", "BRONZE", ResourceManager.intel)
+	intel_card.drag_ended.connect(_on_hand_card_dropped)
+	intel_card.drag_started.connect(func(_c): hand_layout.arrange())
+	intel_card._on_right_click = func(): _split_resource_card(intel_card, "情报", "📜", "BRONZE")
+	intel_card._on_click = func(): popups.show_res_popup("情报", "📜", "BRONZE", intel_card.get_meta("res_count", 0))
+	hand_container.add_child(intel_card); hand_cards.append(intel_card)
+	resource_cards["情报"] = intel_card
+	
 	# 下一天 — 右下角
 	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
 	nb.add_theme_font_size_override("font_size", 15); nb.pressed.connect(_next_press)
@@ -670,9 +680,13 @@ func _update_card_count(card: PanelContainer, count: int):
 	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
 	if card.get_meta("res_type","") == "金币":
 		ResourceManager.gold = count
+	if card.get_meta("res_type","") == "情报":
+		ResourceManager.intel = count
 
 func _next_press() -> void:
-	_insight_used_keys.clear()  # 重置寻思追踪
+	_insight_used_keys.clear()
+	# 检查是否有未执行的杀戮仪式，若是则第二天弹出荣誉杀戮
+	_check_pending_honor_kill()
 	if GameManager.is_game_over:
 		_log("⚰️ 游戏已结束。"); _refresh(); return
 	if active_rites.size() == 0:
@@ -826,6 +840,21 @@ func _log(msg:String) -> void:
 	_refresh()
 	print("[MainScene]", msg)
 
+func _check_pending_honor_kill() -> void:
+	for ar in active_rites:
+		if ar.get("insight_kill_rank","") != "" and ar.char.is_empty() and not ar.get("insight_kill_used", true):
+			var rank = ar.insight_kill_rank
+			if rank in ["STONE","BRONZE"]:
+				var honor_rite = DataManager.get_rite_by_id(205)
+				if not honor_rite.is_empty():
+					var entry = {"rite": honor_rite, "char": {}, "sultan_card": {}, "insight": true}
+					active_rites.append(entry)
+					_log("⚔ 荣誉杀戮的机会出现了——趁还来得及。")
+					_refresh()
+			ar.insight_kill_used = true
+			break
+
+
 func _do_insight_with_card(card: PanelContainer) -> void:
 	var drag_data = card.get_meta("drag_data", {})
 	var card_type = drag_data.get("type", "")
@@ -855,6 +884,11 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 		card.visible = true; hand_layout.arrange()
 		return
 	
+	# 杀戮卡追踪
+	var kill_rank = ""
+	if card_type == "sultan_card" and drag_data.get("data",{}).get("type","") == "MURDER":
+		kill_rank = drag_data.get("data",{}).get("rank","").to_upper()
+	
 	# 有匹配 → 加入地图
 	var picked = matched[randi() % matched.size()]
 	card.visible = false; hand_layout.arrange()
@@ -868,7 +902,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 			card.queue_free(); hand_cards.erase(card)
 			consumed = true
 	
-	_add_insight_rite_to_map(picked, drag_data, consumed)
+	_add_insight_rite_to_map(picked, drag_data, consumed, kill_rank)
 	if not consumed:
 		card.visible = true; hand_layout.arrange()
 
@@ -915,10 +949,14 @@ func _show_insight_bubble(text: String) -> void:
 	bubble.queue_free()
 
 
-func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed: bool):
+func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed: bool, kill_rank: String = ""):
 	var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
 	if drag_data.get("type","") == "character" and not consumed:
 		entry.char = drag_data
+	# 跟踪杀戮卡
+	if kill_rank != "":
+		entry["insight_kill_rank"] = kill_rank
+		entry["insight_kill_used"] = false
 	active_rites.append(entry)
 	_refresh()
 	_show_insight_bubble("「%s」\n出现在地图上" % rite.get("name", "?"))
@@ -935,6 +973,9 @@ func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
 		if subtype != "":
 			if card_type == "sultan_card" and drag_data.get("data",{}).get("type","") != subtype: continue
 			if card_type == "resource" and drag_data.get("id","") != subtype: continue
+		# 杀戮卡固定返回残忍的牺牲（不让玩家选）
+		if card_type == "sultan_card" and subtype == "MURDER" and rite.id != 204:
+			continue
 		matched.append(rite)
 	return matched
 

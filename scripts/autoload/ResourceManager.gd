@@ -20,10 +20,12 @@ var reputations: Dictionary = {
 }
 
 var gold_dice: int = 3                 # 金骰子 — 检定后每颗+1成功
+var intel: int = 0                      # 情报
 
 func reset() -> void:
 	gold = 20
 	gold_dice = 3
+	intel = 0
 	reputations = {
 		"good": 0, "evil": 0, "power": 0, "hero": 0, "spirit": 0
 	}
