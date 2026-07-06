@@ -48,7 +48,6 @@ var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []
-var _map_inner: Control
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
@@ -68,7 +67,6 @@ func _ready() -> void:
 	EventBus.rite_appeared.connect(func(rite: Dictionary):
 		if _get_rite_by_id(rite.get("id",-1)) == null:
 			active_rites.append({"rite":rite,"char":{},"sultan_card":{}})
-		call_deferred("_rebuild_map_nodes")
 	)
 	GameManager.start_game()
 	_refresh()
@@ -137,40 +135,31 @@ func _map() -> void:
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
 
-	_map_inner = Control.new()
-	_map_inner.name = "MapInner"
-	_map_inner.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_map_inner.mouse_filter = Control.MOUSE_FILTER_PASS
-	map.add_child(_map_inner)
+	var map_area = Control.new()
+	map_area.name = "MapArea"
+	map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
+	map.add_child(map_area)
 
 	_all_rites = _load_rites()
-	_map_inner.resized.connect(_rebuild_map_nodes)
-	call_deferred("_rebuild_map_nodes")
-
-
-func _rebuild_map_nodes():
-	if not _map_inner: return
-	for c in _map_inner.get_children(): c.queue_free()
-	var x: float = 8.0; var y: float = 8.0
+	var x: float = 10.0; var y: float = 10.0
 	for rite in _all_rites:
 		if rite.id in PERMANENT_RITE_IDS:
-			var node = _make_rite_node(rite)
-			node.position = Vector2(x, y)
+			var btn = _make_rite_node(rite)
+			btn.position = Vector2(x, y)
 			x += 110.0
-			if x + 100 > _map_inner.size.x:
-				x = 8.0; y += 55.0
-			_map_inner.add_child(node)
+			if x + 100 > 800:
+				x = 10.0; y += 55.0
+			map_area.add_child(btn)
 	y += 55.0
 	for ar in active_rites:
 		var rite = ar.get("rite", ar)
-		if rite.get("category","") == "insight" or (rite.get("id",0) not in PERMANENT_RITE_IDS):
-			var node = _make_rite_node(rite)
-			node.position = Vector2(x, y)
-			x += 110.0
-			if x + 100 > _map_inner.size.x:
-				x = 8.0; y += 55.0
-			_map_inner.add_child(node)
-	_map_inner.custom_minimum_size.y = y + 55
+		var btn = _make_rite_node(rite)
+		btn.position = Vector2(x, y)
+		x += 110.0
+		if x + 100 > 800:
+			x = 10.0; y += 55.0
+		map_area.add_child(btn)
 
 func _make_rite_node(rite: Dictionary) -> Control:
 	var btn = Button.new()
@@ -191,7 +180,6 @@ func _on_rite_node_clicked(rite: Dictionary):
 	else:
 		var entry = {"rite": rite, "char": {}, "sultan_card": {}}
 		active_rites.append(entry)
-		call_deferred("_rebuild_map_nodes")
 		_log("📋 「%s」已加入今日计划" % rite.get("name","?"))
 
 
@@ -771,7 +759,6 @@ func _refresh() -> void:
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
-	call_deferred("_rebuild_map_nodes")
 
 # 同步金币卡数量和 ResourceManager
 
