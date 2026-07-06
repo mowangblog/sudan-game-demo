@@ -185,6 +185,19 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 				ok = false; break
 		if ok: break
 	placed.append(Vector2(px, py))
+	var px: float; var py: float; var ok := false
+	var bw: float = 132; var bh: float = 36; var pad: float = 8
+	for _attempt in range(50):
+		_rite_seed = (_rite_seed * 16807) % 2147483647
+		px = 0.08 + (float(_rite_seed % 900) / 900.0) * 0.82
+		_rite_seed = (_rite_seed * 16807) % 2147483647
+		py = 0.05 + (float(_rite_seed % 900) / 900.0) * 0.88
+		ok = true
+		for pp in placed:
+			if abs(px - pp.x) < (bw + pad) / area.size.x and abs(py - pp.y) < (bh + pad) / area.size.y:
+				ok = false; break
+		if ok: break
+	placed.append(Vector2(px, py))
 	btn.set_meta("rite_pos", Vector2(px, py))
 	btn.set_meta("rite_id", rite.get("id", -1))
 	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
