@@ -48,6 +48,8 @@ var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []
+var _map_area: Control
+var _rite_seed: int = 42
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
@@ -64,6 +66,14 @@ func _ready() -> void:
 	popups.setup(self, {"C":C,"TC":TC,"TN":TN,"RG":RG,"AI":AI,"AN":AN})
 	_char_load()
 	_build()
+	EventBus.rite_appeared.connect(func(rite: Dictionary):
+		if _map_area:
+			var existing = []
+			for c in _map_area.get_children():
+				var rp = c.get_meta("rite_pos")
+				if rp: existing.append(rp)
+			_place_rite_btn(rite, _map_area, existing)
+	)
 	GameManager.start_game()
 	_refresh()
 
@@ -134,38 +144,41 @@ func _map() -> void:
 	var map_area = Control.new(); map_area.name = "MapArea"; map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
 	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
 	map.add_child(map_area)
+	_map_area = map_area
 	
 	var all_rites = _load_rites()
-	var placed_positions: Array[Vector2] = []
-	var seed_val: int = 42
-	var btn_w: float = 132; var btn_h: float = 36; var pad: float = 8
-	
-	for i in range(all_rites.size()):
-		var rite = all_rites[i]
-		if rite.has("insight_trigger"): continue
-		var btn = _make_rite_btn(rite)
-		var px: float; var py: float
-		var ok := false
-		for _attempt in range(50):
-			seed_val = (seed_val * 16807 + 0) % 2147483647
-			px = 0.08 + (float(seed_val % 1000) / 1000.0) * 0.82
-			seed_val = (seed_val * 16807 + 0) % 2147483647
-			py = 0.05 + (float(seed_val % 1000) / 1000.0) * 0.88
-			ok = true
-			for pp in placed_positions:
-				if abs(px - pp.x) < (btn_w + pad) / map_area.size.x and abs(py - pp.y) < (btn_h + pad) / map_area.size.y:
-					ok = false; break
-			if ok: break
-		placed_positions.append(Vector2(px, py))
-		btn.set_meta("rite_pos", Vector2(px, py))
-		btn.position = Vector2(px * map_area.size.x, py * map_area.size.y) - btn.size / 2
-		map_area.add_child(btn)
+	_rite_seed = 42
+	var placed: Array[Vector2] = []
+
+	for rite in all_rites:
+		if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
+			_place_rite_btn(rite, map_area, placed)
 	
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
 			var rp = c.get_meta("rite_pos", Vector2(0.5, 0.5))
 			c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
 	)
+
+
+func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
+	var btn = _make_rite_btn(rite)
+	var px: float; var py: float; var ok := false
+	var bw: float = 132; var bh: float = 36; var pad: float = 8
+	for _attempt in range(50):
+		_rite_seed = (_rite_seed * 16807) % 2147483647
+		px = 0.08 + (float(_rite_seed % 900) / 900.0) * 0.82
+		_rite_seed = (_rite_seed * 16807) % 2147483647
+		py = 0.05 + (float(_rite_seed % 900) / 900.0) * 0.88
+		ok = true
+		for pp in placed:
+			if abs(px - pp.x) < (bw + pad) / area.size.x and abs(py - pp.y) < (bh + pad) / area.size.y:
+				ok = false; break
+		if ok: break
+	placed.append(Vector2(px, py))
+	btn.set_meta("rite_pos", Vector2(px, py))
+	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
+	area.add_child(btn)
 
 
 func _make_rite_btn(rite: Dictionary) -> Button:
