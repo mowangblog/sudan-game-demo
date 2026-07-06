@@ -155,10 +155,18 @@ func _map() -> void:
 	map_area.resized.connect(func():
 		if init_done or map_area.size.x <= 0: return
 		init_done = true
-		var placed: Array[Vector2] = []
+		# 常驻仪式固定位置（百分比）
+		var perm_pos = {1: Vector2(0.05, 0.05), 2: Vector2(0.55, 0.05), 3: Vector2(0.30, 0.60), 4: Vector2(0.05, 0.75)}
 		for rite in _all_rites:
-			if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
-				_place_rite_btn(rite, map_area, placed)
+			if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
+			var rid = rite.get("id", -1)
+			var p = perm_pos.get(rid, Vector2(0.5, 0.5))
+			var btn = _make_rite_btn(rite)
+			var px = p.x * map_area.size.x; var py = p.y * map_area.size.y
+			btn.set_meta("rite_pct", p)
+			btn.set_meta("rite_id", rid)
+			btn.position = Vector2(px, py)
+			map_area.add_child(btn)
 	)
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
