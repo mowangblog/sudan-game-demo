@@ -141,6 +141,24 @@ func _map() -> void:
 
 	_all_rites = _load_rites()
 	
+	# DEBUG: 显示加载数量
+	var dbg = Label.new()
+	dbg.text = "仪式:%d 常驻:%d" % [_all_rites.size(), PERMANENT_RITE_IDS.size()]
+	dbg.add_theme_font_size_override("font_size", 12)
+	dbg.add_theme_color_override("font_color", C.GOLD)
+	vb.add_child(dbg)
+	
+	# 测试按钮
+	var tbtn = Button.new()
+	tbtn.text = "TEST"
+	tbtn.custom_minimum_size = Vector2(100, 40)
+	tbtn.add_theme_font_size_override("font_size", 12)
+	tbtn.add_theme_color_override("font_color", Color.WHITE)
+	var tsb = StyleBoxFlat.new(); tsb.bg_color = Color.RED
+	tsb.set_corner_radius_all(6)
+	tbtn.add_theme_stylebox_override("normal", tsb)
+	vb.add_child(tbtn)
+	
 	var perm_hb = HBoxContainer.new()
 	perm_hb.add_theme_constant_override("separation", 4)
 	vb.add_child(perm_hb)
