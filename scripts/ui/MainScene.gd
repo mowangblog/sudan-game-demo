@@ -167,25 +167,10 @@ func _map() -> void:
 
 func _place_permanent_rites():
 	if not _map_area or _map_area.size.x <= 0: return
-	var w = _map_area.size.x; var h = _map_area.size.y
-	var rites = _load_rites()
-	for rite in rites:
-		var cat = rite.get("category","")
-		if cat != "permanent": continue
-		if rite.has("insight_trigger"): continue
-		var pos: Vector2
-		var rid = rite.get("id", -1)
-		match rid:
-			1: pos = Vector2(0.05 * w, 0.05 * h)
-			2: pos = Vector2(0.55 * w, 0.05 * h)
-			3: pos = Vector2(0.30 * w, 0.60 * h)
-			4: pos = Vector2(0.05 * w, 0.75 * h)
-			_: pos = Vector2(0.5 * w, 0.5 * h)
-		var btn = _make_rite_btn(rite)
-		btn.set_meta("rite_pct", Vector2(pos.x / w, pos.y / h))
-		btn.set_meta("rite_id", rid)
-		btn.position = pos
-		_map_area.add_child(btn)
+	var placed: Array[Vector2] = []
+	for rite in _load_rites():
+		if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
+		_place_rite_btn(rite, _map_area, placed)
 
 
 func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
