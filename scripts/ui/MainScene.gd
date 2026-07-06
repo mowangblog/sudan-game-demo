@@ -135,31 +135,49 @@ func _map() -> void:
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
 
-	var map_area = Control.new()
-	map_area.name = "MapArea"
-	map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
-	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
-	map.add_child(map_area)
+	var vb = VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 4)
+	map.add_child(vb)
 
 	_all_rites = _load_rites()
-	var x: float = 10.0; var y: float = 10.0
+	
+	var perm_hb = HBoxContainer.new()
+	perm_hb.add_theme_constant_override("separation", 4)
+	vb.add_child(perm_hb)
 	for rite in _all_rites:
 		if rite.id in PERMANENT_RITE_IDS:
-			var btn = _make_rite_node(rite)
-			btn.position = Vector2(x, y)
-			x += 110.0
-			if x + 100 > 800:
-				x = 10.0; y += 55.0
-			map_area.add_child(btn)
-	y += 55.0
+			var btn = Button.new()
+			btn.text = rite.get("name","?")
+			btn.custom_minimum_size = Vector2(100, 40)
+			btn.add_theme_font_size_override("font_size", 10)
+			btn.add_theme_color_override("font_color", C.GOLD)
+			var sb = StyleBoxFlat.new()
+			sb.bg_color = Color("1a0f0a")
+			sb.set_corner_radius_all(6)
+			sb.border_width_bottom = 2
+			sb.border_color = C.GOLD_LO
+			btn.add_theme_stylebox_override("normal", sb)
+			btn.pressed.connect(func(rite2=rite): _on_rite_node_clicked(rite2))
+			perm_hb.add_child(btn)
+	
+	var dyn_hb = HBoxContainer.new()
+	dyn_hb.add_theme_constant_override("separation", 4)
+	vb.add_child(dyn_hb)
 	for ar in active_rites:
 		var rite = ar.get("rite", ar)
-		var btn = _make_rite_node(rite)
-		btn.position = Vector2(x, y)
-		x += 110.0
-		if x + 100 > 800:
-			x = 10.0; y += 55.0
-		map_area.add_child(btn)
+		if rite.get("category","") != "permanent":
+			var btn = Button.new()
+			btn.text = rite.get("name","?")
+			btn.custom_minimum_size = Vector2(100, 40)
+			btn.add_theme_font_size_override("font_size", 10)
+			btn.add_theme_color_override("font_color", C.GOLD)
+			var sb = StyleBoxFlat.new()
+			sb.bg_color = Color("1a0f0a")
+			sb.set_corner_radius_all(6)
+			sb.border_width_bottom = 2
+			sb.border_color = C.GOLD_LO
+			btn.add_theme_stylebox_override("normal", sb)
+			dyn_hb.add_child(btn)
 
 func _make_rite_node(rite: Dictionary) -> Control:
 	var btn = Button.new()
