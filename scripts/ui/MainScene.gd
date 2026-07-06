@@ -141,41 +141,12 @@ func _map() -> void:
 
 	_all_rites = _load_rites()
 	
-	# DEBUG: 显示加载数量
-	var dbg = Label.new()
-	dbg.text = "仪式:%d 常驻:%d" % [_all_rites.size(), PERMANENT_RITE_IDS.size()]
-	dbg.add_theme_font_size_override("font_size", 12)
-	dbg.add_theme_color_override("font_color", C.GOLD)
-	vb.add_child(dbg)
-	
-	# 测试按钮
-	var tbtn = Button.new()
-	tbtn.text = "TEST"
-	tbtn.custom_minimum_size = Vector2(100, 40)
-	tbtn.add_theme_font_size_override("font_size", 12)
-	tbtn.add_theme_color_override("font_color", Color.WHITE)
-	var tsb = StyleBoxFlat.new(); tsb.bg_color = Color.RED
-	tsb.set_corner_radius_all(6)
-	tbtn.add_theme_stylebox_override("normal", tsb)
-	vb.add_child(tbtn)
-	
 	var perm_hb = HBoxContainer.new()
 	perm_hb.add_theme_constant_override("separation", 4)
 	vb.add_child(perm_hb)
 	for rite in _all_rites:
-		if rite.id in PERMANENT_RITE_IDS:
-			var btn = Button.new()
-			btn.text = rite.get("name","?")
-			btn.custom_minimum_size = Vector2(100, 40)
-			btn.add_theme_font_size_override("font_size", 10)
-			btn.add_theme_color_override("font_color", C.GOLD)
-			var sb = StyleBoxFlat.new()
-			sb.bg_color = Color("1a0f0a")
-			sb.set_corner_radius_all(6)
-			sb.border_width_bottom = 2
-			sb.border_color = C.GOLD_LO
-			btn.add_theme_stylebox_override("normal", sb)
-			btn.pressed.connect(func(rite2=rite): _on_rite_node_clicked(rite2))
+		if rite.get("category","") == "permanent":
+			var btn = _make_rite_btn(rite)
 			perm_hb.add_child(btn)
 	
 	var dyn_hb = HBoxContainer.new()
@@ -184,18 +155,24 @@ func _map() -> void:
 	for ar in active_rites:
 		var rite = ar.get("rite", ar)
 		if rite.get("category","") != "permanent":
-			var btn = Button.new()
-			btn.text = rite.get("name","?")
-			btn.custom_minimum_size = Vector2(100, 40)
-			btn.add_theme_font_size_override("font_size", 10)
-			btn.add_theme_color_override("font_color", C.GOLD)
-			var sb = StyleBoxFlat.new()
-			sb.bg_color = Color("1a0f0a")
-			sb.set_corner_radius_all(6)
-			sb.border_width_bottom = 2
-			sb.border_color = C.GOLD_LO
-			btn.add_theme_stylebox_override("normal", sb)
+			var btn = _make_rite_btn(rite)
 			dyn_hb.add_child(btn)
+
+
+func _make_rite_btn(rite: Dictionary) -> Button:
+	var btn = Button.new()
+	btn.text = rite.get("name","?")
+	btn.custom_minimum_size = Vector2(100, 40)
+	btn.add_theme_font_size_override("font_size", 10)
+	btn.add_theme_color_override("font_color", C.GOLD)
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color("1a0f0a")
+	sb.set_corner_radius_all(6)
+	sb.border_width_bottom = 2
+	sb.border_color = C.GOLD_LO
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.pressed.connect(func(): _on_rite_node_clicked(rite))
+	return btn
 
 func _make_rite_node(rite: Dictionary) -> Control:
 	var btn = Button.new()
