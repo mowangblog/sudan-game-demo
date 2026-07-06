@@ -156,8 +156,13 @@ func _map() -> void:
 	
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
-			var rp = c.get_meta("rite_pos", Vector2(0.5, 0.5))
-			c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
+			var rp = c.get_meta("rite_pos")
+			if rp:
+				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
+			var lbl = c.get_meta("char_label")
+			if lbl and is_instance_valid(lbl):
+				lbl.position = Vector2(c.position.x, c.position.y - 14)
+				lbl.custom_minimum_size.x = c.size.x
 	)
 
 
@@ -199,13 +204,21 @@ func _update_rite_btn_label(rite_id: int, char_name: String):
 	if not _map_area: return
 	for c in _map_area.get_children():
 		if c.get_meta("rite_id", -1) == rite_id:
-			var orig = _find_rite_by_id(rite_id)
-			if orig and char_name != "":
-				c.text = orig.get("name","?") + "\n" + char_name
-				c.custom_minimum_size.y = 48
-			elif orig:
-				c.text = orig.get("name","?")
-				c.custom_minimum_size.y = 34
+			# 清除旧标签
+			var old_lbl = c.get_meta("char_label")
+			if old_lbl and is_instance_valid(old_lbl): old_lbl.queue_free()
+			if char_name != "":
+				var lbl = Label.new()
+				lbl.text = char_name
+				lbl.add_theme_font_size_override("font_size", 9)
+				lbl.add_theme_color_override("font_color", Color("7ac7ff"))
+				lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				lbl.custom_minimum_size.x = c.size.x
+				lbl.position = Vector2(c.position.x, c.position.y - 14)
+				c.set_meta("char_label", lbl)
+				_map_area.add_child(lbl)
+				# 窗口大小变化时重新定位
+				lbl.position = Vector2(c.position.x, c.position.y - 14)
 			break
 
 
@@ -218,12 +231,8 @@ func _find_rite_by_id(rite_id: int):
 func _reset_all_rite_btn_labels():
 	if not _map_area: return
 	for c in _map_area.get_children():
-		var rid = c.get_meta("rite_id", -1)
-		if rid != -1:
-			var orig = _find_rite_by_id(rid)
-			if orig:
-				c.text = orig.get("name","?")
-				c.custom_minimum_size.y = 34
+		var old_lbl = c.get_meta("char_label")
+		if old_lbl and is_instance_valid(old_lbl): old_lbl.queue_free()
 
 
 func _close_rite_popup() -> void:
