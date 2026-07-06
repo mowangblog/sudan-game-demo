@@ -455,7 +455,7 @@ func _show_intel_notification(type_name: String, grade: String):
 func _typewrite_on_label(lbl: Label, text: String, cb: Callable):
 	_tw_label=lbl; _typewrite_full=text; _typewrite_cb=cb; _typewrite_pos=0; lbl.text=""
 	if _typewrite_timer==null:
-		_typewrite_timer=Timer.new(); _typewrite_timer.one_shot=false; _typewrite_timer.wait_time=0.03
+		_typewrite_timer=Timer.new(); _typewrite_timer.one_shot=false; _typewrite_timer.wait_time=0.015
 		add_child(_typewrite_timer); _typewrite_timer.timeout.connect(_tw_tick)
 	_typewrite_timer.start()
 	if not lbl.gui_input.is_connected(_tw_skip):

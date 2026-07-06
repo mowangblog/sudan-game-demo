@@ -784,10 +784,7 @@ func _refresh_intel_cards():
 				card._on_click = func(): popups.show_res_popup(nm, it.icon, it.q, card.get_meta("res_count", 0))
 				hand_container.add_child(card); hand_cards.append(card)
 				resource_cards[nm] = card
-				# 入场动画：从上掉落
-				card.position.y = -150
-				var t = create_tween()
-				t.tween_property(card, "position:y", 0, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+				_animate_card_enter(card)
 			else:
 				card.set_meta("res_count", cnt)
 				if card.has_meta("res_data"): card.get_meta("res_data").count = cnt
@@ -830,7 +827,14 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 	new_card.drag_started.connect(func(_c): hand_layout.arrange())
 	hand_container.add_child(new_card)
 	hand_cards.append(new_card)
+	_animate_card_enter(new_card)
 	hand_layout.arrange()
+
+func _animate_card_enter(card: Control):
+	card.position.y = -200
+	var t = create_tween()
+	t.tween_property(card, "position:y", 0, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+
 
 func _clear_all_highlights():
 	for card in hand_cards:
