@@ -76,7 +76,7 @@
 	},
 	{
 		"id": 3,
-		"name": "欢愉之馆",
+		"name": "书店",
 		"description": "城中的欢愉场所。可用于消耗纵欲卡。",
 		"location": "market",
 		"slots": [
@@ -552,7 +552,7 @@
 				"optional": false
 			}
 		],
-		"time_limit": 0,
+		"time_limit": 2,
 		"duration": 1,
 		"auto_start": false,
 		"repeatable": true,
@@ -572,7 +572,7 @@
 				"narrative": "[角色]在各个暗巷中徘徊了一整夜，\n但所有的线索都指向了死胡同。\n『他们藏得太深了...』"
 			}
 		},
-		"category": "permanent"
+		"category": "normal"
 	},
 	{
 		"id": 100,

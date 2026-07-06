@@ -53,7 +53,7 @@ var _rite_seed: int = 42
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
-const PERMANENT_RITE_IDS = [1, 2, 3, 4, 15]  # 本回合已寻思：角色用id，其他用类型
+const PERMANENT_RITE_IDS = [1, 2, 3, 4]
 var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉杀戮
 var current_rite_detail: Dictionary = {}
 
