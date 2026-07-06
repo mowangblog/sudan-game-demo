@@ -48,6 +48,8 @@ var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []
+var _map_area: Control
+var _rite_seed: int = 42
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
@@ -64,6 +66,14 @@ func _ready() -> void:
 	popups.setup(self, {"C":C,"TC":TC,"TN":TN,"RG":RG,"AI":AI,"AN":AN})
 	_char_load()
 	_build()
+	EventBus.rite_appeared.connect(func(rite: Dictionary):
+		if _map_area:
+			var existing = []
+			for c in _map_area.get_children():
+				var rp = c.get_meta("rite_pos")
+				if rp: existing.append(rp)
+			_place_rite_btn(rite, _map_area, existing)
+	)
 	GameManager.start_game()
 	_refresh()
 
@@ -134,38 +144,70 @@ func _map() -> void:
 	var map_area = Control.new(); map_area.name = "MapArea"; map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
 	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
 	map.add_child(map_area)
+	_map_area = map_area
+	_all_rites = _load_rites()
+	_rite_seed = 42
 	
-	var all_rites = _load_rites()
-	var placed_positions: Array[Vector2] = []
-	var seed_val: int = 42
-	var btn_w: float = 132; var btn_h: float = 36; var pad: float = 8
-	
-	for i in range(all_rites.size()):
-		var rite = all_rites[i]
-		if rite.has("insight_trigger"): continue
-		var btn = _make_rite_btn(rite)
-		var px: float; var py: float
-		var ok := false
-		for _attempt in range(50):
-			seed_val = (seed_val * 16807 + 0) % 2147483647
-			px = 0.08 + (float(seed_val % 1000) / 1000.0) * 0.82
-			seed_val = (seed_val * 16807 + 0) % 2147483647
-			py = 0.05 + (float(seed_val % 1000) / 1000.0) * 0.88
-			ok = true
-			for pp in placed_positions:
-				if abs(px - pp.x) < (btn_w + pad) / map_area.size.x and abs(py - pp.y) < (btn_h + pad) / map_area.size.y:
-					ok = false; break
-			if ok: break
-		placed_positions.append(Vector2(px, py))
-		btn.set_meta("rite_pos", Vector2(px, py))
-		btn.position = Vector2(px * map_area.size.x, py * map_area.size.y) - btn.size / 2
-		map_area.add_child(btn)
-	
+	var init_done := false
+	map_area.resized.connect(func():
+		if init_done or map_area.size.x <= 0: return
+		init_done = true
+		var placed: Array[Vector2] = []
+		for rite in _all_rites:
+			if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
+				_place_rite_btn(rite, map_area, placed)
+	)
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
-			var rp = c.get_meta("rite_pos", Vector2(0.5, 0.5))
-			c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
+			var rp = c.get_meta("rite_pos")
+			if rp:
+				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
+			var lbl = c.get_meta("char_label")
+			if lbl and is_instance_valid(lbl):
+				lbl.position = Vector2(c.position.x, c.position.y - 14)
+				lbl.custom_minimum_size.x = c.size.x
+			var cd = c.get_meta("cd_label")
+			if cd and is_instance_valid(cd):
+				cd.position = Vector2(c.position.x, c.position.y + c.size.y + 2)
+				cd.custom_minimum_size.x = c.size.x
 	)
+
+
+func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
+	var btn = _make_rite_btn(rite)
+	var bx = area.size.x
+	if bx <= 0: bx = 800  # 布局未完成用默认值
+	var px: float; var py: float; var ok := false
+	var bw: float = 132; var bh: float = 36; var pad: float = 8
+	for _attempt in range(50):
+		_rite_seed = (_rite_seed * 16807) % 2147483647
+		px = 0.08 + (float(_rite_seed % 900) / 900.0) * 0.82
+		_rite_seed = (_rite_seed * 16807) % 2147483647
+		py = 0.05 + (float(_rite_seed % 900) / 900.0) * 0.88
+		ok = true
+		for pp in placed:
+			if abs(px - pp.x) < (bw + pad) / bx and abs(py - pp.y) < (bh + pad) / bx:
+				ok = false; break
+		if ok: break
+	placed.append(Vector2(px, py))
+	btn.set_meta("rite_pos", Vector2(px, py))
+	btn.set_meta("rite_id", rite.get("id", -1))
+	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
+	area.add_child(btn)
+	
+	# 倒计时标签
+	var tl = rite.get("time_limit", 0)
+	if tl > 0:
+		var cl = Label.new()
+		cl.text = "%d天" % tl
+		cl.add_theme_font_size_override("font_size", 9)
+		cl.add_theme_color_override("font_color", Color.RED)
+		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cl.position = Vector2(btn.position.x, btn.position.y + btn.size.y + 2)
+		cl.custom_minimum_size.x = btn.size.x
+		cl.set_meta("countdown", tl)
+		btn.set_meta("cd_label", cl)
+		area.add_child(cl)
 
 
 func _make_rite_btn(rite: Dictionary) -> Button:
@@ -180,6 +222,40 @@ func _make_rite_btn(rite: Dictionary) -> Button:
 	btn.pressed.connect(_open_rite_detail.bind(rite))
 	return btn
 
+
+func _update_rite_btn_label(rite_id: int, char_name: String):
+	if not _map_area: return
+	for c in _map_area.get_children():
+		if c.get_meta("rite_id", -1) == rite_id:
+			# 清除旧标签
+			var old_lbl = c.get_meta("char_label")
+			if old_lbl and is_instance_valid(old_lbl): old_lbl.queue_free()
+			if char_name != "":
+				var lbl = Label.new()
+				lbl.text = char_name
+				lbl.add_theme_font_size_override("font_size", 9)
+				lbl.add_theme_color_override("font_color", Color("7ac7ff"))
+				lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				lbl.custom_minimum_size.x = c.size.x
+				lbl.position = Vector2(c.position.x, c.position.y - 14)
+				c.set_meta("char_label", lbl)
+				_map_area.add_child(lbl)
+				# 窗口大小变化时重新定位
+				lbl.position = Vector2(c.position.x, c.position.y - 14)
+			break
+
+
+func _find_rite_by_id(rite_id: int):
+	for r in _load_rites():
+		if r.get("id", -1) == rite_id: return r
+	return {}
+
+
+func _reset_all_rite_btn_labels():
+	if not _map_area: return
+	for c in _map_area.get_children():
+		var old_lbl = c.get_meta("char_label")
+		if old_lbl and is_instance_valid(old_lbl): old_lbl.queue_free()
 
 
 func _close_rite_popup() -> void:
@@ -332,6 +408,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		else:
 			active_rites.append(entry)
 		_log("✅ 已配置「%s」" % rite.get("name",""))
+		_update_rite_btn_label(rite.get("id", -1), char_data.get("name",""))
 		_commit_assigned_cards(slot_nodes)
 		_close_rite_popup()
 		_refresh())
@@ -343,6 +420,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		if is_edit:
 			var idx = active_rites.find(existing)
 			if idx != -1: active_rites.remove_at(idx)
+			_update_rite_btn_label(rite.get("id", -1), "")
 			_log("🗑 已取消「%s」" % rite.get("name",""))
 		_restore_assigned_cards(slot_nodes)
 		_close_rite_popup()
@@ -681,6 +759,7 @@ func _next_press() -> void:
 		_log("⚔ 无事发生，推进一天。")
 		active_rites.clear()
 		TurnManager.next_day()
+		_update_countdown_labels()
 		_refresh()
 		if GameManager.is_game_over: popups.show_game_over()
 		return
@@ -701,7 +780,9 @@ func _settle_next(index:int) -> void:
 					GameManager.renovation_done = true
 					_log("🏠 装修已完成！")
 		active_rites.clear()
+		_reset_all_rite_btn_labels()
 		TurnManager.next_day()
+		_update_countdown_labels()
 		_log("✅ 所有仪式结算完毕。")
 		_refresh()
 		if GameManager.is_game_over: popups.show_game_over()
@@ -736,6 +817,7 @@ func _refresh() -> void:
 	s_lbl.text = "灵%d" % ResourceManager.reputations.spirit
 	
 	var card = GameManager.active_sultan_card
+	if not is_instance_valid(cp): return
 	cp.visible = not card.is_empty()
 	if not card.is_empty():
 		ct_lbl.text = TN.get(card.get("type",""),"？")
@@ -761,6 +843,19 @@ func _load_rites() -> Array:
 	var d = JSON.parse_string(f.get_as_text()); f.close()
 	if d == null: return []
 	return d
+
+func _update_countdown_labels():
+	if not _map_area: return
+	for c in _map_area.get_children():
+		var cd = c.get_meta("cd_label")
+		if not cd or not is_instance_valid(cd): continue
+		var remaining = cd.get_meta("countdown", 0) - 1
+		cd.set_meta("countdown", remaining)
+		if remaining <= 0:
+			cd.queue_free()
+		else:
+			cd.text = "%d天" % remaining
+
 
 func _refresh_intel_cards():
 	var types = [
@@ -982,6 +1077,13 @@ func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed:
 		entry["insight_kill_rank"] = kill_rank
 		entry["insight_kill_used"] = false
 	active_rites.append(entry)
+	# 添加到地图上
+	if _map_area:
+		var existing = []
+		for c in _map_area.get_children():
+			var rp = c.get_meta("rite_pos")
+			if rp: existing.append(rp)
+		_place_rite_btn(rite, _map_area, existing)
 	_refresh()
 	_show_insight_bubble("「%s」\n出现在地图上" % rite.get("name", "?"))
 
