@@ -137,16 +137,17 @@ func _map() -> void:
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
 
-	var map_area = ScrollContainer.new()
+	var map_area = Control.new()
 	map_area.name = "MapArea"
 	map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
-	map_area.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	map.add_child(map_area)
 
 	_rite_grid = GridContainer.new()
 	_rite_grid.columns = 6
 	_rite_grid.add_theme_constant_override("h_separation", 6)
 	_rite_grid.add_theme_constant_override("v_separation", 6)
+	_rite_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rite_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	map_area.add_child(_rite_grid)
 
 	# 一次性加载所有仪式数据
