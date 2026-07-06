@@ -824,67 +824,89 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 	var card_type = drag_data.get("type", "")
 	var card_name = drag_data.get("name", "卡牌")
 	
-	# 本回合已寻思过此类型 → 提示
+	# 本回合已寻思过此类型 → 即时提示
 	if card_type in _insight_used_types:
-		_log("💀 俺寻思：对「%s」暂时想不出更好的办法了。" % card_name)
+		_show_insight_bubble("暂时想不出\n更好的办法了。")
 		return
 	_insight_used_types.append(card_type)
 	
-	# 角色卡 → 显示气泡文字，不触发事件
+	# 角色卡
 	if card_type == "character":
+		card.visible = false; hand_layout.arrange()
+		_do_think_animation(card_name)
 		_insight_char_bubble(drag_data)
+		card.visible = true; hand_layout.arrange()
 		return
 	
-	# 查找匹配的 insight_trigger 仪式
+	# 查找匹配仪式
 	var matched = _find_insight_rites(card_type, drag_data)
 	if matched.is_empty():
-		_log("💀 俺寻思：对这「%s」暂时想不出更好的办法了。" % card_name)
+		card.visible = false; hand_layout.arrange()
+		_do_think_animation(card_name)
+		_show_insight_bubble("暂时想不出\n更好的办法了。")
+		card.visible = true; hand_layout.arrange()
 		return
 	
-	# 随机选一个
+	# 有匹配 → 加入地图
 	var picked = matched[randi() % matched.size()]
+	card.visible = false; hand_layout.arrange()
+	_do_think_animation(card_name)
 	
-	# 隐藏卡牌 + 思考动画
-	card.visible = false
-	hand_layout.arrange()
-	
-	var insight = hand_container.get_node_or_null("InsightBtn")
-	if insight and is_instance_valid(insight):
-		var t = create_tween().set_loops(3)
-		t.tween_property(insight, "modulate", Color(1.3, 1.3, 1.0), 0.25)
-		t.tween_property(insight, "modulate", Color.WHITE, 0.25)
-		_log("💀 俺寻思：「%s」...思考中..." % card_name)
-	
-	await get_tree().create_timer(1.0).timeout
-	if insight and is_instance_valid(insight):
-		insight.modulate = Color.WHITE
-	
-	# 如果触发标记为消耗，则消耗卡牌
+	# 消耗检查
 	var consumed := false
 	if picked.get("insight_trigger",{}).get("consume", false):
 		if card_type == "sultan_card":
 			GameManager.consume_sultan_card(0)
 			card.queue_free(); hand_cards.erase(card)
-			_log("🃏 苏丹卡已消耗。")
 			consumed = true
 	
-	# 将仪式加入地图，作为今日可选项
-	_add_insight_rite_to_map(picked, drag_data, card, consumed)
-	
-	# 归还卡牌(未消耗的情况)
+	_add_insight_rite_to_map(picked, drag_data, consumed)
 	if not consumed:
-		card.visible = true
-		hand_layout.arrange()
+		card.visible = true; hand_layout.arrange()
 
 
-func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, card: PanelContainer, consumed: bool):
-	# 添加到 active_rites（地图上显示为可拖入的仪式节点）
+func _do_think_animation(card_name: String) -> void:
+	var insight = hand_container.get_node_or_null("InsightBtn")
+	if insight and is_instance_valid(insight):
+		var t = create_tween().set_loops(3)
+		t.tween_property(insight, "modulate", Color(1.3, 1.3, 1.0), 0.25)
+		t.tween_property(insight, "modulate", Color.WHITE, 0.25)
+	await get_tree().create_timer(1.0).timeout
+	if insight and is_instance_valid(insight):
+		insight.modulate = Color.WHITE
+
+
+func _show_insight_bubble(text: String) -> void:
+	var bubble = PanelContainer.new()
+	bubble.name = "InsightBubble"
+	var bs = StyleBoxFlat.new(); bs.bg_color = Color("1a1018"); bs.set_corner_radius_all(8)
+	bs.border_width_bottom=1; bs.border_width_top=1; bs.border_width_left=1; bs.border_width_right=1
+	bs.border_color = C.GOLD_LO; bs.content_margin_left=10; bs.content_margin_right=10
+	bs.content_margin_top=6; bs.content_margin_bottom=6
+	bubble.add_theme_stylebox_override("panel", bs)
+	var bl = Label.new(); bl.text=text; bl.add_theme_font_size_override("font_size",11)
+	bl.add_theme_color_override("font_color", C.GOLD); bl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	bubble.add_child(bl)
+	add_child(bubble)
+	bubble.reset_size()
+	await get_tree().process_frame
+	var insight = hand_container.get_node_or_null("InsightBtn")
+	if insight and is_instance_valid(insight):
+		var r = insight.get_global_rect()
+		bubble.position = Vector2(r.position.x + r.size.x / 2 - bubble.size.x / 2, r.position.y - bubble.size.y - 8)
+	else:
+		bubble.position = Vector2(50, get_viewport().size.y - 240)
+	await get_tree().create_timer(2.0).timeout
+	bubble.queue_free()
+
+
+func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed: bool):
 	var entry = {"rite": rite, "char": {}, "sultan_card": {}}
 	if drag_data.get("type","") == "character" and not consumed:
 		entry.char = drag_data
 	active_rites.append(entry)
-	_refresh()  # 重新渲染地图，显示新仪式
-	_log("💀 俺寻思：「%s」已出现在地图上。" % rite.get("name", "?"))
+	_refresh()
+	_show_insight_bubble("「%s」\n出现在地图上" % rite.get("name", "?"))
 
 
 func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
@@ -911,6 +933,5 @@ func _insight_char_bubble(drag_data: Dictionary):
 		"tietou": "一个沉默寡言的铁匠。",
 		"kuaijiao": "路边的消息，往往最值钱。",
 	}
-	_log("💀 俺寻思：「%s」—— %s" % [drag_data.get("name","角色"), bubbles.get(cid, drag_data.get("name","角色"))])
-
-
+	var text = bubbles.get(cid, drag_data.get("name","角色"))
+	_show_insight_bubble(text)
