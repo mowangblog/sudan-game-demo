@@ -48,8 +48,7 @@ var active_rites: Array = []
 var log_msgs: Array[String] = []
 var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []
-var _perm_flow: FlowContainer
-var _dyn_flow: FlowContainer
+var _map_inner: Control
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
@@ -69,7 +68,7 @@ func _ready() -> void:
 	EventBus.rite_appeared.connect(func(rite: Dictionary):
 		if _get_rite_by_id(rite.get("id",-1)) == null:
 			active_rites.append({"rite":rite,"char":{},"sultan_card":{}})
-		_regenerate_map()
+		call_deferred("_rebuild_map_nodes")
 	)
 	GameManager.start_game()
 	_refresh()
@@ -138,46 +137,42 @@ func _map() -> void:
 	map.add_theme_stylebox_override("panel", ps)
 	add_child(map)
 
-	var map_area = VBoxContainer.new()
-	map_area.name = "MapArea"
-	map_area.set_anchors_preset(Control.PRESET_FULL_RECT)
-	map_area.add_theme_constant_override("separation", 8)
-	map.add_child(map_area)
-
-	# 常驻仪式行
-	var perm_lbl = Label.new(); perm_lbl.text = "📍 常驻"; perm_lbl.add_theme_font_size_override("font_size", 11)
-	perm_lbl.add_theme_color_override("font_color", C.GOLD_LO)
-	map_area.add_child(perm_lbl)
-	_perm_flow = FlowContainer.new()
-	_perm_flow.add_theme_constant_override("h_separation", 6)
-	_perm_flow.add_theme_constant_override("v_separation", 6)
-	map_area.add_child(_perm_flow)
-
-	# 动态仪式行
-	var dyn_lbl = Label.new(); dyn_lbl.text = "📋 今日"; dyn_lbl.add_theme_font_size_override("font_size", 11)
-	dyn_lbl.add_theme_color_override("font_color", C.GOLD_LO)
-	map_area.add_child(dyn_lbl)
-	_dyn_flow = FlowContainer.new()
-	_dyn_flow.add_theme_constant_override("h_separation", 6)
-	_dyn_flow.add_theme_constant_override("v_separation", 6)
-	map_area.add_child(_dyn_flow)
+	_map_inner = Control.new()
+	_map_inner.name = "MapInner"
+	_map_inner.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_map_inner.mouse_filter = Control.MOUSE_FILTER_PASS
+	map.add_child(_map_inner)
 
 	_all_rites = _load_rites()
-	_regenerate_map()
+	_map_inner.resized.connect(_rebuild_map_nodes)
+	call_deferred("_rebuild_map_nodes")
 
-func _regenerate_map():
-	if not _perm_flow: return
-	for c in _perm_flow.get_children(): c.queue_free()
-	for c in _dyn_flow.get_children(): c.queue_free()
 
+func _rebuild_map_nodes():
+	if not _map_inner: return
+	for c in _map_inner.get_children(): c.queue_free()
+	var x: float = 8.0; var y: float = 8.0
 	for rite in _all_rites:
 		if rite.id in PERMANENT_RITE_IDS:
-			_perm_flow.add_child(_make_rite_node(rite))
+			var node = _make_rite_node(rite)
+			node.position = Vector2(x, y)
+			x += 110.0
+			if x + 100 > _map_inner.size.x:
+				x = 8.0; y += 55.0
+			_map_inner.add_child(node)
 
+
+	y += 55.0
 	for ar in active_rites:
 		var rite = ar.get("rite", ar)
 		if rite.get("category","") == "insight" or (rite.get("id",0) not in PERMANENT_RITE_IDS):
-			_dyn_flow.add_child(_make_rite_node(rite))
+			var node = _make_rite_node(rite)
+			node.position = Vector2(x, y)
+			x += 110.0
+			if x + 100 > _map_inner.size.x:
+				x = 8.0; y += 55.0
+			_map_inner.add_child(node)
+	_map_inner.custom_minimum_size.y = y + 55
 
 func _make_rite_node(rite: Dictionary) -> Control:
 	var btn = Button.new()
@@ -198,7 +193,7 @@ func _on_rite_node_clicked(rite: Dictionary):
 	else:
 		var entry = {"rite": rite, "char": {}, "sultan_card": {}}
 		active_rites.append(entry)
-		_regenerate_map()
+		call_deferred("_rebuild_map_nodes")
 		_log("📋 「%s」已加入今日计划" % rite.get("name","?"))
 
 
@@ -778,7 +773,7 @@ func _refresh() -> void:
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
-	_regenerate_map()
+	call_deferred("_rebuild_map_nodes")
 
 # 同步金币卡数量和 ResourceManager
 
