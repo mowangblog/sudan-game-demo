@@ -177,6 +177,7 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 		if ok: break
 	placed.append(Vector2(px, py))
 	btn.set_meta("rite_pos", Vector2(px, py))
+	btn.set_meta("rite_id", rite.get("id", -1))
 	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
 	area.add_child(btn)
 
@@ -193,6 +194,36 @@ func _make_rite_btn(rite: Dictionary) -> Button:
 	btn.pressed.connect(_open_rite_detail.bind(rite))
 	return btn
 
+
+func _update_rite_btn_label(rite_id: int, char_name: String):
+	if not _map_area: return
+	for c in _map_area.get_children():
+		if c.get_meta("rite_id", -1) == rite_id:
+			var orig = _find_rite_by_id(rite_id)
+			if orig and char_name != "":
+				c.text = orig.get("name","?") + "\n" + char_name
+				c.custom_minimum_size.y = 48
+			elif orig:
+				c.text = orig.get("name","?")
+				c.custom_minimum_size.y = 34
+			break
+
+
+func _find_rite_by_id(rite_id: int):
+	for r in _load_rites():
+		if r.get("id", -1) == rite_id: return r
+	return {}
+
+
+func _reset_all_rite_btn_labels():
+	if not _map_area: return
+	for c in _map_area.get_children():
+		var rid = c.get_meta("rite_id", -1)
+		if rid != -1:
+			var orig = _find_rite_by_id(rid)
+			if orig:
+				c.text = orig.get("name","?")
+				c.custom_minimum_size.y = 34
 
 
 func _close_rite_popup() -> void:
@@ -345,6 +376,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		else:
 			active_rites.append(entry)
 		_log("✅ 已配置「%s」" % rite.get("name",""))
+		_update_rite_btn_label(rite.get("id", -1), char_data.get("name",""))
 		_commit_assigned_cards(slot_nodes)
 		_close_rite_popup()
 		_refresh())
@@ -356,6 +388,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		if is_edit:
 			var idx = active_rites.find(existing)
 			if idx != -1: active_rites.remove_at(idx)
+			_update_rite_btn_label(rite.get("id", -1), "")
 			_log("🗑 已取消「%s」" % rite.get("name",""))
 		_restore_assigned_cards(slot_nodes)
 		_close_rite_popup()
@@ -714,6 +747,7 @@ func _settle_next(index:int) -> void:
 					GameManager.renovation_done = true
 					_log("🏠 装修已完成！")
 		active_rites.clear()
+		_reset_all_rite_btn_labels()
 		TurnManager.next_day()
 		_log("✅ 所有仪式结算完毕。")
 		_refresh()
