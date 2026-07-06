@@ -1007,7 +1007,9 @@ func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
 				var cd = drag_data.get("data",{})
 				if cd.get("type","") != subtype: continue
 				var filter_rank = it.get("filter_rank","")
-				if filter_rank != "" and cd.get("rank","").to_upper() != filter_rank:
+				if typeof(filter_rank) == TYPE_ARRAY:
+					if not cd.get("rank","").to_upper() in filter_rank: continue
+				elif filter_rank != "" and cd.get("rank","").to_upper() != filter_rank:
 					continue
 			elif card_type == "resource":
 				var res_id = drag_data.get("id","")

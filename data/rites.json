@@ -522,5 +522,37 @@
 	  "fail": {"gold": 0,
 		"narrative": "20枚金币的代价太过沉重，你宁愿选择另一条路。一把火点燃了旧日的一切，苏丹在火光中微笑着点头——这对他来说，一样美妙。"}
 	}
+  },
+  {
+	"id": 213,
+	"name": "在家行淫",
+	"description": "在家中与追随者解决纵欲卡的问题。消耗苏丹纵欲卡。",
+	"location": "palace",
+	"slots": [{"type": "sultan_card", "required_tags": ["LUST"], "optional": false}, {"type": "character", "required_tags": [], "optional": false}],
+	"time_limit": 0, "duration": 1, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "LUST", "consume": true},
+	"check": {"type": "solo", "attribute": "cha", "required_successes": 1},
+	"outcomes": {
+	  "success": {"evil": 0,
+		"narrative": "你凝视着手中的纵欲卡，卡面繁复的花纹让你感到眩晕。苏丹的屠刀已经近在眼前——你从身边的人里挑出一位来满足这恶意的游戏。一夜荒唐过后，纵欲卡在黎明的微光中碎裂消散。你活过了今天，但代价是内心的一小块东西永远地死去了。"},
+	  "fail": {
+		"narrative": "你尝试了整整一夜，但恐惧和焦虑让一切都无法如愿。天色渐亮，纵欲卡依然完好无损地躺在枕边——苏丹不会满意的。"}
+	}
+  },
+  {
+	"id": 214,
+	"name": "孤高之人",
+	"description": "独自攀爬圣山，用生命征服苏丹也无法征服的高度。消耗不高于铜品级的征服卡。",
+	"location": "wilderness",
+	"slots": [{"type": "sultan_card", "required_tags": ["CONQUEST"], "optional": false}, {"type": "character", "required_tags": [], "optional": false}],
+	"time_limit": 0, "duration": 2, "auto_start": false, "repeatable": false,
+	"insight_trigger": {"type": "sultan_card", "subtype": "CONQUEST", "filter_rank": ["STONE","BRONZE"], "consume": true},
+	"check": {"type": "solo", "attribute": "sur", "required_successes": 1},
+	"outcomes": {
+	  "success": {"power": 1,
+		"narrative": "先是骑马，然后徒步，加上拐杖、铁钩与绳索，最后是手脚并用的爬行……从山顶鸟瞰城市，这个苏丹的游戏棋盘不过尔尔——你觉得自己能赢。征服卡在山风的呼啸中化为齑粉。"},
+	  "fail": {
+		"narrative": "你走进了雪山，再也没有回来。\"这不失为一个比较好的结局……\""}
+	}
   }
 ]
