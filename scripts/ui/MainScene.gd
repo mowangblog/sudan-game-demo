@@ -164,7 +164,6 @@ func _place_permanent_rites():
 		btn.set_meta("rite_id", rid)
 		btn.position = Vector2(p.x * _map_area.size.x, p.y * _map_area.size.y)
 		_map_area.add_child(btn)
-	)
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
 			var rp = c.get_meta("rite_pct")
