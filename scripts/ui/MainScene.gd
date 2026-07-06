@@ -136,24 +136,23 @@ func _map() -> void:
 	map.add_child(map_area)
 	
 	var all_rites = _load_rites()
-	var x: float = 12; var y: float = 8
-	for rite in all_rites:
+	var seed_val: int = 42
+	for i in range(all_rites.size()):
+		var rite = all_rites[i]
 		if rite.has("insight_trigger"): continue
 		var btn = _make_rite_btn(rite)
-		btn.position = Vector2(x, y)
-		x += 146
-		if x + 140 > map_area.size.x - 12:
-			x = 12; y += 50
+		seed_val = (seed_val * 16807 + 0) % 2147483647
+		var px = 0.08 + (float(seed_val % 1000) / 1000.0) * 0.82
+		seed_val = (seed_val * 16807 + 0) % 2147483647
+		var py = 0.05 + (float(seed_val % 1000) / 1000.0) * 0.88
+		btn.set_meta("rite_pos", Vector2(px, py))
+		btn.position = Vector2(px * map_area.size.x, py * map_area.size.y) - btn.size / 2
 		map_area.add_child(btn)
 	
 	map_area.resized.connect(func():
-		for c in map_area.get_children(): c.position = Vector2(0,0)
-		var rx: float = 12; var ry: float = 8
 		for c in map_area.get_children():
-			c.position = Vector2(rx, ry)
-			rx += 146
-			if rx + 140 > map_area.size.x - 12:
-				rx = 12; ry += 50
+			var rp = c.get_meta("rite_pos", Vector2(0.5, 0.5))
+			c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
 	)
 
 
