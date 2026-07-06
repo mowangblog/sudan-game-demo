@@ -690,8 +690,6 @@ func _update_card_count(card: PanelContainer, count: int):
 	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
 	if card.get_meta("res_type","") == "金币":
 		ResourceManager.gold = count
-	if ResourceManager.INTEL_EFFECTS.has(card.get_meta("res_type","")):
-		# 情报卡不追踪计数，由 ResourceManager 管理
 
 func _next_press() -> void:
 	_insight_used_keys.clear()
@@ -779,7 +777,10 @@ func _refresh() -> void:
 
 func _load_rites() -> Array:
 	var f = FileAccess.open("res://data/rites.json",FileAccess.READ)
-
+	if f == null: return []
+	var d = JSON.parse_string(f.get_as_text()); f.close()
+	if d == null: return []
+	return d
 
 func _refresh_intel_cards():
 	for nm in ResourceManager.INTEL_EFFECTS:
@@ -791,10 +792,6 @@ func _refresh_intel_cards():
 			var lbl = card.get_node_or_null("VB/CountLbl")
 			if lbl: lbl.text = ("x%d" % cnt) if cnt > 0 else ""
 			card.visible = cnt > 0
-	if f == null: return []
-	var d = JSON.parse_string(f.get_as_text()); f.close()
-	if d == null: return []
-	return d
 
 func slot_type_to_str(t: String) -> String:
 	return "character" if t == "character" else "sultan_card"
