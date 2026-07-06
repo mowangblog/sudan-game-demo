@@ -148,7 +148,6 @@ func _map() -> void:
 	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
 	map.add_child(map_area)
 	_map_area = map_area
-	_all_rites = _load_rites()
 	call_deferred("_place_permanent_rites")
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
@@ -168,15 +167,24 @@ func _map() -> void:
 
 func _place_permanent_rites():
 	if not _map_area or _map_area.size.x <= 0: return
-	var perm_pos = {1: Vector2(0.05, 0.05), 2: Vector2(0.55, 0.05), 3: Vector2(0.30, 0.60), 4: Vector2(0.05, 0.75)}
-	for rite in _all_rites:
-		if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
+	var w = _map_area.size.x; var h = _map_area.size.y
+	var rites = _load_rites()
+	for rite in rites:
+		var cat = rite.get("category","")
+		if cat != "permanent": continue
+		if rite.has("insight_trigger"): continue
+		var pos: Vector2
 		var rid = rite.get("id", -1)
-		var p = perm_pos.get(rid, Vector2(0.5, 0.5))
+		match rid:
+			1: pos = Vector2(0.05 * w, 0.05 * h)
+			2: pos = Vector2(0.55 * w, 0.05 * h)
+			3: pos = Vector2(0.30 * w, 0.60 * h)
+			4: pos = Vector2(0.05 * w, 0.75 * h)
+			_: pos = Vector2(0.5 * w, 0.5 * h)
 		var btn = _make_rite_btn(rite)
-		btn.set_meta("rite_pct", p)
+		btn.set_meta("rite_pct", Vector2(pos.x / w, pos.y / h))
 		btn.set_meta("rite_id", rid)
-		btn.position = Vector2(p.x * _map_area.size.x, p.y * _map_area.size.y)
+		btn.position = pos
 		_map_area.add_child(btn)
 
 
