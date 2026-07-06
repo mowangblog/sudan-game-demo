@@ -458,6 +458,8 @@ func _typewrite_on_label(lbl: Label, text: String, cb: Callable):
 		_typewrite_timer=Timer.new(); _typewrite_timer.one_shot=false; _typewrite_timer.wait_time=0.015
 		add_child(_typewrite_timer); _typewrite_timer.timeout.connect(_tw_tick)
 	_typewrite_timer.start()
+	if not gui_input.is_connected(_tw_skip):
+		gui_input.connect(_tw_skip)
 	if not lbl.gui_input.is_connected(_tw_skip):
 		lbl.gui_input.connect(_tw_skip)
 
@@ -465,12 +467,23 @@ func _tw_tick():
 	if _typewrite_pos < _typewrite_full.length():
 		_typewrite_pos+=1; _tw_label.text=_typewrite_full.substr(0,_typewrite_pos)
 	else:
-		_typewrite_timer.stop(); _typewrite_cb.call()
+		_typewrite_timer.stop()
+		_disable_skip()
+		_typewrite_cb.call()
 
 func _tw_skip(_e):
+	if _e is InputEventMouseButton and _e.button_index == MOUSE_BUTTON_LEFT and _e.pressed:
+		if _typewrite_timer: _typewrite_timer.stop()
+		if _tw_label and is_instance_valid(_tw_label):
+			_tw_label.text=_typewrite_full
+		if _typewrite_cb.is_valid():
+			_disable_skip()
+			_typewrite_cb.call()
+
+
+func _disable_skip():
 	if _typewrite_timer: _typewrite_timer.stop()
-	_tw_label.text=_typewrite_full
-	if _typewrite_cb.is_valid(): _typewrite_cb.call()
+	if gui_input.is_connected(_tw_skip): gui_input.disconnect(_tw_skip)
 
 
 func _setup_3d_dice():
