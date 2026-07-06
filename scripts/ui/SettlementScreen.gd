@@ -52,6 +52,7 @@ var _typewrite_full: String = ""
 var _typewrite_cb: Callable
 var _typewrite_pos: int = 0
 var _stage_all_success: bool = true
+var _stage_success_counts: Array[int] = []
 var _rerolls_remaining: int = 0
 var _reroll_btn: Button
 var _pending_check: Dictionary = {}
@@ -366,6 +367,7 @@ func _on_dice_settled_stage(_results: Dictionary):
 			fc+=1
 
 	var ok = sc >= _pending_required
+	_stage_success_counts.append(sc)
 	result_lbl.visible=true
 	result_lbl.text="✅ 成功" if ok else "❌ 失败"
 	result_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
@@ -404,8 +406,22 @@ func _finish_settlement():
 		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)
 		if _total_rewards.has("hero"): ResourceManager.modify_reputation("hero",_total_rewards.hero)
 		if _total_rewards.has("spirit"): ResourceManager.modify_reputation("spirit",_total_rewards.spirit)
+	# 应用各阶段的 roll_rewards（情报掉落）
+	_apply_roll_rewards()
 	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success})
 	queue_free()
+
+func _apply_roll_rewards():
+	for i in range(min(_stages.size(), _stage_success_counts.size())):
+		var stage = _stages[i]
+		var sc = _stage_success_counts[i]
+		var tiers = stage.get("roll_rewards", [])
+		for tier in tiers:
+			if sc >= tier.min:
+				var intel_data = tier.intel
+				if intel_data.size() >= 2:
+					ResourceManager.add_intel(intel_data[0], intel_data[1])
+				break  # 只应用最高档
 
 # 打字机效果
 func _typewrite_on_label(lbl: Label, text: String, cb: Callable):
