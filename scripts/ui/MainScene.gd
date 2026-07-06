@@ -491,11 +491,12 @@ func _bottom() -> void:
 	
 	hand_cards.clear()
 	
-	# 俺寻思 — 左下角地图区域独立悬浮
+	# 俺寻思 — 左下角骷髅
 	var insight = _make_insight_button()
-	insight.position = Vector2(10, get_viewport().size.y - 200 - 10 - 112)  # 手牌区上方
-	insight.size.x = 86; insight.size.y = 112
-	add_child(insight)
+	insight.position = Vector2(10, 0)
+	insight.size.x = 86
+	insight.size.y = hand_container.size.y
+	hand_container.add_child(insight)
 	
 	# 角色卡
 	for cid in ["player","meji","tietou","kuaijiao","zhaqiyi"]:
@@ -542,6 +543,7 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
+		if is_instance_valid(insight): insight.size.y = hand_container.size.y
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
 		_update_card_zone_border()
@@ -553,7 +555,8 @@ func _bottom() -> void:
 func _update_card_zone_border():
 	var cz = get_node_or_null("CardZoneBorder")
 	if not cz: return
-	var left: float = 8  # 固定左边距，俺寻思已移出
+	var insight = hand_container.get_node_or_null("InsightBtn")
+	var left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
 	var right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
 	cz.position = Vector2(left, hand_container.position.y + 4)
 	cz.size = Vector2(right - left, hand_container.size.y - 8)
@@ -584,7 +587,7 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	var dropped_in_slot = false
 	
 	# 1. 检查是否拖到了俺寻思
-	var insight = get_node_or_null("InsightBtn")
+	var insight = hand_container.get_node_or_null("InsightBtn")
 	if insight and insight.get_global_rect().has_point(global_pos):
 		_do_insight_with_card(card)
 		dropped_in_slot = true
@@ -845,7 +848,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 	card.visible = false
 	hand_layout.arrange()
 	
-	var insight = get_node_or_null("InsightBtn")
+	var insight = hand_container.get_node_or_null("InsightBtn")
 	if insight and is_instance_valid(insight):
 		var t = create_tween().set_loops(3)
 		t.tween_property(insight, "modulate", Color(1.3, 1.3, 1.0), 0.25)
@@ -865,13 +868,23 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 			_log("🃏 苏丹卡已消耗。")
 			consumed = true
 	
-	# 启动结算
-	_settle_insight_rite(picked, drag_data)
+	# 将仪式加入地图，作为今日可选项
+	_add_insight_rite_to_map(picked, drag_data, card, consumed)
 	
 	# 归还卡牌(未消耗的情况)
 	if not consumed:
 		card.visible = true
 		hand_layout.arrange()
+
+
+func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, card: PanelContainer, consumed: bool):
+	# 添加到 active_rites（地图上显示为可拖入的仪式节点）
+	var entry = {"rite": rite, "char": {}, "sultan_card": {}}
+	if drag_data.get("type","") == "character" and not consumed:
+		entry.char = drag_data
+	active_rites.append(entry)
+	_refresh()  # 重新渲染地图，显示新仪式
+	_log("💀 俺寻思：「%s」已出现在地图上。" % rite.get("name", "?"))
 
 
 func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
@@ -901,47 +914,3 @@ func _insight_char_bubble(drag_data: Dictionary):
 	_log("💀 俺寻思：「%s」—— %s" % [drag_data.get("name","角色"), bubbles.get(cid, drag_data.get("name","角色"))])
 
 
-func _settle_insight_rite(rite: Dictionary, drag_data: Dictionary):
-	var cd = {}
-	var sd = {}
-	if drag_data.get("type","") == "character":
-		cd = drag_data
-	elif drag_data.get("type","") == "sultan_card":
-		sd = drag_data
-	var screen = SettlementScreen.new()
-	add_child(screen)
-	screen.setup_and_show(rite, cd, sd)
-	screen.settlement_done.connect(func(result: Dictionary):
-		_log("  俺寻思：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
-		_refresh()
-	)
-
-func _show_insight_result(msg: String):
-	var popup = PanelContainer.new()
-	popup.name = "InsightResult"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	popup.custom_minimum_size = Vector2(280, 0)
-	var ps = StyleBoxFlat.new()
-	ps.bg_color = C.BG_PANEL; ps.set_corner_radius_all(10)
-	ps.border_width_bottom=2; ps.border_width_top=2; ps.border_width_left=2; ps.border_width_right=2
-	ps.border_color = C.GOLD; ps.shadow_size=12; ps.shadow_color=C.SHADOW
-	ps.content_margin_left=20; ps.content_margin_right=20; ps.content_margin_top=14; ps.content_margin_bottom=14
-	popup.add_theme_stylebox_override("panel", ps)
-	var vb = VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 8); vb.alignment = BoxContainer.ALIGNMENT_CENTER
-	popup.add_child(vb)
-	var skull = Label.new(); skull.text="💀 俺寻思"
-	skull.add_theme_font_size_override("font_size", 18); skull.add_theme_color_override("font_color", C.GOLD)
-	skull.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(skull)
-	var msg_lbl = Label.new(); msg_lbl.text=msg
-	msg_lbl.add_theme_font_size_override("font_size", 14); msg_lbl.add_theme_color_override("font_color", C.TEXT)
-	msg_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; msg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vb.add_child(msg_lbl)
-	add_child(popup)
-	popup.reset_size()
-	await get_tree().process_frame
-	# 限定在地图区域：状态栏下方、手牌区上方，居中
-	var map_top = 45
-	var map_bottom = get_viewport().size.y - 200 - 16  # 手牌区上方留 16px
-	popup.position = Vector2((get_viewport().size.x - popup.size.x) / 2, (map_top + map_bottom - popup.size.y) / 2)
-	await get_tree().create_timer(2.0).timeout
-	popup.queue_free()
