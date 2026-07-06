@@ -53,7 +53,7 @@ var _rite_seed: int = 42
 var _all_rites: Array = []
 
 # 常驻仪式 id 列表
-const PERMANENT_RITE_IDS = [1, 2, 3, 4]
+const PERMANENT_RITE_IDS = [1, 2, 3, 4, 15]  # 本回合已寻思：角色用id，其他用类型
 var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉杀戮
 var current_rite_detail: Dictionary = {}
 
@@ -145,34 +145,17 @@ func _map() -> void:
 	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
 	map.add_child(map_area)
 	_map_area = map_area
-	_all_rites = _load_rites()
 	
-	# 等布局完成后放置常驻仪式
-	var perm_placed := false
-	map_area.resized.connect(func():
-		if perm_placed or map_area.size.x <= 0: return
-		perm_placed = true
-		var placed: Array[Vector2] = []
-		var perm_positions = {1: Vector2(0.12, 0.10), 2: Vector2(0.55, 0.10), 4: Vector2(0.12, 0.75)}
-		for rite in _all_rites:
-			if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
-			var rid = rite.get("id", -1)
-			if rid == 3: continue
-			var pos = perm_positions.get(rid)
-			if pos: _place_rite_btn_at(rite, map_area, placed, pos)
-	)
-	
-	# 欢愉之馆第2天
-	var day2_done := false
-	EventBus.day_started.connect(func(_d,_w):
-		if day2_done or TurnManager.current_day < 2: return
-		day2_done = true
-		_place_rite_btn_at(_find_rite_by_id(3), map_area, [], Vector2(0.35, 0.55))
-	)
+	var all_rites = _load_rites()
+	_rite_seed = 42
+	var placed: Array[Vector2] = []
+
+	for rite in all_rites:
+		if rite.get("category","") == "permanent" and not rite.has("insight_trigger"):
+			_place_rite_btn(rite, map_area, placed)
 	
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
-			if not is_instance_valid(c): continue
 			var rp = c.get_meta("rite_pos")
 			if rp:
 				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y) - c.size / 2
@@ -188,7 +171,7 @@ func _map() -> void:
 
 
 func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
-	# 随机位置 + 防遮挡
+	var btn = _make_rite_btn(rite)
 	var px: float; var py: float; var ok := false
 	var bw: float = 132; var bh: float = 36; var pad: float = 8
 	for _attempt in range(50):
@@ -202,16 +185,11 @@ func _place_rite_btn(rite: Dictionary, area: Control, placed: Array) -> void:
 				ok = false; break
 		if ok: break
 	placed.append(Vector2(px, py))
-	_place_rite_btn_at(rite, area, placed, Vector2(px, py))
-
-
-func _place_rite_btn_at(rite: Dictionary, area: Control, placed: Array, pos: Vector2) -> void:
-	var btn = _make_rite_btn(rite)
-	btn.set_meta("rite_pos", pos)
+	btn.set_meta("rite_pos", Vector2(px, py))
 	btn.set_meta("rite_id", rite.get("id", -1))
-	btn.position = Vector2(pos.x * area.size.x, pos.y * area.size.y) - btn.size / 2
+	btn.position = Vector2(px * area.size.x, py * area.size.y) - btn.size / 2
 	area.add_child(btn)
-
+	
 	# 倒计时标签
 	var tl = rite.get("time_limit", 0)
 	if tl > 0:
@@ -870,20 +848,8 @@ func _update_countdown_labels():
 		cd.set_meta("countdown", remaining)
 		if remaining <= 0:
 			cd.queue_free()
-			var lbl = c.get_meta("char_label")
-			if lbl and is_instance_valid(lbl): lbl.queue_free()
-			var rid = c.get_meta("rite_id", -1)
-			_remove_rite_from_active(rid)
-			c.queue_free()
 		else:
 			cd.text = "%d天" % remaining
-
-
-func _remove_rite_from_active(rite_id: int):
-	for i in range(active_rites.size() - 1, -1, -1):
-		if active_rites[i].rite.get("id", -1) == rite_id:
-			active_rites.remove_at(i)
-			break
 
 
 func _refresh_intel_cards():
