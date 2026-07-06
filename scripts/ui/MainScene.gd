@@ -145,38 +145,29 @@ func _map() -> void:
 	map_area.mouse_filter = Control.MOUSE_FILTER_PASS
 	map.add_child(map_area)
 	_map_area = map_area
+	_all_rites = _load_rites()
 	
-	var all_rites = _load_rites()
-	_rite_seed = 42
-	var placed: Array[Vector2] = []
+	# 等布局完成后放置常驻仪式
+	var perm_placed := false
+	map_area.resized.connect(func():
+		if perm_placed or map_area.size.x <= 0: return
+		perm_placed = true
+		var placed: Array[Vector2] = []
+		var perm_positions = {1: Vector2(0.12, 0.10), 2: Vector2(0.55, 0.10), 4: Vector2(0.12, 0.75)}
+		for rite in _all_rites:
+			if rite.get("category","") != "permanent" or rite.has("insight_trigger"): continue
+			var rid = rite.get("id", -1)
+			if rid == 3: continue
+			var pos = perm_positions.get(rid)
+			if pos: _place_rite_btn_at(rite, map_area, placed, pos)
+	)
 	
-	# 固定位置的常驻仪式
-	var perm_positions = {
-		1: Vector2(0.12, 0.10),  # 治理家业 - 左上
-		2: Vector2(0.55, 0.10),  # 上朝觐见 - 右上
-		3: Vector2(0.35, 0.55),  # 欢愉之馆 - 中下(第2天)
-		4: Vector2(0.12, 0.75),  # 浴场 - 左下
-	}
-
-	for rite in all_rites:
-		if rite.get("category","") != "permanent": continue
-		if rite.has("insight_trigger"): continue
-		var rid = rite.get("id", -1)
-		if rid == 3: continue  # 欢愉之馆第2天再出现
-		var pos = perm_positions.get(rid)
-		if pos:
-			_place_rite_btn_at(rite, map_area, placed, pos)
-
-	# 欢愉之馆第2天常驻
-	var day2_triggered := false
-	EventBus.day_started.connect(func(_d: int, _w: int):
-		if day2_triggered: return
-		if TurnManager.current_day >= 2:
-			day2_triggered = true
-			for rite in all_rites:
-				if rite.get("id", -1) == 3:
-					_place_rite_btn_at(rite, map_area, [], Vector2(0.35, 0.55))
-					break
+	# 欢愉之馆第2天
+	var day2_done := false
+	EventBus.day_started.connect(func(_d,_w):
+		if day2_done or TurnManager.current_day < 2: return
+		day2_done = true
+		_place_rite_btn_at(_find_rite_by_id(3), map_area, [], Vector2(0.35, 0.55))
 	)
 	
 	map_area.resized.connect(func():
