@@ -236,13 +236,11 @@ func _start_settlement():
 
 
 func _animate_entrance():
-	var vs = get_viewport().size
-	var target_y = position.y
-	position.y = vs.y
+	scale = Vector2(0.5, 0.5)
 	modulate.a = 0.0
 	var t = create_tween()
-	t.tween_property(self, "position:y", target_y, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	t.parallel().tween_property(self, "modulate:a", 1.0, 0.3)
+	t.tween_property(self, "scale", Vector2.ONE, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.parallel().tween_property(self, "modulate:a", 1.0, 0.2)
 	t.tween_callback(func(): _process_stage())
 
 func _auto_stage(rite: Dictionary) -> Array:
