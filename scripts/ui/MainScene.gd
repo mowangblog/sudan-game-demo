@@ -413,17 +413,18 @@ func _open_rite_detail(rite: Dictionary) -> void:
 	confirm_btn.text = "确认"
 	confirm_btn.custom_minimum_size = Vector2(100, 38); confirm_btn.add_theme_font_size_override("font_size", 13)
 	confirm_btn.pressed.connect(func():
-		var char_data = {}; var sultan_card_data = {}
+		var char_data = {}; var sultan_card_data = {}; var gold_card_data = {}
 		for sn in slot_nodes:
 			if not sn.current_card.is_empty():
 				if sn.slot_type == "character": char_data = sn.current_card
 				elif sn.slot_type == "sultan_card": sultan_card_data = sn.current_card
+				elif sn.slot_type == "gold" or sn.slot_type == "resource": gold_card_data = sn.current_card
 		var valid = true
 		for sn in slot_nodes:
 			if not sn.is_optional and sn.current_card.is_empty():
 				valid = false; _log("❌ 槽位未配置")
 		if not valid: return
-		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data}
+		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data}
 		if is_edit:
 			var idx = active_rites.find(existing)
 			if idx != -1: active_rites[idx] = entry
@@ -530,7 +531,7 @@ func _create_slot_ui(index:int, slot_cfg:Dictionary) -> Node:
 	slot.slot_index = index
 	slot.slot_type = slot_cfg.get("type", "character")
 	slot.required_tags = slot_cfg.get("required_tags", [])
-	slot.is_optional = slot_cfg.get("optional", false)
+	slot.is_optional = not slot_cfg.get("required", true)
 	slot.accept = slot_cfg.get("accept", "")
 	slot.max_cards = slot_cfg.get("max", 1)
 	return slot
@@ -828,7 +829,10 @@ func _settle_next(index:int) -> void:
 	screen.settlement_done.connect(func(result:Dictionary):
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
-			_give_random_book()
+			if not ar.get("gold", {}).is_empty():
+				_give_random_book()
+			else:
+				_log("📖 逛了一圈，没买书。")
 		if result.success and result.rite.get("id", -1) == 300 and not ar.char.is_empty():
 			var book = ar.rite.get("book", {})
 			var attr_map = {"social":"soc","combat":"com","wisdom":"wis","charm":"cha","stealth":"ste","magic":"mag","physique":"phy","survival":"sur"}

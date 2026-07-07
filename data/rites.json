@@ -1445,21 +1445,29 @@
 	{
 		"id": 16,
 		"name": "书店营业",
-		"description": "在垂钓者书店寻访书籍。每次1金币购入一本随机书。",
+		"description": "在垂钓者书店寻访书籍。可放入1金币买书，也可只逛不买。",
 		"category": "permanent",
 		"time_limit": 0,
 		"duration": 1,
 		"slots": [
 			{
 				"type": "gold",
-				"required": true
+				"required": false,
+				"label": "金币(1枚)"
 			},
 			{
 				"type": "character",
-				"required": false
+				"required": false,
+				"label": "派谁去逛"
 			}
 		],
-		"gold_cost": 1,
-		"rarity": 5
+		"rarity": 5,
+		"check": {
+			"attr": [
+				"wisdom",
+				"social"
+			],
+			"difficulty": "Normal"
+		}
 	}
 ]
