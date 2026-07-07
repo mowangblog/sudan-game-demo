@@ -803,6 +803,8 @@ func _settle_next(index:int) -> void:
 	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card)
 	screen.settlement_done.connect(func(result:Dictionary):
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
+		if result.success and result.rite.get("id", -1) == 16:
+			_give_random_book()
 		_settle_next(index+1)
 	)
 
@@ -1122,6 +1124,24 @@ func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
 
 
 func _insight_char_bubble(drag_data: Dictionary):
+
+
+func _give_random_book():
+	var pool = DataManager.books.duplicate()
+	if pool.is_empty(): _log("📖 书店已无新书。"); return
+	for c in hand_cards:
+		var d = c.get_meta("drag_data", {})
+		if d.get("type","") == "book":
+			pool = pool.filter(func(b): return b.id != d.get("id",""))
+	if pool.is_empty(): _log("📖 当前可买到的书都已拥有。"); return
+	var book = pool[randi() % pool.size()]
+	var card = card_factory.make_book_card(book)
+	card.drag_ended.connect(_on_hand_card_dropped)
+	card.drag_started.connect(func(_c): hand_layout.arrange())
+	hand_container.add_child(card)
+	hand_cards.append(card)
+	hand_layout.arrange()
+	_log("📖 购得《%s》" % book.get("name","?"))
 	var cid = drag_data.get("id","")
 	var bubbles = {
 		"player": "嗯？",
