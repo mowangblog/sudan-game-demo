@@ -414,9 +414,8 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
-	var gold_gained = 0
 	if not _total_rewards.is_empty():
-		gold_gained = _total_rewards.get("gold", 0)
+		if _total_rewards.has("gold"): ResourceManager.add_gold(_total_rewards.gold)
 		if _total_rewards.has("power"): ResourceManager.modify_reputation("power",_total_rewards.power)
 		if _total_rewards.has("good"): ResourceManager.modify_reputation("good",_total_rewards.good)
 		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)
@@ -425,7 +424,7 @@ func _finish_settlement():
 	_apply_roll_rewards()
 	if reward_text != "":
 		_show_reward_notification()
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":gold_gained})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate()})
 	queue_free()
 
 func _apply_roll_rewards():
@@ -450,6 +449,33 @@ func _show_reward_notification():
 	_notifications.append(reward_text)
 
 
+func _play_notifications():
+	if _notifications.is_empty():
+		_settle_and_free()
+		return
+	var text = _notifications.pop_front()
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", GOLD_HI)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.modulate = Color(1, 1, 1, 0)
+	add_child(lbl)
+	# 自动宽度，居中定位
+	lbl.reset_size()
+	await get_tree().process_frame
+	lbl.position = Vector2((size.x - lbl.size.x) / 2, -24)
+	
+	var t = create_tween()
+	t.tween_property(lbl, "position:y", 8, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 1, 0.15)
+	t.tween_interval(1.0)
+	t.tween_property(lbl, "position:y", -24, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 0, 0.15)
+	t.tween_callback(func():
+		if is_instance_valid(lbl): lbl.queue_free()
+		_play_notifications()
+	)
 
 # 打字机效果
 func _typewrite_on_label(lbl: Label, text: String, cb: Callable):

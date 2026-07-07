@@ -369,21 +369,20 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
 		slot.resource_trimmed.connect(func(idx, excess_data):
-			# 数量超出 — 删除原卡，多余数量逐一退回手牌
-			for j in range(hand_cards.size() - 1, -1, -1):
-				var c2 = hand_cards[j]
+			# 数量溢出 → 修改原卡数量为max，多余创建新卡退回
+			for c2 in hand_cards:
 				if not c2.visible and is_instance_valid(c2):
 					var dd = c2.get_meta("drag_data", {})
 					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
-						hand_cards.remove_at(j)
-						c2.queue_free()
+						_update_card_count(c2, slot_cfg.get("max", 1))
 						break
-			for _k in range(excess_data.get("count", 1)):
-				var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), 1)
-				ecard.drag_ended.connect(_on_hand_card_dropped)
-				ecard.drag_started.connect(func(_c): hand_layout.arrange())
-				hand_container.add_child(ecard)
-				hand_cards.append(ecard)
+			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
+			ecard.drag_ended.connect(_on_hand_card_dropped)
+			ecard.drag_started.connect(func(_c): hand_layout.arrange())
+			ecard._on_right_click = func(): _split_resource_card(ecard, excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"))
+			ecard._on_click = func(): popups.show_res_popup(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), ecard.get_meta("res_count", 1))
+			hand_container.add_child(ecard)
+			hand_cards.append(ecard)
 			hand_layout.arrange())
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
@@ -772,6 +771,8 @@ func _update_card_count(card: PanelContainer, count: int):
 	card.set_meta("drag_data", card.get_meta("res_data"))
 	var lbl = card.get_node_or_null("VB/CountLbl")
 	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
+	if card.get_meta("res_type","") == "金币":
+		ResourceManager.gold = count
 
 func _next_press() -> void:
 	_insight_used_keys.clear()
@@ -835,14 +836,11 @@ func _settle_next(index:int) -> void:
 	screen.settlement_done.connect(func(result:Dictionary):
 		var nts: Array = result.get("notifications", [])
 		_show_toasts(nts)
-		# 金币收入 → 发卡
-		var gold_gained = result.get("gold_gained", 0)
-		if result.success and gold_gained > 0:
-			_give_gold_cards(gold_gained)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
-				_consume_gold_from_hand()
+				# 消耗金币
+				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
 			else:
 				_log("📖 逛了一圈，没买书。")
@@ -869,47 +867,25 @@ func _refresh() -> void:
 	s_lbl.text = "灵%d" % ResourceManager.reputations.spirit
 	
 	var card = GameManager.active_sultan_card
-	if is_instance_valid(cp):
-		cp.visible = not card.is_empty()
-		if not card.is_empty():
-			ct_lbl.text = TN.get(card.get("type",""),"？")
-			cr_lbl.text = RG.get(card.get("rank",""),"？")
-			cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
-			var tc = TC.get(card.get("type",""),C.LUST)
-			var rk_bg = SC.get(card.get("rank",""), Color("2a2018"))
-			var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
-			var sb = StyleBoxFlat.new(); sb.bg_color=rk_bg; sb.set_corner_radius_all(10)
-			sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-			sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
-			sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
-			cp.add_theme_stylebox_override("panel",sb)
-			cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
+	if not is_instance_valid(cp): return
+	cp.visible = not card.is_empty()
+	if not card.is_empty():
+		ct_lbl.text = TN.get(card.get("type",""),"？")
+		cr_lbl.text = RG.get(card.get("rank",""),"？")
+		cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
+		var tc = TC.get(card.get("type",""),C.LUST)
+		var rk_bg = SC.get(card.get("rank",""), Color("2a2018"))
+		var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
+		var sb = StyleBoxFlat.new(); sb.bg_color=rk_bg; sb.set_corner_radius_all(10)
+		sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
+		sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
+		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
+		cp.add_theme_stylebox_override("panel",sb)
+		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
 
-func _give_gold_cards(amount: int):
-	for _i in range(amount):
-		var card = card_factory.make_resource_card("金币", "💰", "GOLD", 1)
-		card.drag_ended.connect(_on_hand_card_dropped)
-		card.drag_started.connect(func(_c): hand_layout.arrange())
-		card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
-		card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", 1))
-		hand_container.add_child(card)
-		hand_cards.append(card)
-	hand_layout.arrange()
-
-
-func _consume_gold_from_hand() -> bool:
-	for i in range(hand_cards.size() - 1, -1, -1):
-		var c = hand_cards[i]
-		if not is_instance_valid(c): continue
-		var dd = c.get_meta("drag_data", {})
-		if dd.get("name", "") == "金币" and c.visible:
-			hand_cards.remove_at(i)
-			c.queue_free()
-			return true
-	return false
-
+# 同步金币卡数量和 ResourceManager
 
 func _load_rites() -> Array:
 	var f = FileAccess.open("res://data/rites.json",FileAccess.READ)
