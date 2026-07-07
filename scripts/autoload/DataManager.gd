@@ -8,6 +8,7 @@ var sultan_cards: Array = []
 var characters: Array = []
 var rites: Array = []
 var events: Array = []
+var books: Array = []
 
 var _card_pool: Array = []   # 牌盒（待抽取的苏丹卡）
 
@@ -21,6 +22,7 @@ func _load_all_data() -> void:
 	_load_json("res://data/characters.json", characters)
 	_load_json("res://data/rites.json", rites)
 	_load_json("res://data/events.json", events)
+	_load_json("res://data/books.json", books)
 	_refill_card_pool()
 	print("[DataManager] Loaded %d cards, %d characters, %d rites, %d events" % [sultan_cards.size(), characters.size(), rites.size(), events.size()])
 
