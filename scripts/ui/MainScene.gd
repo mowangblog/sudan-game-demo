@@ -31,6 +31,7 @@ const StatusBarScript = preload("res://scripts/ui/StatusBar.gd")
 const RiteDetailPopupScript = preload("res://scripts/ui/RiteDetailPopup.gd")
 const RiteRewardApplierScript = preload("res://scripts/ui/RiteRewardApplier.gd")
 const RiteSettlementControllerScript = preload("res://scripts/ui/RiteSettlementController.gd")
+const InsightControllerScript = preload("res://scripts/game/InsightController.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
@@ -39,6 +40,7 @@ var map_rite_panel = MapRitePanelScript.new()
 var status_bar = StatusBarScript.new()
 var rite_reward_applier = RiteRewardApplierScript.new()
 var rite_settlement_controller = RiteSettlementControllerScript.new()
+var insight_controller = InsightControllerScript.new()
 
 # ============ UI 节点 ============
 var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
@@ -55,7 +57,6 @@ var sort_btn: Button
 # ============ 状态 ============
 var active_rites: Array = []
 var log_msgs: Array[String] = []
-var _insight_used_keys: Array[String] = []
 var _map_area: Control
 var _rite_seed: int = 42
 var _all_rites: Array = []
@@ -401,6 +402,11 @@ func _bottom() -> void:
 		"reset_rite_btn_labels": func(): _reset_all_rite_btn_labels(),
 		"show_toasts": func(notifications): _show_toasts(notifications),
 	})
+	insight_controller.call("setup", self, {"C": C}, hand_container, hand_cards, hand_layout, active_rites, {
+		"log": func(message): _log(message),
+		"refresh": func(): _refresh(),
+		"place_rite": func(rite): _place_rite_btn(rite, _map_area, map_rite_panel.get_existing_positions()),
+	})
 	
 	# 资源卡（金币、情报等可叠加）
 	var gold_card = resource_card_manager.make_gold_card(ResourceManager.gold)
@@ -456,7 +462,7 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	# 1. 检查是否拖到了俺寻思
 	var insight = hand_container.get_node_or_null("InsightBtn")
 	if insight and insight.get_global_rect().has_point(global_pos):
-		_do_insight_with_card(card)
+		insight_controller.call("do_insight_with_card", card)
 		dropped_in_slot = true
 	
 	# 2. 资源卡合并 — 拖到同类型资源卡上
@@ -510,9 +516,9 @@ func _update_card_count(card: PanelContainer, count: int):
 	resource_card_manager.update_card_count(card, count)
 
 func _next_press() -> void:
-	_insight_used_keys.clear()
+	insight_controller.call("clear_used_keys")
 	# 检查是否有未执行的杀戮仪式，若是则第二天弹出荣誉杀戮
-	_check_pending_honor_kill()
+	insight_controller.call("check_pending_honor_kill")
 	rite_settlement_controller.call("start")
 
 func _refresh() -> void:
@@ -623,193 +629,6 @@ func _log(msg:String) -> void:
 	if log_msgs.size() > 50: log_msgs.pop_front()
 	_refresh()
 	print("[MainScene]", msg)
-
-func _check_pending_honor_kill() -> void:
-	for ar in active_rites:
-		if ar.get("insight_kill_rank","") != "" and ar.char.is_empty() and not ar.get("insight_kill_used", true):
-			var rank = ar.insight_kill_rank
-			if rank in ["STONE","BRONZE"]:
-				var honor_rite = DataManager.get_rite_by_id(205)
-				if not honor_rite.is_empty():
-					var entry = {"rite": honor_rite, "char": {}, "sultan_card": {}, "insight": true}
-					active_rites.append(entry)
-					_log("⚔ 荣誉杀戮的机会出现了——趁还来得及。")
-					_refresh()
-			ar.insight_kill_used = true
-			break
-
-
-func _do_insight_with_card(card: PanelContainer) -> void:
-	var drag_data = card.get_meta("drag_data", {})
-	var card_type = drag_data.get("type", "")
-	var card_name = drag_data.get("name", "卡牌")
-	
-	# 重复检查：角色按id、其他按类型
-	var repeat_key = drag_data.get("id","") if card_type == "character" else card_type
-	if repeat_key in _insight_used_keys:
-		_show_insight_bubble("暂时想不出\n更好的办法了。")
-		return
-	_insight_used_keys.append(repeat_key)
-	
-	# 角色卡：思考→气泡
-	if card_type == "character":
-		card.visible = false; hand_layout.arrange()
-		await _do_think_animation()
-		_insight_char_bubble(drag_data)
-		card.visible = true; hand_layout.arrange()
-		return
-	
-	# 书籍卡：加入看书仪式
-	if card_type == "book":
-		card.visible = false; hand_layout.arrange()
-		hand_cards.erase(card)
-		card.queue_free()
-		await _do_think_animation()
-		var book_data = drag_data.get("data", {})
-		var rite = {"id":300,"name":book_data.get("name","读书"),"category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","label":"阅读者","required":true}],"book":book_data}
-		var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
-		active_rites.append(entry)
-		# 加到地图
-		if _map_area:
-			_place_rite_btn(rite, _map_area, map_rite_panel.get_existing_positions())
-		_show_insight_bubble("「%s」\n开始阅读" % book_data.get("name","?"))
-		hand_layout.arrange()
-		return
-	
-	# 查找匹配仪式
-	var matched = _find_insight_rites(card_type, drag_data)
-	if matched.is_empty():
-		card.visible = false; hand_layout.arrange()
-		await _do_think_animation()
-		_show_insight_bubble("暂时想不出\n更好的办法了。")
-		card.visible = true; hand_layout.arrange()
-		return
-	
-	# 杀戮卡追踪
-	var kill_rank = ""
-	if card_type == "sultan_card" and drag_data.get("data",{}).get("type","") == "MURDER":
-		kill_rank = drag_data.get("data",{}).get("rank","").to_upper()
-	
-	# 有匹配 → 加入地图
-	var picked = matched[randi() % matched.size()]
-	card.visible = false; hand_layout.arrange()
-	await _do_think_animation()
-	
-	# 消耗检查
-	var consumed := false
-	if picked.get("insight_trigger",{}).get("consume", false):
-		if card_type == "sultan_card":
-			GameManager.consume_sultan_card(0)
-			card.queue_free(); hand_cards.erase(card)
-			consumed = true
-	
-	_add_insight_rite_to_map(picked, drag_data, consumed, kill_rank)
-	if not consumed:
-		card.visible = true; hand_layout.arrange()
-
-
-func _do_think_animation() -> void:
-	var insight = hand_container.get_node_or_null("InsightBtn")
-	if insight and is_instance_valid(insight):
-		var t = create_tween().set_loops(3)
-		t.tween_property(insight, "modulate", Color(1.3, 1.3, 1.0), 0.25)
-		t.tween_property(insight, "modulate", Color.WHITE, 0.25)
-	await get_tree().create_timer(1.0).timeout
-	if insight and is_instance_valid(insight):
-		insight.modulate = Color.WHITE
-
-
-func _show_insight_bubble(text: String) -> void:
-	var bubble = PanelContainer.new()
-	bubble.name = "InsightBubble"
-	var bs = StyleBoxFlat.new(); bs.bg_color = Color("1a1018"); bs.set_corner_radius_all(8)
-	bs.border_width_bottom=1; bs.border_width_top=1; bs.border_width_left=1; bs.border_width_right=1
-	bs.border_color = C.GOLD_LO; bs.content_margin_left=10; bs.content_margin_right=10
-	bs.content_margin_top=6; bs.content_margin_bottom=6
-	bubble.add_theme_stylebox_override("panel", bs)
-	var bl = Label.new(); bl.text=text; bl.add_theme_font_size_override("font_size",11)
-	bl.add_theme_color_override("font_color", C.GOLD); bl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	bubble.add_child(bl)
-	add_child(bubble)
-	bubble.reset_size()
-	await get_tree().process_frame
-	var vs = get_viewport().size
-	var insight = hand_container.get_node_or_null("InsightBtn")
-	var x: float = 0.0; var y: float = 0.0
-	if insight and is_instance_valid(insight):
-		var r = insight.get_global_rect()
-		x = r.position.x + r.size.x / 2 - bubble.size.x / 2
-		y = r.position.y - bubble.size.y - 8
-	else:
-		x = 50; y = vs.y - 240
-	# 限制在屏幕内
-	x = clampf(x, 4, vs.x - bubble.size.x - 4)
-	y = maxf(y, 4)
-	bubble.position = Vector2(x, y)
-	await get_tree().create_timer(2.0).timeout
-	bubble.queue_free()
-
-
-func _add_insight_rite_to_map(rite: Dictionary, drag_data: Dictionary, consumed: bool, kill_rank: String = ""):
-	var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
-	if drag_data.get("type","") == "character" and not consumed:
-		entry.char = drag_data
-	# 跟踪杀戮卡
-	if kill_rank != "":
-		entry["insight_kill_rank"] = kill_rank
-		entry["insight_kill_used"] = false
-	active_rites.append(entry)
-	# 添加到地图上
-	if _map_area:
-		_place_rite_btn(rite, _map_area, map_rite_panel.get_existing_positions())
-	_refresh()
-	_show_insight_bubble("「%s」\n出现在地图上" % rite.get("name", "?"))
-
-
-func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
-	var all = DataManager.rites
-	var matched: Array = []
-	for rite in all:
-		var it = rite.get("insight_trigger", {})
-		if it.is_empty(): continue
-		if it.get("type","") != card_type: continue
-		# 装修只能做一次
-		if it.get("subtype","") == "LUXURY" and GameManager.renovation_done:
-			continue
-		var subtype = it.get("subtype","")
-		if subtype != "":
-			if card_type == "sultan_card":
-				var cd = drag_data.get("data",{})
-				if cd.get("type","") != subtype: continue
-				var filter_rank = it.get("filter_rank","")
-				if typeof(filter_rank) == TYPE_ARRAY:
-					if not cd.get("rank","").to_upper() in filter_rank: continue
-				elif filter_rank != "" and cd.get("rank","").to_upper() != filter_rank:
-					continue
-			elif card_type == "resource":
-				var res_id = drag_data.get("id","")
-				if subtype == "INTEL":
-					if not ResourceManager.INTEL_EFFECTS.has(res_id): continue
-				elif res_id != subtype:
-					continue
-		# 杀戮卡固定返回残忍的牺牲
-		if card_type == "sultan_card" and subtype == "MURDER" and rite.id != 204:
-			continue
-		matched.append(rite)
-	return matched
-
-
-func _insight_char_bubble(drag_data: Dictionary):
-	var cid = drag_data.get("id","")
-	var bubbles = {
-		"player": "嗯？",
-		"meji": "我的挚爱，我的坚定盟友。",
-		"zhaqiyi": "我的学生，很有潜力的年轻人。",
-		"tietou": "一个沉默寡言的铁匠。",
-		"kuaijiao": "路边的消息，往往最值钱。",
-	}
-	var text = bubbles.get(cid, drag_data.get("name","角色"))
-	_show_insight_bubble(text)
 
 
 func _show_toasts(nts: Array):
