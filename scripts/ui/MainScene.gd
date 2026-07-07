@@ -424,7 +424,20 @@ func _open_rite_detail(rite: Dictionary) -> void:
 			if not sn.is_optional and sn.current_card.is_empty():
 				valid = false; _log("❌ 槽位未配置")
 		if not valid: return
-		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data}
+		# 从手牌移除已分配卡牌（存到仪式中，结算后处理）
+		var stored_cards = []
+		var card_types = [char_data, sultan_card_data, gold_card_data]
+		for ct in card_types:
+			if ct.is_empty(): continue
+			for i in range(hand_cards.size() - 1, -1, -1):
+				var c = hand_cards[i]
+				if not c.visible and is_instance_valid(c):
+					var dd = c.get_meta("drag_data", {})
+					if dd.get("id", "") == ct.get("id", "") and dd.get("type", "") in ["character","sultan_card","resource"]:
+						hand_cards.remove_at(i)
+						stored_cards.append(c)
+						break
+		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "stored_cards": stored_cards}
 		if is_edit:
 			var idx = active_rites.find(existing)
 			if idx != -1: active_rites[idx] = entry
