@@ -247,6 +247,8 @@ func _animate_entrance():
 func _auto_stage(rite: Dictionary) -> Array:
 	var s := {}
 	var c = rite.get("check", {})
+	if not c is Dictionary:
+		c = {}
 	if not c.is_empty():
 		s["check"] = c
 		s["text"] = rite.get("description", "")
@@ -412,12 +414,9 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
-	var outcome_key = "success" if _stage_all_success else "fail"
-	var oc = rite_data.get("outcomes", {}).get(outcome_key, {})
-	var gold_gained = oc.get("gold", 0)
 	if reward_text != "":
 		_show_reward_notification()
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":gold_gained,"stage_success_counts":_stage_success_counts.duplicate(),"stages":_stages.duplicate(true)})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"stage_success_counts":_stage_success_counts.duplicate(),"stages":_stages.duplicate(true)})
 	queue_free()
 
 func _show_reward_notification():

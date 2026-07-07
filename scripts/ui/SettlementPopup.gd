@@ -194,24 +194,7 @@ func show_result():
 	desc_lbl.visible = true
 	desc_lbl.text = narrative
 
-	# 应用效果
-	apply_outcome(outcome)
-
 	continue_btn.visible = true
-
-func apply_outcome(outcome: Dictionary):
-	if outcome.has("gold"):
-		ResourceManager.add_gold(outcome.gold)
-	if outcome.has("power"):
-		ResourceManager.modify_reputation("power", outcome.power)
-	if outcome.has("good"):
-		ResourceManager.modify_reputation("good", outcome.good)
-	if outcome.has("evil"):
-		ResourceManager.modify_reputation("evil", outcome.evil)
-	if outcome.has("hero"):
-		ResourceManager.modify_reputation("hero", outcome.hero)
-	if outcome.has("spirit"):
-		ResourceManager.modify_reputation("spirit", outcome.spirit)
 
 func calc_dice_count(cd: Dictionary, check: Dictionary) -> int:
 	if cd.is_empty():

@@ -9,7 +9,6 @@ const SettlementScreen = preload("res://scripts/ui/SettlementScreen.gd")
 var root: Control
 var active_rites: Array
 var reward_applier: RiteRewardApplier
-var settle_sultan_used: bool = false
 var _callbacks: Dictionary = {}
 
 func setup(p_root: Control, p_active_rites: Array, p_reward_applier: RiteRewardApplier, callbacks: Dictionary) -> void:
@@ -33,7 +32,6 @@ func start() -> void:
 		if GameManager.is_game_over:
 			_call("show_game_over")
 		return
-	settle_sultan_used = false
 	_call("log", ["⚔ 开始结算 %d 个仪式..." % active_rites.size()])
 	_settle_next(0)
 
@@ -49,9 +47,6 @@ func _settle_next(index: int) -> void:
 		_settle_next(index + 1)
 		return
 
-	if not active_rite.sultan_card.is_empty():
-		settle_sultan_used = true
-
 	var screen = SettlementScreen.new()
 	root.add_child(screen)
 	var reward_context = reward_applier.prepare_context(active_rite)
@@ -65,15 +60,11 @@ func _settle_next(index: int) -> void:
 
 
 func _finish_all() -> void:
-	if settle_sultan_used:
-		GameManager.consume_sultan_card(0)
-		_call("log", ["🃏 苏丹卡已消耗。"])
+	var notifications = reward_applier.apply_queue_consumption(active_rites)
+	for message in notifications:
+		_call("log", [message])
+	_call("show_toasts", [notifications])
 	_call("restore_hand_cards")
-	for active_rite in active_rites:
-		if active_rite.rite.has("s2_gold") and active_rite.rite.get("insight_trigger", {}).get("subtype", "") == "LUXURY":
-			if not active_rite.char.is_empty():
-				GameManager.renovation_done = true
-				_call("log", ["🏠 装修已完成！"])
 	active_rites.clear()
 	_call("reset_rite_btn_labels")
 	TurnManager.next_day()

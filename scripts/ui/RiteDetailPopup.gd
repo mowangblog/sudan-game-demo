@@ -273,6 +273,9 @@ func _build_right(split: HSplitContainer) -> void:
 
 func _add_check_info(rvb: VBoxContainer) -> void:
 	var check = rite.get("check", {})
+	if not check is Dictionary or check.is_empty():
+		rvb.add_child(_label("检定：无需检定", 12, C.get("DIM", Color("a09070"))))
+		return
 	var text = "检定："
 	if check.get("type", "solo") == "solo":
 		text += "%s · 需%d成功" % [AN.get(check.get("attribute", ""), "?"), check.get("required_successes", 1)]

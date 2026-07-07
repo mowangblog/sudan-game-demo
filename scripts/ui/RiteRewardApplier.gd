@@ -11,6 +11,7 @@ var hand_cards: Array
 var hand_layout: HandLayoutManager
 var _on_card_dropped: Callable
 var _log: Callable
+const REPUTATION_KEYS := ["power", "good", "evil", "hero", "spirit"]
 
 func setup(
 	p_card_factory: CardFactory,
@@ -40,9 +41,7 @@ func prepare_context(active_rite: Dictionary) -> Dictionary:
 func apply_result(active_rite: Dictionary, result: Dictionary, context: Dictionary) -> Array:
 	var notifications: Array = result.get("notifications", [])
 	_apply_roll_rewards(result, notifications)
-	var gold_gained = result.get("gold_gained", 0)
-	if gold_gained > 0:
-		resource_card_manager.give_gold_cards(gold_gained)
+	_apply_outcome(active_rite, result, notifications)
 
 	if result.success and result.rite.get("id", -1) == 16:
 		var pending_book = context.get("pending_book", {})
@@ -55,6 +54,79 @@ func apply_result(active_rite: Dictionary, result: Dictionary, context: Dictiona
 	if result.success and result.rite.get("id", -1) == 300 and not active_rite.char.is_empty():
 		_apply_reading_reward(active_rite)
 	return notifications
+
+
+func apply_queue_consumption(active_rites: Array) -> Array:
+	var notifications: Array = []
+	var consumed_sultan := false
+	for active_rite in active_rites:
+		if not consumed_sultan and not active_rite.get("sultan_card", {}).is_empty():
+			GameManager.consume_sultan_card(active_rite.get("rite", {}).get("id", 0))
+			notifications.append("🃏 苏丹卡已消耗。")
+			consumed_sultan = true
+		_apply_consumed_gold(active_rite, notifications)
+		_apply_rite_completion_flags(active_rite, notifications)
+	return notifications
+
+
+func _apply_outcome(_active_rite: Dictionary, result: Dictionary, notifications: Array) -> void:
+	var outcome = _get_result_outcome(result)
+	var gold_delta = outcome.get("gold", 0)
+	if gold_delta > 0:
+		resource_card_manager.give_gold_cards(gold_delta)
+		notifications.append("💰 %+d" % gold_delta)
+	elif gold_delta < 0:
+		notifications.append("💰 %d（由仪式队列消耗）" % gold_delta)
+
+	for key in REPUTATION_KEYS:
+		var delta = outcome.get(key, 0)
+		if delta == 0:
+			continue
+		ResourceManager.modify_reputation(key, delta)
+		notifications.append("%s %+d" % [_reputation_label(key), delta])
+
+	var trigger_event = outcome.get("trigger_event", "")
+	if trigger_event != "":
+		_log.call("📌 待触发事件：%s" % trigger_event)
+
+
+func _get_result_outcome(result: Dictionary) -> Dictionary:
+	var outcomes = result.get("rite", {}).get("outcomes", {})
+	if not outcomes is Dictionary:
+		return {}
+	var outcome_key = "success" if result.get("success", false) else "fail"
+	var outcome = outcomes.get(outcome_key, {})
+	if outcome is Dictionary:
+		return outcome
+	return {}
+
+
+func _apply_consumed_gold(active_rite: Dictionary, notifications: Array) -> void:
+	if active_rite.get("gold", {}).is_empty():
+		return
+	var gold_data = active_rite.get("gold", {})
+	var amount = gold_data.get("count", gold_data.get("res_count", 0))
+	if amount > 0:
+		notifications.append("💰 消耗金币卡 x%d" % amount)
+
+
+func _apply_rite_completion_flags(active_rite: Dictionary, notifications: Array) -> void:
+	var rite = active_rite.get("rite", {})
+	if rite.has("s2_gold") and rite.get("insight_trigger", {}).get("subtype", "") == "LUXURY":
+		if not active_rite.get("char", {}).is_empty():
+			GameManager.renovation_done = true
+			notifications.append("🏠 装修已完成！")
+
+
+func _reputation_label(key: String) -> String:
+	var labels = {
+		"power": "权势",
+		"good": "善名",
+		"evil": "恶名",
+		"hero": "侠名",
+		"spirit": "灵视",
+	}
+	return labels.get(key, key)
 
 
 func _apply_roll_rewards(result: Dictionary, notifications: Array) -> void:

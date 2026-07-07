@@ -23,8 +23,6 @@ const SC_HOVER = {"STONE":Color(0.60,0.52,0.42), "BRONZE":Color(0.72,0.82,0.45),
 const SC_GLOW = {"STONE":Color(0.55,0.47,0.36,0.5), "BRONZE":Color(0.65,0.74,0.38,0.5), "SILVER":Color(0.68,0.71,0.74,0.5), "GOLD":Color(0.96,0.80,0.37,0.5)}
 const CHAR_QUALITY = {"player":"SILVER", "meji":"BRONZE", "zhaqiyi":"BRONZE", "tietou":"STONE", "kuaijiao":"STONE"}
 
-const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
-const SettlementScreen = preload("res://scripts/ui/SettlementScreen.gd")
 const ResourceCardManagerScript = preload("res://scripts/ui/ResourceCardManager.gd")
 const MapRitePanelScript = preload("res://scripts/ui/MapRitePanel.gd")
 const StatusBarScript = preload("res://scripts/ui/StatusBar.gd")
