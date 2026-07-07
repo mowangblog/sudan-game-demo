@@ -48,6 +48,7 @@ var _stages: Array = []
 var _stage_idx: int = 0
 var _current_stage: Dictionary = {}
 var _total_rewards: Dictionary = {}
+var _notifications: Array[String] = []
 var _typewrite_timer: Timer
 var _typewrite_full: String = ""
 var _typewrite_cb: Callable
@@ -422,12 +423,15 @@ func _finish_settlement():
 		if _total_rewards.has("spirit"): ResourceManager.modify_reputation("spirit",_total_rewards.spirit)
 	# 应用各阶段的 roll_rewards（情报掉落）
 	_apply_roll_rewards()
-	# 奖励通知
+	# 收集奖励通知
 	if reward_text != "":
 		_show_reward_notification()
+	# 依次播放通知
+	_play_notifications()
+
+
+func _settle_and_free():
 	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success})
-	# 延迟释放，确保通知动画播完
-	await get_tree().create_timer(1.5).timeout
 	queue_free()
 
 func _apply_roll_rewards():
@@ -445,32 +449,32 @@ func _apply_roll_rewards():
 
 func _show_intel_notification(type_name: String, grade: String):
 	var grade_texts = {"STONE": "石", "COPPER": "铜", "SILVER": "银"}
-	var gtxt = grade_texts.get(grade, grade)
-	var lbl = Label.new()
-	lbl.text = "+%s情报 %s" % [gtxt, type_name]
-	lbl.add_theme_font_size_override("font_size", 15)
-	lbl.add_theme_color_override("font_color", Color(0.91, 0.78, 0.29))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(lbl)
-	lbl.position = Vector2(size.x / 2 - 60, size.y / 2)
-	var t = create_tween()
-	t.tween_property(lbl, "position:y", size.y / 2 - 60, 1.0)
-	t.parallel().tween_property(lbl, "modulate:a", 0.0, 1.0)
-	t.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
+	_notifications.append("+%s情报 %s" % [grade_texts.get(grade, grade), type_name])
 
 
 func _show_reward_notification():
+	_notifications.append(reward_text)
+
+
+func _play_notifications():
+	if _notifications.is_empty():
+		_settle_and_free()
+		return
+	var text = _notifications.pop_front()
 	var lbl = Label.new()
-	lbl.text = reward_text
+	lbl.text = text
 	lbl.add_theme_font_size_override("font_size", 16)
 	lbl.add_theme_color_override("font_color", Color(0.91, 0.78, 0.29))
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(lbl)
-	lbl.position = Vector2(size.x / 2 - 100, size.y / 2)
+	lbl.position = Vector2(size.x / 2 - 120, 60)
 	var t = create_tween()
-	t.tween_property(lbl, "position:y", size.y / 2 - 80, 1.2)
-	t.parallel().tween_property(lbl, "modulate:a", 0.0, 1.2)
-	t.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
+	t.tween_property(lbl, "position:y", 30, 0.8)
+	t.parallel().tween_property(lbl, "modulate:a", 0.0, 0.8)
+	t.tween_callback(func():
+		if is_instance_valid(lbl): lbl.queue_free()
+		_play_notifications()
+	)
 
 # 打字机效果
 func _typewrite_on_label(lbl: Label, text: String, cb: Callable):
