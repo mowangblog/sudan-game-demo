@@ -825,12 +825,19 @@ func _settle_next(index:int) -> void:
 	
 	var screen = SettlementScreen.new()
 	add_child(screen)
-	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card)
+	# 书店：预计算书籍名称用于结算展示
+	var book_reward = ""
+	var pending_book = {}
+	if ar.rite.get("id", -1) == 16 and not ar.get("gold", {}).is_empty():
+		book_reward = "📖 获得《%s》" % (pending_book.get("name", "")) if not pending_book.is_empty() else "📖 获得书籍"
+		pending_book = _pick_random_book()
+		book_reward = "📖 获得《%s》" % pending_book.get("name", "") if not pending_book.is_empty() else ""
+	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card, book_reward)
 	screen.settlement_done.connect(func(result:Dictionary):
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
-			if not ar.get("gold", {}).is_empty():
-				_give_random_book()
+			if not pending_book.is_empty():
+				_give_random_book(pending_book)
 			else:
 				_log("📖 逛了一圈，没买书。")
 		if result.success and result.rite.get("id", -1) == 300 and not ar.char.is_empty():
@@ -1201,15 +1208,21 @@ func _insight_char_bubble(drag_data: Dictionary):
 	_show_insight_bubble(text)
 
 
-func _give_random_book():
+func _pick_random_book() -> Dictionary:
 	var pool = DataManager.books.duplicate()
-	if pool.is_empty(): _log("📖 书店已无新书。"); return
+	if pool.is_empty(): return {}
 	for c in hand_cards:
 		var d = c.get_meta("drag_data", {})
 		if d.get("type","") == "book":
 			pool = pool.filter(func(b): return b.id != d.get("id",""))
-	if pool.is_empty(): _log("📖 当前可买到的书都已拥有。"); return
-	var book = pool[randi() % pool.size()]
+	if pool.is_empty(): return {}
+	return pool[randi() % pool.size()]
+
+
+func _give_random_book(book: Dictionary = {}):
+	if book.is_empty():
+		book = _pick_random_book()
+		if book.is_empty(): return
 	var card = card_factory.make_book_card(book)
 	card.drag_ended.connect(_on_hand_card_dropped)
 	card.drag_started.connect(func(_c): hand_layout.arrange())

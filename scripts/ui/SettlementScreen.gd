@@ -32,6 +32,7 @@ const NUMBER_6 = DOT_6
 var rite_data: Dictionary = {}
 var char_data: Dictionary = {}
 var sultan_card_data: Dictionary = {}
+var reward_text: String = ""
 
 var narrative_vb: VBoxContainer
 var _stage_log: VBoxContainer
@@ -65,10 +66,11 @@ var next_btn: Button
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary):
+func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, reward: String = ""):
 	rite_data = rite
 	char_data = char_d
 	sultan_card_data = sultan
+	reward_text = reward
 	_dice_roller = null
 	_dice_svc = null
 
@@ -420,7 +422,12 @@ func _finish_settlement():
 		if _total_rewards.has("spirit"): ResourceManager.modify_reputation("spirit",_total_rewards.spirit)
 	# 应用各阶段的 roll_rewards（情报掉落）
 	_apply_roll_rewards()
+	# 奖励通知
+	if reward_text != "":
+		_show_reward_notification()
 	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success})
+	# 延迟释放，确保通知动画播完
+	await get_tree().create_timer(1.5).timeout
 	queue_free()
 
 func _apply_roll_rewards():
@@ -449,6 +456,20 @@ func _show_intel_notification(type_name: String, grade: String):
 	var t = create_tween()
 	t.tween_property(lbl, "position:y", size.y / 2 - 60, 1.0)
 	t.parallel().tween_property(lbl, "modulate:a", 0.0, 1.0)
+	t.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
+
+
+func _show_reward_notification():
+	var lbl = Label.new()
+	lbl.text = reward_text
+	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_color_override("font_color", Color(0.91, 0.78, 0.29))
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(lbl)
+	lbl.position = Vector2(size.x / 2 - 100, size.y / 2)
+	var t = create_tween()
+	t.tween_property(lbl, "position:y", size.y / 2 - 80, 1.2)
+	t.parallel().tween_property(lbl, "modulate:a", 0.0, 1.2)
 	t.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
 
 # 打字机效果

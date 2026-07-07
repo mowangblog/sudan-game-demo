@@ -1468,6 +1468,15 @@
 				"social"
 			],
 			"difficulty": "Normal"
-		}
+		},
+		"roll_rewards": [
+			{
+				"min": 2,
+				"intel": [
+					"密教",
+					"STONE"
+				]
+			}
+		]
 	}
 ]
