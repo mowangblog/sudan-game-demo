@@ -416,7 +416,6 @@ func _on_next():
 func _finish_settlement():
 	if not _total_rewards.is_empty():
 	var gold_gained = _total_rewards.get("gold", 0)
-	if gold_gained > 0: ResourceManager.add_gold(gold_gained)
 		if _total_rewards.has("power"): ResourceManager.modify_reputation("power",_total_rewards.power)
 		if _total_rewards.has("good"): ResourceManager.modify_reputation("good",_total_rewards.good)
 		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)

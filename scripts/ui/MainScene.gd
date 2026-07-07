@@ -771,8 +771,6 @@ func _update_card_count(card: PanelContainer, count: int):
 	card.set_meta("drag_data", card.get_meta("res_data"))
 	var lbl = card.get_node_or_null("VB/CountLbl")
 	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
-	if card.get_meta("res_type","") == "金币":
-		ResourceManager.gold = count
 
 func _next_press() -> void:
 	_insight_used_keys.clear()
