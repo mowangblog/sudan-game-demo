@@ -805,6 +805,15 @@ func _settle_next(index:int) -> void:
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
 			_give_random_book()
+		if result.success and result.rite.get("id", -1) == 300 and not ar.char.is_empty():
+			var book = ar.rite.get("book", {})
+			var attr_map = {"social":"soc","combat":"com","wisdom":"wis","charm":"cha","stealth":"ste","magic":"mag","physique":"phy","survival":"sur"}
+			var attr_key = attr_map.get(book.get("attr",""),"")
+			var gain = book.get("gain", 0)
+			if attr_key != "" and ar.char.has("attributes"):
+				ar.char["attributes"][attr_key] = ar.char["attributes"].get(attr_key, 0) + gain
+				var ai = card_factory.AI if card_factory.AI.has(attr_key) else attr_key
+				_log("📖 %s 读了《%s》，%s+%d" % [ar.char.get("name","?"), book.get("name","?"), ai, gain])
 		_settle_next(index+1)
 	)
 
@@ -994,6 +1003,30 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 		await _do_think_animation()
 		_insight_char_bubble(drag_data)
 		card.visible = true; hand_layout.arrange()
+		return
+	
+	# 书籍卡：加入看书仪式
+	if card_type == "book":
+		card.visible = false; hand_layout.arrange()
+		hand_cards.erase(card)
+		card.queue_free()
+		await _do_think_animation()
+		var book_data = drag_data.get("data", {})
+		var rite = {"id":300,"name":"看书","category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","required":true}],"book":book_data}
+		var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
+		active_rites.append(entry)
+		# 加到地图
+		if _map_area:
+			var existing = []
+			for c2 in _map_area.get_children():
+				var rp = c2.get_meta("rite_pct")
+				if rp:
+					var w = _map_area.size.x; if w <= 0: w = 1000
+					var h = _map_area.size.y; if h <= 0: h = 500
+					existing.append(Vector2(rp.x * w, rp.y * h))
+			_place_rite_btn(rite, _map_area, existing)
+		_show_insight_bubble("「%s」\n开始阅读" % book_data.get("name","?"))
+		hand_layout.arrange()
 		return
 	
 	# 查找匹配仪式
