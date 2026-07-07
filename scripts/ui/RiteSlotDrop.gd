@@ -217,7 +217,6 @@ func _draw_card_preview():
 
 func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	if not data is Dictionary: return false
-	if not current_card.is_empty(): return false  # 已满
 	
 	var drag_type = data.get("type", "")
 	
@@ -245,7 +244,7 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	return false
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
-	# 替换已有卡牌
+	# 已满则弹出旧卡
 	if not current_card.is_empty():
 		card_removed.emit(slot_index, current_card)
 	current_card = data.get("data", {}) if data is Dictionary and data.has("data") else (data if data is Dictionary else {})
