@@ -25,9 +25,11 @@ const CHAR_QUALITY = {"player":"SILVER", "meji":"BRONZE", "zhaqiyi":"BRONZE", "t
 
 const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
 const SettlementScreen = preload("res://scripts/ui/SettlementScreen.gd")
+const ResourceCardManagerScript = preload("res://scripts/ui/ResourceCardManager.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
+var resource_card_manager = ResourceCardManagerScript.new()
 
 # ============ UI 节点 ============
 var d_lbl:Label;var w_lbl:Label;var gd_lbl:Label
@@ -70,7 +72,7 @@ func _ready() -> void:
 		if _map_area:
 			var existing = []
 			for c in _map_area.get_children():
-				var rp = c.get_meta("rite_pct")
+				var rp = c.get_meta("rite_pct") if c.has_meta("rite_pct") else null
 				if rp:
 					var w = _map_area.size.x; if w <= 0: w = 1000
 					var h = _map_area.size.y; if h <= 0: h = 500
@@ -151,14 +153,14 @@ func _map() -> void:
 	call_deferred("_place_permanent_rites")
 	map_area.resized.connect(func():
 		for c in map_area.get_children():
-			var rp = c.get_meta("rite_pct")
+			var rp = c.get_meta("rite_pct") if c.has_meta("rite_pct") else null
 			if rp:
 				c.position = Vector2(rp.x * map_area.size.x, rp.y * map_area.size.y)
-			var lbl = c.get_meta("char_label")
+			var lbl = c.get_meta("char_label") if c.has_meta("char_label") else null
 			if lbl and is_instance_valid(lbl):
 				lbl.position = Vector2(c.position.x, c.position.y - 14)
 				lbl.custom_minimum_size.x = c.size.x
-			var cd = c.get_meta("cd_label")
+			var cd = c.get_meta("cd_label") if c.has_meta("cd_label") else null
 			if cd and is_instance_valid(cd):
 				cd.position = Vector2(c.position.x, c.position.y + c.size.y + 2)
 				cd.custom_minimum_size.x = c.size.x
@@ -228,7 +230,7 @@ func _update_rite_btn_label(rite_id: int, char_name: String):
 	for c in _map_area.get_children():
 		if c.get_meta("rite_id", -1) == rite_id:
 			# 清除旧标签
-			var old_lbl = c.get_meta("char_label")
+			var old_lbl = c.get_meta("char_label") if c.has_meta("char_label") else null
 			if old_lbl and is_instance_valid(old_lbl): old_lbl.queue_free()
 			if char_name != "":
 				var lbl = Label.new()
@@ -254,7 +256,7 @@ func _find_rite_by_id(rite_id: int):
 func _reset_all_rite_btn_labels():
 	if not _map_area: return
 	for c in _map_area.get_children():
-		var old_lbl = c.get_meta("char_label")
+		var old_lbl = c.get_meta("char_label") if c.has_meta("char_label") else null
 		if old_lbl and is_instance_valid(old_lbl): old_lbl.queue_free()
 
 
@@ -376,14 +378,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
 						_update_card_count(c2, slot_cfg.get("max", 1))
 						break
-			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
-			ecard.drag_ended.connect(_on_hand_card_dropped)
-			ecard.drag_started.connect(func(_c): hand_layout.arrange())
-			ecard._on_right_click = func(): _split_resource_card(ecard, excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"))
-			ecard._on_click = func(): popups.show_res_popup(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), ecard.get_meta("res_count", 1))
-			hand_container.add_child(ecard)
-			hand_cards.append(ecard)
-			hand_layout.arrange())
+			resource_card_manager.give_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1)))
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
 				popups.show_sultan_popup(card_data)
@@ -680,18 +675,6 @@ func _bottom() -> void:
 	cp.drag_ended.connect(_on_hand_card_dropped)
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
-	# 资源卡（金币等可叠加）
-	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", ResourceManager.gold)
-	gold_card.drag_ended.connect(_on_hand_card_dropped)
-	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
-	gold_card._on_right_click = func(): _split_resource_card(gold_card, "金币", "💰", "GOLD")
-	gold_card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", 0))
-	hand_container.add_child(gold_card); hand_cards.append(gold_card)
-	resource_cards["金币"] = gold_card
-	
-	# 情报卡（按需创建，初始可见）
-	_refresh_intel_cards()
-	
 	# 下一天 — 右下角
 	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
 	nb.add_theme_font_size_override("font_size", 15); nb.pressed.connect(_next_press)
@@ -707,6 +690,20 @@ func _bottom() -> void:
 	
 	# 初始化手牌布局管理器
 	hand_layout.setup(hand_cards, hand_container, sort_btn, func(card, count): _update_card_count(card, count), CHAR_QUALITY)
+	resource_card_manager.setup(
+		card_factory,
+		hand_layout,
+		popups,
+		hand_container,
+		hand_cards,
+		resource_cards,
+		func(card, global_pos): _on_hand_card_dropped(card, global_pos)
+	)
+	
+	# 资源卡（金币、情报等可叠加）
+	var gold_card = resource_card_manager.make_gold_card(ResourceManager.gold)
+	hand_container.add_child(gold_card); hand_cards.append(gold_card)
+	_refresh_intel_cards()
 	
 	hand_layout.arrange()
 	
@@ -815,29 +812,11 @@ func _reorder_card(card: PanelContainer, global_pos: Vector2):
 			if c.get_index() != i: hand_container.move_child(c, i)
 
 func _split_resource_card(source_card: PanelContainer, name_str: String, icon: String, quality: String):
-	var c2 = source_card.get_meta("res_count", 0)
-	if c2 <= 1: return
-	_update_card_count(source_card, c2 - 1)
-	var newc = card_factory.make_resource_card(name_str, icon, quality, 1)
-	newc.drag_ended.connect(_on_hand_card_dropped)
-	newc.drag_started.connect(func(_c): hand_layout.arrange())
-	newc._on_right_click = func(): _split_resource_card(newc, name_str, icon, quality)
-	newc._on_click = func(): popups.show_res_popup(name_str, icon, quality, newc.get_meta("res_count", 0))
-	hand_container.add_child(newc)
-	var idx = hand_cards.find(source_card)
-	if idx != -1: hand_cards.insert(idx + 1, newc)
-	else: hand_cards.append(newc)
-	hand_layout.arrange()
+	resource_card_manager.split_resource_card(source_card, name_str, icon, quality)
 
 # 金币卡数量更新（同步 ResourceManager）
 func _update_card_count(card: PanelContainer, count: int):
-	card.set_meta("res_count", count)
-	card.get_meta("res_data").count = count
-	card.set_meta("drag_data", card.get_meta("res_data"))
-	var lbl = card.get_node_or_null("VB/CountLbl")
-	if lbl: lbl.text = ("x%d" % count) if count > 1 else ""
-	if card.get_meta("res_type","") == "金币":
-		ResourceManager.gold = count
+	resource_card_manager.update_card_count(card, count)
 
 func _next_press() -> void:
 	_insight_used_keys.clear()
@@ -904,8 +883,6 @@ func _settle_next(index:int) -> void:
 			_give_gold_cards(gold_gained)
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
-				# 消耗金币
-				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
 				nts.append("📖 获得《%s》" % pending_book.get("name", ""))
 			else:
@@ -964,7 +941,7 @@ func _load_rites() -> Array:
 func _update_countdown_labels():
 	if not _map_area: return
 	for c in _map_area.get_children():
-		var cd = c.get_meta("cd_label")
+		var cd = c.get_meta("cd_label") if c.has_meta("cd_label") else null
 		if not cd or not is_instance_valid(cd): continue
 		var remaining = cd.get_meta("countdown", 0) - 1
 		cd.set_meta("countdown", remaining)
@@ -976,33 +953,7 @@ func _update_countdown_labels():
 
 
 func _refresh_intel_cards():
-	var types = [
-		{"name": "秘密", "icon": "📜", "q": "BRONZE"},
-		{"name": "洞察", "icon": "🔍", "q": "BRONZE"},
-	]
-	for it in types:
-		var nm = it.name
-		var card = resource_cards.get(nm)
-		var cnt = ResourceManager.get_intel_count(nm)
-		print("[intel] ", nm, " cnt=", cnt, " has_card=", is_instance_valid(card))
-		if cnt > 0:
-			if not is_instance_valid(card):
-				card = card_factory.make_resource_card(nm, it.icon, it.q, cnt)
-				card.drag_ended.connect(_on_hand_card_dropped)
-				card.drag_started.connect(func(_c): hand_layout.arrange())
-				card._on_right_click = func(): _split_resource_card(card, nm, it.icon, it.q)
-				card._on_click = func(): popups.show_res_popup(nm, it.icon, it.q, card.get_meta("res_count", 0))
-				hand_container.add_child(card); hand_cards.append(card)
-				resource_cards[nm] = card
-			else:
-				card.set_meta("res_count", cnt)
-				if card.has_meta("res_data"): card.get_meta("res_data").count = cnt
-				card.get_node_or_null("VB/CountLbl").text = ("x%d" % cnt) if cnt > 1 else ""
-				card.visible = true
-		else:
-			if is_instance_valid(card):
-				card.visible = false
-	hand_layout.arrange()
+	resource_card_manager.refresh_intel_cards()
 
 func slot_type_to_str(t: String) -> String:
 	if t == "character": return "character"
@@ -1132,7 +1083,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 		if _map_area:
 			var existing = []
 			for c2 in _map_area.get_children():
-				var rp = c2.get_meta("rite_pct")
+				var rp = c2.get_meta("rite_pct") if c2.has_meta("rite_pct") else null
 				if rp:
 					var w = _map_area.size.x; if w <= 0: w = 1000
 					var h = _map_area.size.y; if h <= 0: h = 500
@@ -1284,16 +1235,7 @@ func _insight_char_bubble(drag_data: Dictionary):
 
 func _consume_gold_card(gold_data: Dictionary):
 	if gold_data.is_empty(): return
-	for i in range(hand_cards.size() - 1, -1, -1):
-		var c = hand_cards[i]
-		if not is_instance_valid(c): continue
-		var dd = c.get_meta("drag_data", {})
-		if dd.get("type","") == "resource" and dd.get("name","") == "金币":
-			hand_cards.remove_at(i)
-			c.queue_free()
-			ResourceManager.spend_gold(gold_data.get("count", 1))
-			break
-	hand_layout.arrange()
+	resource_card_manager.consume_gold_card(gold_data)
 
 
 func _show_toasts(nts: Array):
@@ -1333,14 +1275,7 @@ func _pick_random_book() -> Dictionary:
 
 
 func _give_gold_cards(amount: int):
-	var card = card_factory.make_resource_card("金币", "💰", "GOLD", amount)
-	card.drag_ended.connect(_on_hand_card_dropped)
-	card.drag_started.connect(func(_c): hand_layout.arrange())
-	card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
-	card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", 1))
-	hand_container.add_child(card)
-	hand_cards.append(card)
-	hand_layout.arrange()
+	resource_card_manager.give_gold_cards(amount)
 
 
 func _give_random_book(book: Dictionary = {}):

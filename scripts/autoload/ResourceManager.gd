@@ -33,6 +33,7 @@ const INTEL_EFFECTS = {
 	"机遇": {"attrs": {"sur": 1}, "rerolls": 1},
 	"内幕": {"attrs": {"pow": 1}, "rerolls": 1},
 	"预兆": {"attrs": {"mag": 1}, "rerolls": 1},
+	"密教": {"attrs": {"mag": 1}, "rerolls": 1},
 }
 
 func reset() -> void:
