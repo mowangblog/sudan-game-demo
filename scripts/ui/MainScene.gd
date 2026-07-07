@@ -883,9 +883,36 @@ func _refresh() -> void:
 		cp.add_theme_stylebox_override("panel",sb)
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
+	_sync_gold_card()
 	_refresh_intel_cards()
 
 # 同步金币卡数量和 ResourceManager
+func _sync_gold_card():
+	var count = ResourceManager.gold
+	if count <= 0:
+		# 移除金币卡
+		for i in range(hand_cards.size() - 1, -1, -1):
+			var c = hand_cards[i]
+			var dd = c.get_meta("drag_data", {})
+			if dd.get("name", "") == "金币":
+				hand_cards.remove_at(i)
+				c.queue_free()
+		return
+	# 找现有金币卡更新数量
+	for c in hand_cards:
+		var dd = c.get_meta("drag_data", {})
+		if dd.get("name", "") == "金币":
+			_update_card_count(c, count)
+			return
+	# 没有金币卡则创建
+	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", count)
+	gold_card.drag_ended.connect(_on_hand_card_dropped)
+	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
+	gold_card._on_right_click = func(): _split_resource_card(gold_card, "金币", "💰", "GOLD")
+	gold_card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", count))
+	hand_container.add_child(gold_card)
+	hand_cards.append(gold_card)
+
 
 func _load_rites() -> Array:
 	var f = FileAccess.open("res://data/rites.json",FileAccess.READ)
