@@ -984,6 +984,7 @@ func _refresh_intel_cards():
 		var nm = it.name
 		var card = resource_cards.get(nm)
 		var cnt = ResourceManager.get_intel_count(nm)
+		print("[intel] ", nm, " cnt=", cnt, " has_card=", is_instance_valid(card))
 		if cnt > 0:
 			if not is_instance_valid(card):
 				card = card_factory.make_resource_card(nm, it.icon, it.q, cnt)
