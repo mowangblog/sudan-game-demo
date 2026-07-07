@@ -415,7 +415,8 @@ func _on_next():
 
 func _finish_settlement():
 	if not _total_rewards.is_empty():
-		if _total_rewards.has("gold"): ResourceManager.add_gold(_total_rewards.gold)
+	var gold_gained = _total_rewards.get("gold", 0)
+	if gold_gained > 0: ResourceManager.add_gold(gold_gained)
 		if _total_rewards.has("power"): ResourceManager.modify_reputation("power",_total_rewards.power)
 		if _total_rewards.has("good"): ResourceManager.modify_reputation("good",_total_rewards.good)
 		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)
@@ -424,7 +425,7 @@ func _finish_settlement():
 	_apply_roll_rewards()
 	if reward_text != "":
 		_show_reward_notification()
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate()})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":gold_gained})
 	queue_free()
 
 func _apply_roll_rewards():

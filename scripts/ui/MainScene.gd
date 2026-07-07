@@ -616,7 +616,6 @@ func _bottom() -> void:
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
 	# 资源卡（金币等可叠加）
-	_last_gold = ResourceManager.gold
 	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", ResourceManager.gold)
 	gold_card.drag_ended.connect(_on_hand_card_dropped)
 	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
@@ -837,11 +836,14 @@ func _settle_next(index:int) -> void:
 	screen.settlement_done.connect(func(result:Dictionary):
 		var nts: Array = result.get("notifications", [])
 		_show_toasts(nts)
+		# 金币收入 → 发卡
+		var gold_gained = result.get("gold_gained", 0)
+		if result.success and gold_gained > 0:
+			_give_gold_cards(gold_gained)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
-				# 消耗金币
-				_consume_gold_card(ar.get("gold", {}))
+				_consume_gold_from_hand()
 				_give_random_book(pending_book)
 			else:
 				_log("📖 逛了一圈，没买书。")
@@ -884,25 +886,34 @@ func _refresh() -> void:
 			cp.add_theme_stylebox_override("panel",sb)
 			cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
-	_sync_gold_card()
 	_refresh_intel_cards()
 
-# 金币卡数量同步 — 差值发新卡
-var _last_gold: int = 0
-func _sync_gold_card():
-	var cur = ResourceManager.gold
-	var delta = cur - _last_gold
-	_last_gold = cur
-	if delta <= 0: return
-	var card = card_factory.make_resource_card("金币", "💰", "GOLD", delta)
-	card.drag_ended.connect(_on_hand_card_dropped)
-	card.drag_started.connect(func(_c): hand_layout.arrange())
-	card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
-	card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", delta))
-	hand_container.add_child(card)
-	hand_cards.append(card)
-	resource_cards["金币"] = card
+func _give_gold_cards(amount: int):
+	for _i in range(amount):
+		var card = card_factory.make_resource_card("金币", "💰", "GOLD", 1)
+		card.drag_ended.connect(_on_hand_card_dropped)
+		card.drag_started.connect(func(_c): hand_layout.arrange())
+		card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
+		card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", 1))
+		hand_container.add_child(card)
+		hand_cards.append(card)
 	hand_layout.arrange()
+
+
+func _consume_gold_from_hand() -> bool:
+	for i in range(hand_cards.size() - 1, -1, -1):
+		var c = hand_cards[i]
+		if not is_instance_valid(c): continue
+		var dd = c.get_meta("drag_data", {})
+		if dd.get("name", "") == "金币":
+			var cnt = c.get_meta("res_count", 1)
+			if cnt > 1:
+				_update_card_count(c, cnt - 1)
+			else:
+				hand_cards.remove_at(i)
+				c.queue_free()
+			return true
+	return false
 
 
 func _load_rites() -> Array:
