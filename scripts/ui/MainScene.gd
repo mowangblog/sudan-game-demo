@@ -1235,10 +1235,13 @@ func _consume_gold_card(gold_data: Dictionary):
 		var c = hand_cards[i]
 		if not is_instance_valid(c): continue
 		var dd = c.get_meta("drag_data", {})
-		if dd.get("type","") == "resource" and dd.get("name","") == "金币":
-			hand_cards.remove_at(i)
-			c.queue_free()
-			ResourceManager.spend_gold(gold_data.get("count", 1))
+		if dd.get("name", "") == "金币" and c.visible:
+			var cnt = c.get_meta("res_count", 1)
+			if cnt > 1:
+				_update_card_count(c, cnt - 1)
+			else:
+				hand_cards.remove_at(i)
+				c.queue_free()
 			break
 	hand_layout.arrange()
 
