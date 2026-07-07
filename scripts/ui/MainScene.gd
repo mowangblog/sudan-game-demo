@@ -341,8 +341,14 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot_flow.add_child(slot_box)
 
 		var sc_lbl = Label.new()
-		var label_text = slot_cfg.get("label", "角色卡槽" if slot_cfg.type == "character" else "苏丹卡槽")
-		if slot_cfg.get("optional", false): label_text += "（可选）"
+		var label_text = slot_cfg.get("label", "")
+		if label_text == "":
+			match slot_cfg.type:
+				"character": label_text = "角色卡槽"
+				"sultan_card": label_text = "苏丹卡槽"
+				"gold": label_text = "金币卡槽"
+				_: label_text = "卡牌槽位"
+		if slot_cfg.get("optional", false) or not slot_cfg.get("required", true): label_text += "（可选）"
 		sc_lbl.text = "🃏 " + label_text
 		sc_lbl.add_theme_font_size_override("font_size", 10)
 		sc_lbl.add_theme_color_override("font_color", C.DIM)
@@ -363,7 +369,13 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
 		slot.resource_trimmed.connect(func(idx, excess_data):
-			# 数量溢出 → 创建新资源卡退回手牌
+			# 数量溢出 → 修改原卡数量为max，多余创建新卡退回
+			for c2 in hand_cards:
+				if not c2.visible and is_instance_valid(c2):
+					var dd = c2.get_meta("drag_data", {})
+					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
+						_update_card_count(c2, slot_cfg.get("max", 1))
+						break
 			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
 			ecard.drag_ended.connect(_on_hand_card_dropped)
 			ecard.drag_started.connect(func(_c): hand_layout.arrange())
