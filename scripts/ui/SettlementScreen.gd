@@ -414,6 +414,11 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
+	# 从 outcomes 合并奖励（治理家业等没有单独 rewards 字段）
+	var outcome_key = "success" if _stage_all_success else "fail"
+	var outcomes = rite_data.get("outcomes", {}).get(outcome_key, {})
+	if outcomes.has("gold") and not _total_rewards.has("gold"):
+		_total_rewards["gold"] = outcomes.gold
 	if not _total_rewards.is_empty():
 		if _total_rewards.has("gold"): ResourceManager.add_gold(_total_rewards.gold)
 		if _total_rewards.has("power"): ResourceManager.modify_reputation("power",_total_rewards.power)
