@@ -891,13 +891,10 @@ func _settle_next(index:int) -> void:
 	var screen = SettlementScreen.new()
 	add_child(screen)
 	# 书店：预计算书籍名称用于结算展示
-	var book_reward = ""
 	var pending_book = {}
 	if ar.rite.get("id", -1) == 16 and not ar.get("gold", {}).is_empty():
-		book_reward = "📖 获得《%s》" % (pending_book.get("name", "")) if not pending_book.is_empty() else "📖 获得书籍"
 		pending_book = _pick_random_book()
-		book_reward = "📖 获得《%s》" % pending_book.get("name", "") if not pending_book.is_empty() else ""
-	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card, book_reward)
+	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card, "")
 	screen.settlement_done.connect(func(result:Dictionary):
 		var nts: Array = result.get("notifications", [])
 		_show_toasts(nts)
@@ -911,6 +908,7 @@ func _settle_next(index:int) -> void:
 				# 消耗金币
 				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
+				_show_toasts(["📖 获得《%s》" % pending_book.get("name", "")])
 			else:
 				_log("📖 逛了一圈，没买书。")
 		if result.success and result.rite.get("id", -1) == 300 and not ar.char.is_empty():
@@ -1002,6 +1000,7 @@ func _refresh_intel_cards():
 		else:
 			if is_instance_valid(card):
 				card.visible = false
+	hand_layout.arrange()
 
 func slot_type_to_str(t: String) -> String:
 	if t == "character": return "character"
@@ -1332,14 +1331,13 @@ func _pick_random_book() -> Dictionary:
 
 
 func _give_gold_cards(amount: int):
-	for _i in range(amount):
-		var card = card_factory.make_resource_card("金币", "💰", "GOLD", 1)
-		card.drag_ended.connect(_on_hand_card_dropped)
-		card.drag_started.connect(func(_c): hand_layout.arrange())
-		card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
-		card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", 1))
-		hand_container.add_child(card)
-		hand_cards.append(card)
+	var card = card_factory.make_resource_card("金币", "💰", "GOLD", amount)
+	card.drag_ended.connect(_on_hand_card_dropped)
+	card.drag_started.connect(func(_c): hand_layout.arrange())
+	card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
+	card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", 1))
+	hand_container.add_child(card)
+	hand_cards.append(card)
 	hand_layout.arrange()
 
 
