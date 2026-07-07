@@ -891,12 +891,14 @@ func _refresh() -> void:
 
 
 func _give_gold_cards(amount: int):
-	for _i in range(amount):
-		var card = card_factory.make_resource_card("金币", "💰", "GOLD", 1)
-		card.drag_ended.connect(_on_hand_card_dropped)
-		card.drag_started.connect(func(_c): hand_layout.arrange())
-		hand_container.add_child(card)
-		hand_cards.append(card)
+	if amount <= 0: return
+	var card = card_factory.make_resource_card("金币", "💰", "GOLD", amount)
+	card.drag_ended.connect(_on_hand_card_dropped)
+	card.drag_started.connect(func(_c): hand_layout.arrange())
+	card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
+	card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", amount))
+	hand_container.add_child(card)
+	hand_cards.append(card)
 	hand_layout.arrange()
 
 
