@@ -1457,8 +1457,8 @@
 			},
 			{
 				"type": "character",
-				"required": false,
-				"label": "派谁去逛"
+				"required": true,
+				"label": "派谁去逛(必填)"
 			}
 		],
 		"rarity": 5,

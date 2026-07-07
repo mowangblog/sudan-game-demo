@@ -1044,7 +1044,7 @@ func _do_insight_with_card(card: PanelContainer) -> void:
 		card.queue_free()
 		await _do_think_animation()
 		var book_data = drag_data.get("data", {})
-		var rite = {"id":300,"name":"看书","category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","label":"阅读者","required":true}],"book":book_data}
+		var rite = {"id":300,"name":book_data.get("name","读书"),"category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","label":"阅读者","required":true}],"book":book_data}
 		var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
 		active_rites.append(entry)
 		# 加到地图
