@@ -970,6 +970,7 @@ func _update_countdown_labels():
 		cd.set_meta("countdown", remaining)
 		if remaining <= 0:
 			cd.queue_free()
+			c.visible = false
 		else:
 			cd.text = "%d天" % remaining
 
