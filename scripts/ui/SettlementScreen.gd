@@ -412,6 +412,7 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
+	print("[_finish_settlement] called, stages=", _stages.size(), " success_counts=", _stage_success_counts.size())
 	# 从 outcomes 读取奖励
 	var outcome_key = "success" if _stage_all_success else "fail"
 	var oc = rite_data.get("outcomes", {}).get(outcome_key, {})
