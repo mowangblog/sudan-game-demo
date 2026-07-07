@@ -115,6 +115,16 @@ func consume_gold_card(gold_data: Dictionary) -> void:
 	pass
 
 
+func consume_resource_card_data(resource_data: Dictionary) -> void:
+	if _resource_type(resource_data) == "intel":
+		_modify_intel(resource_data, -resource_data.get("count", 1))
+
+
+func restore_resource_card_data(resource_data: Dictionary) -> void:
+	if _resource_type(resource_data) == "intel":
+		_modify_intel(resource_data, resource_data.get("count", 1))
+
+
 func _make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
 	var card = card_factory.make_resource_card(name_str, icon, quality, count)
 	card.drag_ended.connect(_on_card_dropped)
@@ -157,3 +167,30 @@ func _get_intel_icon(type_name: String) -> String:
 		"密教": "🕯",
 	}
 	return icons.get(type_name, "📜")
+
+
+func _resource_type(resource_data: Dictionary) -> String:
+	var resource_type = resource_data.get("resource_type", "")
+	if resource_type != "":
+		return resource_type
+	return "gold" if resource_data.get("name", "") == "金币" else "intel"
+
+
+func _modify_intel(resource_data: Dictionary, delta: int) -> void:
+	var name_str = resource_data.get("name", "")
+	if name_str == "":
+		return
+	var pool = _intel_pool_for_quality(resource_data.get("quality", "STONE"))
+	pool[name_str] = max(0, pool.get(name_str, 0) + delta)
+	if pool[name_str] <= 0:
+		pool.erase(name_str)
+
+
+func _intel_pool_for_quality(quality: String) -> Dictionary:
+	match quality:
+		"SILVER":
+			return ResourceManager.intel_silver
+		"COPPER", "BRONZE":
+			return ResourceManager.intel_copper
+		_:
+			return ResourceManager.intel_stone

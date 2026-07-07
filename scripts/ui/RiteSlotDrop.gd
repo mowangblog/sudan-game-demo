@@ -14,6 +14,7 @@ signal resource_trimmed(slot_index: int, excess_data: Dictionary)  # 资源溢�
 @export var required_tags: Array = []
 @export var is_optional: bool = false
 @export var accept: String = ""   # resource 类型时过滤卡牌名称
+@export var accepts: Array = []
 @export var max_cards: int = 1
 
 var current_card: Dictionary = {}
@@ -89,7 +90,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		var l2 = Label.new(); l2.text=RANK_STARS.get(current_card.get("rank",""),"★")
 		l2.add_theme_font_size_override("font_size",13); l2.add_theme_color_override("font_color",C.GOLD)
 		l2.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l2)
-	elif slot_type == "gold" or slot_type == "resource":
+	elif slot_type == "gold" or slot_type == "resource" or slot_type == "item":
 		var q = current_card.get("quality","STONE")
 		sb.bg_color = RANK_BG.get(q, Color("2a2018"))
 		sb.border_color = RANK_BORDER.get(q, C.GOLD_LO)
@@ -136,6 +137,7 @@ func _draw_empty():
 	var icon = Label.new()
 	if slot_type == "gold": icon.text = "💰"
 	elif slot_type == "resource": icon.text = "📦"
+	elif slot_type == "item": icon.text = "🔎"
 	elif slot_type == "sultan_card": icon.text = "🃏"
 	else: icon.text = "👤"
 	icon.add_theme_font_size_override("font_size", 30)
@@ -184,7 +186,7 @@ func _draw_card_preview():
 		var nl = Label.new(); nl.text = current_card.get("name", "?")
 		nl.add_theme_font_size_override("font_size", 13); nl.add_theme_color_override("font_color", C.TEXT)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-		if slot_type == "gold" or slot_type == "resource":
+		if slot_type == "gold" or slot_type == "resource" or slot_type == "item":
 			var icon_lbl = Label.new(); icon_lbl.text = current_card.get("icon", "💰")
 			icon_lbl.add_theme_font_size_override("font_size", 32); icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			vb.add_child(icon_lbl)
@@ -213,7 +215,7 @@ func _draw_card_preview():
 			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
 			sb3.border_color = C.GOLD; sb3.content_margin_left=4; sb3.content_margin_right=4
 			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
-		elif slot_type == "resource":
+		elif slot_type == "resource" or slot_type == "item":
 			sb3 = StyleBoxFlat.new(); sb3.bg_color = Color("1a1a2e"); sb3.set_corner_radius_all(10)
 			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
 			sb3.border_color = C.GOLD_LO; sb3.content_margin_left=4; sb3.content_margin_right=4
@@ -251,6 +253,15 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 		var res_name = data.get("name", "")
 		var target = accept if accept != "" else "金币"
 		return res_name == target
+
+	if slot_type == "item":
+		if drag_type != "resource": return false
+		var resource_type = data.get("resource_type", "")
+		if resource_type == "":
+			resource_type = "gold" if data.get("name", "") == "金币" else "intel"
+		if accepts.is_empty():
+			return resource_type != "gold"
+		return accepts.has(resource_type)
 	
 	return false
 
@@ -262,7 +273,7 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 	var card = data.get("data", {}) if data is Dictionary and data.has("data") else (data if data is Dictionary else {})
 	
 	# 可堆叠资源：限制数量，多余退回
-	if (slot_type == "gold" or slot_type == "resource") and card.has("count") and card.get("count", 1) > max_cards:
+	if (slot_type == "gold" or slot_type == "resource" or slot_type == "item") and card.has("count") and card.get("count", 1) > max_cards:
 		var excess = card.get("count", 1) - max_cards
 		current_card = card.duplicate()
 		current_card["count"] = max_cards

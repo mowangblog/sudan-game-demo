@@ -50,7 +50,7 @@ func _settle_next(index: int) -> void:
 	var screen = SettlementScreen.new()
 	root.add_child(screen)
 	var reward_context = reward_applier.prepare_context(active_rite)
-	screen.setup_and_show(active_rite.rite, active_rite.char, active_rite.sultan_card, "")
+	screen.setup_and_show(active_rite.rite, active_rite.char, active_rite.sultan_card, "", active_rite.get("items", []))
 	screen.settlement_done.connect(func(result: Dictionary):
 		_call("log", ["  结算：「%s」%s" % [result.rite.get("name", ""), "成功" if result.success else "失败"]])
 		var notifications = reward_applier.apply_result(active_rite, result, reward_context)

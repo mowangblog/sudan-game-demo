@@ -9,6 +9,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 0,
@@ -47,6 +56,15 @@
 					"follower"
 				],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 0,
@@ -90,6 +108,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 0,
@@ -126,6 +153,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 0,
@@ -181,6 +217,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -217,6 +262,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -251,6 +305,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -288,6 +351,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -326,6 +398,15 @@
 					"warrior"
 				],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -361,6 +442,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -396,6 +486,15 @@
 					"stealth"
 				],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -443,6 +542,15 @@
 					"wife"
 				],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -478,6 +586,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -510,6 +627,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -550,6 +676,15 @@
 					"scout"
 				],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 2,
@@ -763,6 +898,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -807,6 +951,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -851,6 +1004,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -893,6 +1055,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -938,6 +1109,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -986,6 +1166,15 @@
 					"warrior"
 				],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -1031,6 +1220,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -1076,6 +1274,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -1144,6 +1351,15 @@
 				"type": "resource",
 				"required_tags": [],
 				"optional": true
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -1384,6 +1600,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -1428,6 +1653,15 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": false
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"time_limit": 1,
@@ -1476,6 +1710,15 @@
 				"type": "character",
 				"required": true,
 				"label": "派谁去逛(必填)"
+			},
+			{
+				"type": "item",
+				"label": "辅助物品",
+				"required": false,
+				"accepts": [
+					"intel"
+				],
+				"max": 1
 			}
 		],
 		"rarity": 5,

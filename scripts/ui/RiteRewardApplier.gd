@@ -65,6 +65,7 @@ func apply_queue_consumption(active_rites: Array) -> Array:
 			notifications.append("🃏 苏丹卡已消耗。")
 			consumed_sultan = true
 		_apply_consumed_gold(active_rite, notifications)
+		_apply_consumed_items(active_rite, notifications)
 		_apply_rite_completion_flags(active_rite, notifications)
 	return notifications
 
@@ -110,6 +111,15 @@ func _apply_consumed_gold(active_rite: Dictionary, notifications: Array) -> void
 		notifications.append("💰 消耗金币卡 x%d" % amount)
 
 
+func _apply_consumed_items(active_rite: Dictionary, notifications: Array) -> void:
+	for item in active_rite.get("items", []):
+		if not item is Dictionary:
+			continue
+		var count = item.get("count", 1)
+		var quality = item.get("quality", "STONE")
+		notifications.append("🔎 消耗%s：%s x%d" % [_quality_label(quality), item.get("name", "?"), count])
+
+
 func _apply_rite_completion_flags(active_rite: Dictionary, notifications: Array) -> void:
 	var rite = active_rite.get("rite", {})
 	if rite.has("s2_gold") and rite.get("insight_trigger", {}).get("subtype", "") == "LUXURY":
@@ -127,6 +137,17 @@ func _reputation_label(key: String) -> String:
 		"spirit": "灵视",
 	}
 	return labels.get(key, key)
+
+
+func _quality_label(quality: String) -> String:
+	var labels = {
+		"STONE": "石",
+		"COPPER": "铜",
+		"BRONZE": "铜",
+		"SILVER": "银",
+		"GOLD": "金",
+	}
+	return labels.get(quality, quality)
 
 
 func _apply_roll_rewards(result: Dictionary, notifications: Array) -> void:

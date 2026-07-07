@@ -178,31 +178,28 @@ func _on_rite_detail_committed(config: Dictionary) -> void:
 	var char_data = config.get("char", {})
 	var sultan_card_data = config.get("sultan_card", {})
 	var gold_card_data = config.get("gold", {})
+	var item_cards: Array = config.get("items", [])
 	var is_edit = config.get("is_edit", false)
 	var existing = config.get("existing", null)
-	var queue = {"character": null, "sultan_card": null, "gold": null}
+	var queue = {"character": null, "sultan_card": null, "gold": null, "items": []}
 	if is_edit:
 		var old_q = existing.get("queue", {})
-		queue.character = old_q.get("character")
-		queue.sultan_card = old_q.get("sultan_card")
-		queue.gold = old_q.get("gold")
-	else:
-		var pairs = [["character", char_data], ["sultan_card", sultan_card_data], ["gold", gold_card_data]]
-		for pair in pairs:
-			var skey = pair[0]
-			var cdata = pair[1]
-			if cdata.is_empty():
-				continue
-			for i in range(hand_cards.size() - 1, -1, -1):
-				var card = hand_cards[i]
-				if not is_instance_valid(card) or card.visible:
-					continue
-				var dd = card.get_meta("drag_data", {})
-				if dd.get("id", "") == cdata.get("id", "") and dd.get("type", "") in ["character", "sultan_card", "resource"]:
-					hand_cards.remove_at(i)
-					queue[skey] = card
-					break
-	var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "queue": queue}
+		_return_queue_to_hand(old_q)
+	var pairs = [["character", char_data], ["sultan_card", sultan_card_data], ["gold", gold_card_data]]
+	for pair in pairs:
+		var skey = pair[0]
+		var cdata = pair[1]
+		if cdata.is_empty():
+			continue
+		queue[skey] = _take_card_from_hand(cdata, ["character", "sultan_card", "resource"], not is_edit)
+	for item_data in item_cards:
+		if item_data.is_empty():
+			continue
+		var item_card = _take_card_from_hand(item_data, ["resource"], not is_edit)
+		if item_card:
+			queue.items.append(item_card)
+			_on_item_card_queued(item_card, item_data)
+	var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "items": item_cards, "queue": queue}
 	if is_edit:
 		var idx = active_rites.find(existing)
 		if idx != -1:
@@ -237,12 +234,15 @@ func _on_rite_detail_resource_trimmed(slot_cfg: Dictionary, excess_data: Diction
 		if dd.get("type", "") == "resource" and dd.get("name", "") == excess_data.get("name", ""):
 			_update_card_count(card, slot_cfg.get("max", 1))
 			break
-	resource_card_manager.give_resource_card(excess_data.get("name", "?"), excess_data.get("icon", "💰"), excess_data.get("quality", "STONE"), excess_data.get("count", 1))
+	var excess_card = resource_card_manager.give_resource_card(excess_data.get("name", "?"), excess_data.get("icon", "💰"), excess_data.get("quality", "STONE"), excess_data.get("count", 1))
+	resource_cards[excess_data.get("name", "?")] = excess_card
 
 
 func _on_rite_detail_card_clicked(slot_type: String, card_data: Dictionary) -> void:
 	if slot_type == "sultan_card":
 		popups.show_sultan_popup(card_data)
+	elif slot_type == "gold" or slot_type == "resource" or slot_type == "item":
+		popups.show_res_popup(card_data.get("name", "?"), card_data.get("icon", "📦"), card_data.get("quality", "STONE"), card_data.get("count", 1))
 	else:
 		popups.show_char_popup(card_data)
 
@@ -257,6 +257,40 @@ func _on_rite_detail_highlight_requested(slot) -> void:
 			continue
 		if slot._can_drop_data(Vector2.ZERO, drag_data):
 			card.set_highlight(true)
+
+
+func _take_card_from_hand(card_data: Dictionary, allowed_types: Array, hidden_only: bool = true) -> PanelContainer:
+	for i in range(hand_cards.size() - 1, -1, -1):
+		var card = hand_cards[i]
+		if not is_instance_valid(card):
+			continue
+		if hidden_only and card.visible:
+			continue
+		var dd = card.get_meta("drag_data", {})
+		if not allowed_types.has(dd.get("type", "")):
+			continue
+		if dd.get("id", "") != card_data.get("id", ""):
+			continue
+		if not hidden_only and card.visible and dd.get("type", "") == "resource":
+			var take_count = card_data.get("count", 1)
+			var current_count = card.get_meta("res_count", dd.get("count", 1))
+			if current_count > take_count:
+				_update_card_count(card, current_count - take_count)
+				var queue_card = resource_card_manager.give_resource_card(card_data.get("name", "?"), card_data.get("icon", "📦"), card_data.get("quality", "STONE"), take_count)
+				hand_cards.erase(queue_card)
+				queue_card.visible = false
+				return queue_card
+		hand_cards.remove_at(i)
+		card.visible = false
+		return card
+	return null
+
+
+func _on_item_card_queued(card: PanelContainer, item_data: Dictionary) -> void:
+	resource_card_manager.consume_resource_card_data(item_data)
+	var item_name = item_data.get("name", "")
+	if resource_cards.get(item_name) == card:
+		resource_cards.erase(item_name)
 
 # 结算后回收卡牌：角色卡回手牌，苏丹卡/金币卡销毁（消费）
 func _restore_hand_cards():
@@ -275,6 +309,9 @@ func _restore_hand_cards():
 		var g = q.get("gold")
 		if g and is_instance_valid(g):
 			g.queue_free()
+		for item in q.get("items", []):
+			if item and is_instance_valid(item):
+				item.queue_free()
 	hand_layout.arrange()
 
 # 取消仪式时，queue 里的卡牌退回手牌（金币合并回手牌金币卡）
@@ -287,23 +324,32 @@ func _return_queue_to_hand(q: Dictionary):
 		hand_cards.append(sc); sc.visible = true
 	var g = q.get("gold")
 	if g and is_instance_valid(g):
-		_merge_gold_back(g)
+		_merge_resource_back(g)
+	for item in q.get("items", []):
+		if item and is_instance_valid(item):
+			resource_card_manager.restore_resource_card_data(item.get_meta("drag_data", {}))
+			_merge_resource_back(item)
 	hand_layout.arrange()
 
-# 金币卡节点合并回手牌金币卡（count 累加，避免手牌出现多张金币卡）
-func _merge_gold_back(gold_node):
-	var back_count = gold_node.get_meta("res_count", 0)
+# 资源卡节点合并回手牌同类资源卡（count 累加，避免手牌出现重复堆叠）
+func _merge_resource_back(resource_node):
+	var back_count = resource_node.get_meta("res_count", 0)
+	var back_data = resource_node.get_meta("drag_data", {})
+	var back_name = back_data.get("name", "")
 	var target = null
 	for c in hand_cards:
 		if is_instance_valid(c):
 			var dd = c.get_meta("drag_data", {})
-			if dd.get("type","") == "resource" and dd.get("name","") == "金币":
+			if dd.get("type","") == "resource" and dd.get("name","") == back_name:
 				target = c; break
 	if target:
 		_update_card_count(target, target.get_meta("res_count", 0) + back_count)
-		gold_node.queue_free()
+		resource_node.queue_free()
 	else:
-		hand_cards.append(gold_node); gold_node.visible = true
+		hand_cards.append(resource_node)
+		resource_node.visible = true
+		if back_name != "":
+			resource_cards[back_name] = resource_node
 
 func _bottom() -> void:
 	hand_container = Control.new(); hand_container.name="HandContainer"
@@ -579,6 +625,11 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 	var new_card: PanelContainer
 	if card_type == "character":
 		new_card = card_factory.make_char_card(card_data)
+	elif card_type == "resource":
+		new_card = resource_card_manager.give_resource_card(card_data.get("name", "?"), card_data.get("icon", "📦"), card_data.get("quality", "STONE"), card_data.get("count", 1))
+		resource_cards[card_data.get("name", "?")] = new_card
+		hand_layout.arrange()
+		return
 	else:
 		# 苏丹卡：从 GameManager 取当前数据
 		var scard = GameManager.active_sultan_card

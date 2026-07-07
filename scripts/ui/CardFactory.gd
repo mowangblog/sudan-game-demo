@@ -132,7 +132,8 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	cnt_lbl.add_theme_font_size_override("font_size", 12); cnt_lbl.add_theme_color_override("font_color", C.get("GOLD_HI", Color("e8d48b")))
 	cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt_lbl)
 
-	var res_data = {"type": "resource", "id": name_str, "name": name_str, "quality": quality, "count": count, "icon": icon}
+	var resource_type = "gold" if name_str == "金币" else "intel"
+	var res_data = {"type": "resource", "resource_type": resource_type, "id": name_str, "name": name_str, "quality": quality, "count": count, "icon": icon}
 	card.set_meta("drag_data", res_data)
 	card.set_meta("res_type", name_str)
 	card.set_meta("res_count", count)

@@ -157,6 +157,7 @@ func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -
 			"character": label_text = "角色卡槽"
 			"sultan_card": label_text = "苏丹卡槽"
 			"gold": label_text = "金币卡槽"
+			"item": label_text = "物品卡槽"
 			_: label_text = "卡牌槽位"
 	if slot_cfg.get("optional", false) or not slot_cfg.get("required", true):
 		label_text += "（可选）"
@@ -183,6 +184,7 @@ func _create_slot(index: int, slot_cfg: Dictionary):
 	slot.required_tags = slot_cfg.get("required_tags", [])
 	slot.is_optional = not slot_cfg.get("required", true)
 	slot.accept = slot_cfg.get("accept", "")
+	slot.accepts = slot_cfg.get("accepts", [])
 	slot.max_cards = slot_cfg.get("max", 1)
 	slot.card_removed.connect(func(_idx, card_data): card_return_requested.emit(_slot_type_to_card_type(slot.slot_type), card_data))
 	slot.resource_trimmed.connect(func(_idx, excess_data): resource_trimmed.emit(slot_cfg, excess_data))
@@ -198,6 +200,10 @@ func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
 		slot._drop_data(Vector2.ZERO, {"type": "character", "data": existing_entry.char})
 	elif slot_cfg.get("type", "") == "sultan_card" and not existing_entry.sultan_card.is_empty():
 		slot._drop_data(Vector2.ZERO, {"type": "sultan_card", "data": existing_entry.sultan_card})
+	elif slot_cfg.get("type", "") == "item":
+		var item_data = _get_existing_item_for_slot(slot.slot_index)
+		if not item_data.is_empty():
+			slot._drop_data(Vector2.ZERO, {"type": "resource", "data": item_data})
 
 
 func _add_buttons(lvb: VBoxContainer) -> void:
@@ -269,6 +275,8 @@ func _build_right(split: HSplitContainer) -> void:
 	_add_reward_info(rvb)
 	rvb.add_child(HSeparator.new())
 	rvb.add_child(_label("🃏 将卡牌拖入左侧卡槽", 12, C.get("GOLD", Color("c8a84e"))))
+	if _has_item_slot():
+		rvb.add_child(_label("🔎 可选物品：情报卡可提供属性加成和重投", 11, C.get("DIM", Color("a09070"))))
 
 
 func _add_check_info(rvb: VBoxContainer) -> void:
@@ -327,6 +335,7 @@ func _collect_config() -> Dictionary:
 	var char_data = {}
 	var sultan_card_data = {}
 	var gold_card_data = {}
+	var item_cards: Array = []
 	var valid = true
 	for slot in slot_nodes:
 		if not slot.current_card.is_empty():
@@ -334,6 +343,8 @@ func _collect_config() -> Dictionary:
 				char_data = slot.current_card
 			elif slot.slot_type == "sultan_card":
 				sultan_card_data = slot.current_card
+			elif slot.slot_type == "item":
+				item_cards.append(slot.current_card)
 			elif slot.slot_type == "gold" or slot.slot_type == "resource":
 				gold_card_data = slot.current_card
 		if not slot.is_optional and slot.current_card.is_empty():
@@ -344,6 +355,7 @@ func _collect_config() -> Dictionary:
 		"char": char_data,
 		"sultan_card": sultan_card_data,
 		"gold": gold_card_data,
+		"items": item_cards,
 		"is_edit": is_edit,
 		"existing": existing_entry,
 	}
@@ -355,6 +367,30 @@ func _slot_type_to_card_type(slot_type: String) -> String:
 	if slot_type == "sultan_card":
 		return "sultan_card"
 	return "resource"
+
+
+func _get_existing_item_for_slot(slot_index: int) -> Dictionary:
+	if existing_entry == null:
+		return {}
+	var item_pos = 0
+	var slots = rite.get("slots", [])
+	for i in range(min(slot_index + 1, slots.size())):
+		if slots[i].get("type", "") != "item":
+			continue
+		if i == slot_index:
+			var items = existing_entry.get("items", [])
+			if item_pos < items.size():
+				return items[item_pos]
+			return {}
+		item_pos += 1
+	return {}
+
+
+func _has_item_slot() -> bool:
+	for slot_cfg in rite.get("slots", []):
+		if slot_cfg.get("type", "") == "item":
+			return true
+	return false
 
 
 func _label(text: String, size: int, color: Color) -> Label:

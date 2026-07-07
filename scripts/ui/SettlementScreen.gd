@@ -28,10 +28,12 @@ const NUMBER_3 = DOT_3
 const NUMBER_4 = DOT_4
 const NUMBER_5 = DOT_5
 const NUMBER_6 = DOT_6
+const RiteItemEffectResolver = preload("res://scripts/game/RiteItemEffectResolver.gd")
 
 var rite_data: Dictionary = {}
 var char_data: Dictionary = {}
 var sultan_card_data: Dictionary = {}
+var item_data: Array = []
 var reward_text: String = ""
 
 var narrative_vb: VBoxContainer
@@ -55,6 +57,7 @@ var _typewrite_pos: int = 0
 var _stage_all_success: bool = true
 var _stage_success_counts: Array[int] = []
 var _rerolls_remaining: int = 0
+var _item_effects: Dictionary = {}
 var _reroll_btn: Button
 var _pending_check: Dictionary = {}
 var _pending_char: Dictionary = {}
@@ -66,10 +69,12 @@ var next_btn: Button
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, reward: String = ""):
+func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, reward: String = "", items: Array = []):
 	rite_data = rite
 	char_data = char_d
 	sultan_card_data = sultan
+	item_data = items
+	_item_effects = RiteItemEffectResolver.resolve(item_data)
 	reward_text = reward
 	_dice_roller = null
 	_dice_svc = null
@@ -303,15 +308,10 @@ func _do_check(stage: Dictionary, check: Dictionary):
 	_pending_check = check
 	_pending_char = char_data
 	
-	# 计算可重投次数（S2 情报奖励）
-	_rerolls_remaining = 0
-	if stage.has("check"):  # 有检定的 stage
-		for nm in ResourceManager.INTEL_EFFECTS:
-			if ResourceManager.get_intel_count(nm) > 0:
-				var bonus = ResourceManager.get_intel_bonus(nm)
-				_rerolls_remaining += bonus.get("rerolls", 0)
+	# 计算可重投次数：只使用本次放入物品槽的情报。
+	_rerolls_remaining = _item_effects.get("rerolls", 0) if stage.has("check") else 0
 	
-	var dc = _calc_dice_count(char_data, check)
+	var dc = _calc_dice_count(char_data, check, _item_effects)
 	var req = check.get("required_successes", 1)
 	var atype = "solo" if check.has("attribute") else check.get("type","solo")
 	var an_name = ""
@@ -322,6 +322,9 @@ func _do_check(stage: Dictionary, check: Dictionary):
 	var extra = ""
 	if _rerolls_remaining > 0:
 		extra = "  🔄×%d" % _rerolls_remaining
+	var item_desc = _item_effects.get("descriptions", [])
+	if not item_desc.is_empty():
+		extra += "  🔎%s" % "；".join(item_desc)
 	check_lbl.text = "%s检定 🎲×%d 需✅×%d%s" % [an_name, dc, req, extra]
 	_pending_required = req
 	_setup_3d_dice()
@@ -354,18 +357,9 @@ func _do_roll_dice(dice_count: int) -> void:
 
 func _on_reroll_pressed():
 	_rerolls_remaining -= 1
-	for nm in ResourceManager.INTEL_EFFECTS:
-		if ResourceManager.get_intel_count(nm) > 0:
-			if ResourceManager.intel_silver.has(nm) and ResourceManager.intel_silver[nm] > 0:
-				ResourceManager.intel_silver[nm] -= 1
-			elif ResourceManager.intel_copper.has(nm) and ResourceManager.intel_copper[nm] > 0:
-				ResourceManager.intel_copper[nm] -= 1
-			elif ResourceManager.intel_stone.has(nm) and ResourceManager.intel_stone[nm] > 0:
-				ResourceManager.intel_stone[nm] -= 1
-			break
 	_reroll_btn.text = "🔄 重投 ×%d" % _rerolls_remaining
 	_setup_3d_dice()
-	_do_roll_dice(_calc_dice_count(_pending_char, _pending_check))
+	_do_roll_dice(_calc_dice_count(_pending_char, _pending_check, _item_effects))
 
 func _on_dice_settled_stage(_results: Dictionary):
 	await get_tree().process_frame
@@ -570,18 +564,19 @@ func _compute_visible_face(die: DiceDie3D, cam_pos: Vector3) -> int:
 			if face: best_val = face.value
 	return best_val
 
-func _calc_dice_count(cd: Dictionary, check: Dictionary) -> int:
+func _calc_dice_count(cd: Dictionary, check: Dictionary, item_effects: Dictionary = {}) -> int:
 	if cd.is_empty(): return 1
 	var attrs = cd.get("attributes", {})
+	var item_bonus = RiteItemEffectResolver.bonus_for_check(check, item_effects)
 	var total = 0
 	if check.get("type", "solo") == "solo":
-		total = attrs.get(check.get("attribute", "phy"), 0)
+		total = attrs.get(check.get("attribute", "phy"), 0) + item_bonus
 	else:
 		var attr_list = check.get("attributes", [])
 		if attr_list.size() >= 2:
 			var a = attrs.get(attr_list[0], 0)
 			var b = attrs.get(attr_list[1], 0)
-			total = int(round(float(a + b) * 0.5))
+			total = int(round(float(a + b + item_bonus) * 0.5))
 		elif attr_list.size() == 1:
-			total = attrs.get(attr_list[0], 0)
+			total = attrs.get(attr_list[0], 0) + item_bonus
 	return clamp(total, 1, 8)
