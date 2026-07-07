@@ -424,20 +424,29 @@ func _open_rite_detail(rite: Dictionary) -> void:
 			if not sn.is_optional and sn.current_card.is_empty():
 				valid = false; _log("❌ 槽位未配置")
 		if not valid: return
-		# 从手牌移除已分配卡牌（存到仪式中，结算后处理）
-		var stored_cards = []
-		var card_types = [char_data, sultan_card_data, gold_card_data]
-		for ct in card_types:
-			if ct.is_empty(): continue
-			for i in range(hand_cards.size() - 1, -1, -1):
-				var c = hand_cards[i]
-				if not c.visible and is_instance_valid(c):
-					var dd = c.get_meta("drag_data", {})
-					if dd.get("id", "") == ct.get("id", "") and dd.get("type", "") in ["character","sultan_card","resource"]:
-						hand_cards.remove_at(i)
-						stored_cards.append(c)
-						break
-		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "stored_cards": stored_cards}
+		# 构建 queue：卡牌节点归属（character/sultan_card/gold），从手牌移出
+		var queue = {"character": null, "sultan_card": null, "gold": null}
+		if is_edit:
+			# 编辑已有仪式：继承旧 queue 的卡牌节点，保持配置不丢
+			var old_q = existing.get("queue", {})
+			queue.character = old_q.get("character")
+			queue.sultan_card = old_q.get("sultan_card")
+			queue.gold = old_q.get("gold")
+		else:
+			# 新建：从 hand_cards 收集已投入（invisible）的卡牌节点，按槽位类型分类
+			var pairs = [["character", char_data], ["sultan_card", sultan_card_data], ["gold", gold_card_data]]
+			for pair in pairs:
+				var skey = pair[0]; var cdata = pair[1]
+				if cdata.is_empty(): continue
+				for i in range(hand_cards.size() - 1, -1, -1):
+					var c = hand_cards[i]
+					if not c.visible and is_instance_valid(c):
+						var dd = c.get_meta("drag_data", {})
+						if dd.get("id", "") == cdata.get("id", "") and dd.get("type", "") in ["character","sultan_card","resource"]:
+							hand_cards.remove_at(i)
+							queue[skey] = c
+							break
+		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "queue": queue}
 		if is_edit:
 			var idx = active_rites.find(existing)
 			if idx != -1: active_rites[idx] = entry
@@ -455,7 +464,10 @@ func _open_rite_detail(rite: Dictionary) -> void:
 	cancel_btn.pressed.connect(func():
 		if is_edit:
 			var idx = active_rites.find(existing)
-			if idx != -1: active_rites.remove_at(idx)
+			if idx != -1:
+				var old_entry = active_rites[idx]
+				active_rites.remove_at(idx)
+				_return_queue_to_hand(old_entry.get("queue", {}))
 			_update_rite_btn_label(rite.get("id", -1), "")
 			_log("🗑 已取消「%s」" % rite.get("name",""))
 		_restore_assigned_cards(slot_nodes)
@@ -568,28 +580,52 @@ func _commit_assigned_cards(slot_nodes:Array):
 	_rite_popup.set_meta("assigned_cards", [])
 	hand_layout.arrange()
 
-	# 结算后恢复手牌，消费掉的卡从数量扣除
+	# 结算后回收卡牌：角色卡回手牌，苏丹卡/金币卡销毁（消费）
 func _restore_hand_cards():
-	# 消费金币
 	for ar in active_rites:
-		var gd = ar.get("gold", {})
-		if gd.is_empty(): continue
-		var cost = gd.get("count", 1)
-		for c in hand_cards:
-			if not is_instance_valid(c): continue
-			var dd = c.get_meta("drag_data", {})
-			if dd.get("name", "") != "金币": continue
-			var cnt = c.get_meta("res_count", 1)
-			if cnt > cost:
-				_update_card_count(c, cnt - cost)
-			else:
-				hand_cards.erase(c)
-				c.queue_free()
-			break
-	for c in hand_cards:
-		if is_instance_valid(c) and not c.visible:
-			c.visible = true
+		var q = ar.get("queue", {})
+		# 角色卡：回手牌
+		var ch = q.get("character")
+		if ch and is_instance_valid(ch):
+			hand_cards.append(ch)
+			ch.visible = true
+		# 苏丹卡：销毁（原版消耗品，全局 consume_sultan_card 已扣计数）
+		var sc = q.get("sultan_card")
+		if sc and is_instance_valid(sc):
+			sc.queue_free()
+		# 金币卡：消费销毁
+		var g = q.get("gold")
+		if g and is_instance_valid(g):
+			g.queue_free()
 	hand_layout.arrange()
+
+# 取消仪式时，queue 里的卡牌退回手牌（金币合并回手牌金币卡）
+func _return_queue_to_hand(q: Dictionary):
+	var ch = q.get("character")
+	if ch and is_instance_valid(ch):
+		hand_cards.append(ch); ch.visible = true
+	var sc = q.get("sultan_card")
+	if sc and is_instance_valid(sc):
+		hand_cards.append(sc); sc.visible = true
+	var g = q.get("gold")
+	if g and is_instance_valid(g):
+		_merge_gold_back(g)
+	hand_layout.arrange()
+
+# 金币卡节点合并回手牌金币卡（count 累加，避免手牌出现多张金币卡）
+func _merge_gold_back(gold_node):
+	var back_count = gold_node.get_meta("res_count", 0)
+	var target = null
+	for c in hand_cards:
+		if is_instance_valid(c):
+			var dd = c.get_meta("drag_data", {})
+			if dd.get("type","") == "resource" and dd.get("name","") == "金币":
+				target = c; break
+	if target:
+		_update_card_count(target, target.get_meta("res_count", 0) + back_count)
+		gold_node.queue_free()
+	else:
+		hand_cards.append(gold_node); gold_node.visible = true
 
 func _bottom() -> void:
 	hand_container = Control.new(); hand_container.name="HandContainer"
