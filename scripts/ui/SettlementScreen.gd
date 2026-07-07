@@ -432,6 +432,7 @@ func _apply_roll_rewards():
 				var intel_data = tier.intel
 				if intel_data.size() >= 2:
 					ResourceManager.add_intel(intel_data[0], intel_data[1])
+					print("[apply_roll] added ", intel_data[0], " ", intel_data[1], " silver_cnt=", ResourceManager.intel_silver.get(intel_data[0], 0))
 					_show_intel_notification(intel_data[0], intel_data[1])
 				break
 
