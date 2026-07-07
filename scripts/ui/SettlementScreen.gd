@@ -412,8 +412,6 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
-	print("[_finish_settlement] called, stages=", _stages.size(), " success_counts=", _stage_success_counts.size())
-	# 从 outcomes 读取奖励
 	var outcome_key = "success" if _stage_all_success else "fail"
 	var oc = rite_data.get("outcomes", {}).get(outcome_key, {})
 	var gold_gained = oc.get("gold", 0)
@@ -424,6 +422,18 @@ func _finish_settlement():
 	queue_free()
 
 func _apply_roll_rewards():
+	if _stage_success_counts.size() == 0:
+		# Fallback: stage结算数据不可得时，直接从rite_data.roll_rewards读取
+		var tiers = rite_data.get("roll_rewards", [])
+		var sc = 99 if _stage_all_success else 0
+		for tier in tiers:
+			if sc >= tier.min:
+				var intel_data = tier.intel
+				if intel_data.size() >= 2:
+					ResourceManager.add_intel(intel_data[0], intel_data[1])
+					_show_intel_notification(intel_data[0], intel_data[1])
+				break
+		return
 	for i in range(min(_stages.size(), _stage_success_counts.size())):
 		var stage = _stages[i]
 		var sc = _stage_success_counts[i]
@@ -433,7 +443,6 @@ func _apply_roll_rewards():
 				var intel_data = tier.intel
 				if intel_data.size() >= 2:
 					ResourceManager.add_intel(intel_data[0], intel_data[1])
-					print("[apply_roll] added ", intel_data[0], " ", intel_data[1], " silver_cnt=", ResourceManager.intel_silver.get(intel_data[0], 0))
 					_show_intel_notification(intel_data[0], intel_data[1])
 				break
 
