@@ -837,6 +837,8 @@ func _settle_next(index:int) -> void:
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
+				# 消耗金币
+				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
 			else:
 				_log("📖 逛了一圈，没买书。")
@@ -1206,6 +1208,20 @@ func _insight_char_bubble(drag_data: Dictionary):
 	}
 	var text = bubbles.get(cid, drag_data.get("name","角色"))
 	_show_insight_bubble(text)
+
+
+func _consume_gold_card(gold_data: Dictionary):
+	if gold_data.is_empty(): return
+	for i in range(hand_cards.size() - 1, -1, -1):
+		var c = hand_cards[i]
+		if not is_instance_valid(c): continue
+		var dd = c.get_meta("drag_data", {})
+		if dd.get("type","") == "resource" and dd.get("name","") == "金币":
+			hand_cards.remove_at(i)
+			c.queue_free()
+			ResourceManager.spend_gold(gold_data.get("count", 1))
+			break
+	hand_layout.arrange()
 
 
 func _pick_random_book() -> Dictionary:
