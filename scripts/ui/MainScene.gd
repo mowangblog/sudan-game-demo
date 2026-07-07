@@ -368,6 +368,15 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot_nodes.append(slot)
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
+		slot.card_consumed.connect(func(consumed: int):
+			# 减小手牌中原卡数量
+			for c2 in hand_cards:
+				if not c2.visible and is_instance_valid(c2):
+					var dd = c2.get_meta("drag_data", {})
+					if dd.get("name", "") == "金币":
+						var cnt = c2.get_meta("res_count", 1)
+						_update_card_count(c2, cnt - consumed)
+						break)
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
 				popups.show_sultan_popup(card_data)
@@ -408,19 +417,17 @@ func _open_rite_detail(rite: Dictionary) -> void:
 			if not sn.is_optional and sn.current_card.is_empty():
 				valid = false; _log("❌ 槽位未配置")
 		if not valid: return
-		# 金币卡：确认时销毁手牌中的原卡（已消费）
+		# 金币卡：消费已在拖入时完成，确认时清理残卡
 		for i in range(hand_cards.size() - 1, -1, -1):
 			var c = hand_cards[i]
 			if not c.visible and is_instance_valid(c):
 				var dd = c.get_meta("drag_data", {})
 				if dd.get("name", "") == "金币":
 					var cnt = c.get_meta("res_count", 1)
-					if cnt > 1:
-						_update_card_count(c, cnt - 1)
-						c.visible = true
-					else:
+					if cnt <= 0:
 						hand_cards.remove_at(i)
 						c.queue_free()
+					# cnt>0: 剩余金币取消时退回手牌
 		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data}
 		if is_edit:
 			var idx = active_rites.find(existing)

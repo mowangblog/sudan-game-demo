@@ -7,6 +7,7 @@ signal card_dropped(slot_index: int, card_data: Dictionary)
 signal card_removed(slot_index: int, card_data: Dictionary)
 signal card_clicked(card_data: Dictionary)
 signal empty_slot_clicked(slot_index: int)
+signal card_consumed(amount: int)  # 资源卡超出max时，通知MainScene消费多少
 
 @export var slot_index: int = 0
 @export var slot_type: String = "character"
@@ -254,10 +255,21 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	return false
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
-	# 弹出旧卡
 	if not current_card.is_empty():
 		card_removed.emit(slot_index, current_card)
-	current_card = data.get("data", {}) if data is Dictionary and data.has("data") else (data if data is Dictionary else {})
+	var card = data.get("data", {}) if data is Dictionary and data.has("data") else (data if data is Dictionary else {})
+	# 资源卡数量限制：超出max则只留max
+	if (slot_type == "gold" or slot_type == "resource") and card.has("count"):
+		var total = card.get("count", 1)
+		if total > max_cards:
+			current_card = card.duplicate()
+			current_card["count"] = max_cards
+			card_consumed.emit(max_cards)
+		else:
+			current_card = card
+			card_consumed.emit(total)
+	else:
+		current_card = card
 	_draw_card_preview()
 	card_dropped.emit(slot_index, current_card)
 
