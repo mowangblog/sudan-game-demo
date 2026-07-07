@@ -902,6 +902,10 @@ func _settle_next(index:int) -> void:
 		var nts: Array = result.get("notifications", [])
 		_show_toasts(nts)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
+		# 结算获得金币 → 发金币卡到手上
+		var gold_gained = result.get("gold_gained", 0)
+		if result.success and gold_gained > 0:
+			_give_gold_cards(gold_gained)
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
 				# 消耗金币
@@ -1325,6 +1329,18 @@ func _pick_random_book() -> Dictionary:
 			pool = pool.filter(func(b): return b.id != d.get("id",""))
 	if pool.is_empty(): return {}
 	return pool[randi() % pool.size()]
+
+
+func _give_gold_cards(amount: int):
+	for _i in range(amount):
+		var card = card_factory.make_resource_card("金币", "💰", "GOLD", 1)
+		card.drag_ended.connect(_on_hand_card_dropped)
+		card.drag_started.connect(func(_c): hand_layout.arrange())
+		card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
+		card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", 1))
+		hand_container.add_child(card)
+		hand_cards.append(card)
+	hand_layout.arrange()
 
 
 func _give_random_book(book: Dictionary = {}):
