@@ -344,6 +344,7 @@ func _do_roll_dice(dice_count: int) -> void:
 	var dice_to_roll: Array[DiceDie3D] = []; var req_res = []
 	for i in range(faces.size()):
 		var die = _dice_roller.create_die(def); die.body_material=wm
+		die.set_meta("desired_visible_face", faces[i])
 		dice_to_roll.append(die); req_res.append(faces[i])
 	_layout_dice_grid(dice_to_roll)
 	await get_tree().create_timer(0.1).timeout
@@ -374,6 +375,8 @@ func _on_dice_settled_stage(_results: Dictionary):
 		if not r is DiceRollResult: continue
 		var die: DiceDie3D = r.die
 		if not is_instance_valid(die): continue
+		var desired_face = die.get_meta("desired_visible_face") if die.has_meta("desired_visible_face") else r.value
+		_align_die_face_to_camera(die, desired_face, cam_pos)
 		if _compute_visible_face(die,cam_pos) >= 4:
 			sc+=1; die.body_material=gm
 		else:
@@ -598,6 +601,39 @@ func _compute_visible_face(die: DiceDie3D, cam_pos: Vector3) -> int:
 			var face = die.get_face(slot)
 			if face: best_val = face.value
 	return best_val
+
+func _align_die_face_to_camera(die: DiceDie3D, face_value: int, cam_pos: Vector3) -> void:
+	var slot = _find_face_slot_by_value(die, face_value)
+	if slot == &"":
+		return
+	var local_n = die.get_local_face_normal(slot).normalized()
+	var to_cam = (cam_pos - die.global_transform.origin).normalized()
+	var basis = _basis_aligning(local_n, to_cam)
+	die.global_transform = Transform3D(basis, die.global_transform.origin)
+
+func _find_face_slot_by_value(die: DiceDie3D, face_value: int) -> StringName:
+	for slot in die.get_face_slots():
+		var face = die.get_face(slot)
+		if face and face.value == face_value:
+			return slot
+	return &""
+
+func _basis_aligning(from_dir: Vector3, to_dir: Vector3) -> Basis:
+	var from_n = from_dir.normalized()
+	var to_n = to_dir.normalized()
+	var dot = clampf(from_n.dot(to_n), -1.0, 1.0)
+	var axis = from_n.cross(to_n)
+	if axis.length_squared() <= 0.0001:
+		if dot > 0.0:
+			return Basis.IDENTITY
+		return Basis(_perpendicular_axis(from_n), PI)
+	return Basis(axis.normalized(), acos(dot))
+
+func _perpendicular_axis(axis: Vector3) -> Vector3:
+	var perpendicular = axis.cross(Vector3.RIGHT)
+	if perpendicular.length_squared() <= 0.0001:
+		perpendicular = axis.cross(Vector3.UP)
+	return perpendicular.normalized()
 
 func _calc_dice_count(cd: Dictionary, check: Dictionary) -> int:
 	if cd.is_empty(): return 1
