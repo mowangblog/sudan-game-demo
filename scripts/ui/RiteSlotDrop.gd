@@ -169,6 +169,7 @@ func _draw_card_preview():
 		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=6; sb.shadow_color=Color("00000066")
 		add_theme_stylebox_override("panel", sb)
 	else:
+		var quality = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
 		var nl = Label.new(); nl.text = current_card.get("name", "?")
 		nl.add_theme_font_size_override("font_size", 13); nl.add_theme_color_override("font_color", C.TEXT)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
@@ -180,8 +181,6 @@ func _draw_card_preview():
 			cnt.add_theme_font_size_override("font_size", 12); cnt.add_theme_color_override("font_color", C.GOLD)
 			cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt)
 		else:
-			# 品质星级
-			var quality = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
 			var qs = RANK_STARS.get(quality, "★")
 			var ql = Label.new(); ql.text = qs
 			ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.GOLD)
