@@ -932,6 +932,8 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 			var dd = c.get_meta("drag_data", {})
 			if dd.get("type","") == card_type and dd.get("id","") == card_data.get("id",""):
 				c.visible = true
+				if card_type == "resource" and card_data.has("count"):
+					_update_card_count(c, card_data.get("count", 1))
 				hand_layout.arrange()
 				return
 	
