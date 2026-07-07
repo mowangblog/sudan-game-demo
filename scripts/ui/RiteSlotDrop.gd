@@ -7,7 +7,6 @@ signal card_dropped(slot_index: int, card_data: Dictionary)
 signal card_removed(slot_index: int, card_data: Dictionary)
 signal card_clicked(card_data: Dictionary)
 signal empty_slot_clicked(slot_index: int)
-signal resource_trimmed(slot_index: int, excess_data: Dictionary)  # 资源溢出（数量超过max）
 
 @export var slot_index: int = 0
 @export var slot_type: String = "character"
@@ -258,20 +257,7 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 	# 弹出旧卡
 	if not current_card.is_empty():
 		card_removed.emit(slot_index, current_card)
-	
-	var card = data.get("data", {}) if data is Dictionary and data.has("data") else (data if data is Dictionary else {})
-	
-	# 可堆叠资源：限制数量，多余退回
-	if (slot_type == "gold" or slot_type == "resource") and card.has("count") and card.get("count", 1) > max_cards:
-		var excess = card.get("count", 1) - max_cards
-		current_card = card.duplicate()
-		current_card["count"] = max_cards
-		var ex_data = card.duplicate()
-		ex_data["count"] = excess
-		resource_trimmed.emit(slot_index, ex_data)
-	else:
-		current_card = card
-	
+	current_card = data.get("data", {}) if data is Dictionary and data.has("data") else (data if data is Dictionary else {})
 	_draw_card_preview()
 	card_dropped.emit(slot_index, current_card)
 

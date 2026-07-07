@@ -368,22 +368,6 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot_nodes.append(slot)
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
-		slot.resource_trimmed.connect(func(idx, excess_data):
-			# 数量溢出 → 修改原卡数量为max，多余创建新卡退回
-			for c2 in hand_cards:
-				if not c2.visible and is_instance_valid(c2):
-					var dd = c2.get_meta("drag_data", {})
-					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
-						_update_card_count(c2, slot_cfg.get("max", 1))
-						break
-			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
-			ecard.drag_ended.connect(_on_hand_card_dropped)
-			ecard.drag_started.connect(func(_c): hand_layout.arrange())
-			ecard._on_right_click = func(): _split_resource_card(ecard, excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"))
-			ecard._on_click = func(): popups.show_res_popup(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), ecard.get_meta("res_count", 1))
-			hand_container.add_child(ecard)
-			hand_cards.append(ecard)
-			hand_layout.arrange())
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
 				popups.show_sultan_popup(card_data)
@@ -424,6 +408,19 @@ func _open_rite_detail(rite: Dictionary) -> void:
 			if not sn.is_optional and sn.current_card.is_empty():
 				valid = false; _log("❌ 槽位未配置")
 		if not valid: return
+		# 金币卡：确认时销毁手牌中的原卡（已消费）
+		for i in range(hand_cards.size() - 1, -1, -1):
+			var c = hand_cards[i]
+			if not c.visible and is_instance_valid(c):
+				var dd = c.get_meta("drag_data", {})
+				if dd.get("name", "") == "金币":
+					var cnt = c.get_meta("res_count", 1)
+					if cnt > 1:
+						_update_card_count(c, cnt - 1)
+						c.visible = true
+					else:
+						hand_cards.remove_at(i)
+						c.queue_free()
 		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data}
 		if is_edit:
 			var idx = active_rites.find(existing)
@@ -843,8 +840,6 @@ func _settle_next(index:int) -> void:
 			_give_gold_cards(gold_gained)
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
-				# 消耗金币
-				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
 			else:
 				_log("📖 逛了一圈，没买书。")
