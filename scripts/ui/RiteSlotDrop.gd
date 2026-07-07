@@ -12,6 +12,8 @@ signal empty_slot_clicked(slot_index: int)
 @export var slot_type: String = "character"
 @export var required_tags: Array = []
 @export var is_optional: bool = false
+@export var accept: String = ""   # resource 类型时过滤卡牌名称
+@export var max_cards: int = 1
 
 var current_card: Dictionary = {}
 
@@ -121,8 +123,11 @@ func _draw_empty():
 	
 	var vb = VBoxContainer.new(); vb.alignment = BoxContainer.ALIGNMENT_CENTER; add_child(vb)
 	var icon = Label.new()
-	icon.text = "🃏" if slot_type == "sultan_card" else "👤"
-	icon.add_theme_font_size_override("font_size", 30 if slot_type == "sultan_card" else 28)
+	if slot_type == "gold": icon.text = "💰"
+	elif slot_type == "resource": icon.text = "📦"
+	elif slot_type == "sultan_card": icon.text = "🃏"
+	else: icon.text = "👤"
+	icon.add_theme_font_size_override("font_size", 30)
 	icon.add_theme_color_override("font_color", Color("605040"))
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon)
 	var hint = Label.new(); hint.text = "拖入\n卡牌"
@@ -167,43 +172,78 @@ func _draw_card_preview():
 		var nl = Label.new(); nl.text = current_card.get("name", "?")
 		nl.add_theme_font_size_override("font_size", 13); nl.add_theme_color_override("font_color", C.TEXT)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-		# 品质星级
-		var quality = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
-		var qs = RANK_STARS.get(quality, "★")
-		var ql = Label.new(); ql.text = qs
-		ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.GOLD)
-		ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-		var attrs = current_card.get("attributes", {})
-		var best=""; var best_v=0
-		for k in attrs:
-			if attrs[k]>best_v: best_v=attrs[k]; best=k
-		var tl = Label.new(); tl.text = "%s %d" % [ATTR_ICONS.get(best, best), best_v]
-		tl.add_theme_font_size_override("font_size", 10); tl.add_theme_color_override("font_color", C.GOLD)
-		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(tl)
+		if slot_type == "gold" or slot_type == "resource":
+			var icon_lbl = Label.new(); icon_lbl.text = current_card.get("icon", "💰")
+			icon_lbl.add_theme_font_size_override("font_size", 32); icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			vb.add_child(icon_lbl)
+			var cnt = Label.new(); cnt.text = "x%d" % current_card.get("count", 1)
+			cnt.add_theme_font_size_override("font_size", 12); cnt.add_theme_color_override("font_color", C.GOLD)
+			cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt)
+		else:
+			# 品质星级
+			var quality = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
+			var qs = RANK_STARS.get(quality, "★")
+			var ql = Label.new(); ql.text = qs
+			ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.GOLD)
+			ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
+			var attrs = current_card.get("attributes", {})
+			var best=""; var best_v=0
+			for k in attrs:
+				if attrs[k]>best_v: best_v=attrs[k]; best=k
+			var tl = Label.new(); tl.text = "%s %d" % [ATTR_ICONS.get(best, best), best_v]
+			tl.add_theme_font_size_override("font_size", 10); tl.add_theme_color_override("font_color", C.GOLD)
+			tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(tl)
 		var hint = Label.new(); hint.text = "右键拖出"
 		hint.add_theme_font_size_override("font_size", 9); hint.add_theme_color_override("font_color", C.DIM)
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(hint)
-		var c_bg = RANK_BG.get(quality, Color("2a2018"))
-		var sb2 = StyleBoxFlat.new(); sb2.bg_color = c_bg; sb2.set_corner_radius_all(10)
-		sb2.border_width_bottom=2; sb2.border_width_top=2; sb2.border_width_left=2; sb2.border_width_right=2
-		sb2.border_color = C.GOLD_HI; sb2.content_margin_left=4; sb2.content_margin_right=4
-		sb2.content_margin_top=4; sb2.content_margin_bottom=4; sb2.shadow_size=6; sb2.shadow_color=Color("00000066")
-		add_theme_stylebox_override("panel", sb2)
+		var sb3: StyleBoxFlat
+		if slot_type == "gold":
+			var gbg = RANK_BG.get("GOLD", Color("2a2018"))
+			sb3 = StyleBoxFlat.new(); sb3.bg_color = gbg; sb3.set_corner_radius_all(10)
+			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
+			sb3.border_color = C.GOLD; sb3.content_margin_left=4; sb3.content_margin_right=4
+			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
+		elif slot_type == "resource":
+			sb3 = StyleBoxFlat.new(); sb3.bg_color = Color("1a1a2e"); sb3.set_corner_radius_all(10)
+			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
+			sb3.border_color = C.GOLD_LO; sb3.content_margin_left=4; sb3.content_margin_right=4
+			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
+		else:
+			var c_bg = RANK_BG.get(quality, Color("2a2018"))
+			sb3 = StyleBoxFlat.new(); sb3.bg_color = c_bg; sb3.set_corner_radius_all(10)
+			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
+			sb3.border_color = C.GOLD_HI; sb3.content_margin_left=4; sb3.content_margin_right=4
+			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
+		add_theme_stylebox_override("panel", sb3)
 
 func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	if not data is Dictionary: return false
+	if not current_card.is_empty(): return false  # 已满
 	
 	var drag_type = data.get("type", "")
-	if slot_type == "character" and drag_type != "character": return false
-	if slot_type == "sultan_card" and drag_type != "sultan_card": return false
 	
-	if slot_type == "sultan_card" and data.has("data"):
-		var cd = data.get("data", {})
-		for tag in required_tags:
-			if tag in ["LUST","LUXURY","CONQUEST","MURDER"] and tag != cd.get("type",""): return false
-			if tag in ["STONE","BRONZE","SILVER","GOLD"] and tag != cd.get("rank",""): return false
+	# 角色卡槽
+	if slot_type == "character":
+		return drag_type == "character"
 	
-	return true
+	# 苏丹卡槽
+	if slot_type == "sultan_card":
+		if drag_type != "sultan_card": return false
+		if data.has("data") and not required_tags.is_empty():
+			var cd = data.get("data", {})
+			for tag in required_tags:
+				if tag in ["LUST","LUXURY","CONQUEST","MURDER"] and tag != cd.get("type",""): return false
+				if tag in ["STONE","BRONZE","SILVER","GOLD"] and tag != cd.get("rank",""): return false
+		return true
+	
+	# 资源/金币卡槽
+	if slot_type == "resource" or slot_type == "gold":
+		if drag_type != "resource": return false
+		var res_name = data.get("name", "")
+		var target = accept if accept != "" else "金币"
+		return res_name == target
+	
+	return false
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
 	# 替换已有卡牌
