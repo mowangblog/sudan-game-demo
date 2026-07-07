@@ -620,13 +620,18 @@
 				"failure_text": ""
 			}
 		],
-		"rewards": {
-			"gold": 15,
-			"power": 2,
-			"spirit": 1
-		},
 		"category": "normal",
-		"rarity": 3
+		"rarity": 3,
+		"outcomes": {
+			"success": {
+				"gold": 15,
+				"narrative": "探索被诅咒的远古神殿，多阶段检定测试仪式。"
+			},
+			"fail": {
+				"gold": 0,
+				"narrative": "任务失败"
+			}
+		}
 	},
 	{
 		"id": 101,
@@ -668,12 +673,18 @@
 				"on_failure": "end"
 			}
 		],
-		"rewards": {
-			"gold": 8,
-			"spirit": 1
-		},
 		"category": "normal",
-		"rarity": 3
+		"rarity": 3,
+		"outcomes": {
+			"success": {
+				"gold": 8,
+				"narrative": "在暗巷中与神秘商人进行交易——利益与风险并存。"
+			},
+			"fail": {
+				"gold": 0,
+				"narrative": "任务失败"
+			}
+		}
 	},
 	{
 		"id": 102,
@@ -724,12 +735,18 @@
 				"failure_text": ""
 			}
 		],
-		"rewards": {
-			"gold": 12,
-			"power": 1
-		},
 		"category": "normal",
-		"rarity": 3
+		"rarity": 3,
+		"outcomes": {
+			"success": {
+				"gold": 12,
+				"narrative": "深入密林追踪一头传说中的野兽，但林中的危险不止于此。"
+			},
+			"fail": {
+				"gold": 0,
+				"narrative": "任务失败"
+			}
+		}
 	},
 	{
 		"id": 200,

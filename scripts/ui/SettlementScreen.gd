@@ -412,17 +412,10 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
-	# 合并 outcomes 和 rewards 到统一字典
-	var gold_gained = 0
+	# 从 outcomes 读取奖励
 	var outcome_key = "success" if _stage_all_success else "fail"
 	var oc = rite_data.get("outcomes", {}).get(outcome_key, {})
-	var rw = rite_data.get("rewards", {})
-	gold_gained = oc.get("gold", rw.get("gold", 0))
-	if rw.has("power"): ResourceManager.modify_reputation("power", rw.power)
-	if rw.has("good"): ResourceManager.modify_reputation("good", rw.good)
-	if rw.has("evil"): ResourceManager.modify_reputation("evil", rw.evil)
-	if rw.has("hero"): ResourceManager.modify_reputation("hero", rw.hero)
-	if rw.has("spirit"): ResourceManager.modify_reputation("spirit", rw.spirit)
+	var gold_gained = oc.get("gold", 0)
 	_apply_roll_rewards()
 	if reward_text != "":
 		_show_reward_notification()
