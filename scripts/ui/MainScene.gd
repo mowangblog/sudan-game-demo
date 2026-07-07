@@ -369,7 +369,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
 		slot.resource_trimmed.connect(func(idx, excess_data):
-			# 数量超出 — 删除原卡，多余数量退回手牌
+			# 数量超出 — 删除原卡，多余数量逐一退回手牌
 			for j in range(hand_cards.size() - 1, -1, -1):
 				var c2 = hand_cards[j]
 				if not c2.visible and is_instance_valid(c2):
@@ -378,13 +378,12 @@ func _open_rite_detail(rite: Dictionary) -> void:
 						hand_cards.remove_at(j)
 						c2.queue_free()
 						break
-			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
-			ecard.drag_ended.connect(_on_hand_card_dropped)
-			ecard.drag_started.connect(func(_c): hand_layout.arrange())
-			ecard._on_right_click = func(): _split_resource_card(ecard, excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"))
-			ecard._on_click = func(): popups.show_res_popup(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), ecard.get_meta("res_count", 1))
-			hand_container.add_child(ecard)
-			hand_cards.append(ecard)
+			for _k in range(excess_data.get("count", 1)):
+				var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), 1)
+				ecard.drag_ended.connect(_on_hand_card_dropped)
+				ecard.drag_started.connect(func(_c): hand_layout.arrange())
+				hand_container.add_child(ecard)
+				hand_cards.append(ecard)
 			hand_layout.arrange())
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
@@ -905,13 +904,9 @@ func _consume_gold_from_hand() -> bool:
 		var c = hand_cards[i]
 		if not is_instance_valid(c): continue
 		var dd = c.get_meta("drag_data", {})
-		if dd.get("name", "") == "金币":
-			var cnt = c.get_meta("res_count", 1)
-			if cnt > 1:
-				_update_card_count(c, cnt - 1)
-			else:
-				hand_cards.remove_at(i)
-				c.queue_free()
+		if dd.get("name", "") == "金币" and c.visible:
+			hand_cards.remove_at(i)
+			c.queue_free()
 			return true
 	return false
 
