@@ -1451,6 +1451,10 @@
 		"duration": 1,
 		"slots": [
 			{
+				"type": "gold",
+				"required": true
+			},
+			{
 				"type": "character",
 				"required": false
 			}
