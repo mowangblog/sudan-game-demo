@@ -47,7 +47,6 @@ var _pending_required: int = 0
 var _stages: Array = []
 var _stage_idx: int = 0
 var _current_stage: Dictionary = {}
-var _total_rewards: Dictionary = {}
 var _notifications: Array[String] = []
 var _typewrite_timer: Timer
 var _typewrite_full: String = ""
@@ -414,22 +413,21 @@ func _on_next():
 		_finish_settlement()
 
 func _finish_settlement():
-	# 从 outcomes 合并奖励（治理家业等没有单独 rewards 字段）
+	# 合并 outcomes 和 rewards 到统一字典
+	var gold_gained = 0
 	var outcome_key = "success" if _stage_all_success else "fail"
-	var outcomes = rite_data.get("outcomes", {}).get(outcome_key, {})
-	if outcomes.has("gold") and not _total_rewards.has("gold"):
-		_total_rewards["gold"] = outcomes.gold
-	if not _total_rewards.is_empty():
-		if _total_rewards.has("gold"): ResourceManager.add_gold(_total_rewards.gold)
-		if _total_rewards.has("power"): ResourceManager.modify_reputation("power",_total_rewards.power)
-		if _total_rewards.has("good"): ResourceManager.modify_reputation("good",_total_rewards.good)
-		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)
-		if _total_rewards.has("hero"): ResourceManager.modify_reputation("hero",_total_rewards.hero)
-		if _total_rewards.has("spirit"): ResourceManager.modify_reputation("spirit",_total_rewards.spirit)
+	var oc = rite_data.get("outcomes", {}).get(outcome_key, {})
+	var rw = rite_data.get("rewards", {})
+	gold_gained = oc.get("gold", rw.get("gold", 0))
+	if rw.has("power"): ResourceManager.modify_reputation("power", rw.power)
+	if rw.has("good"): ResourceManager.modify_reputation("good", rw.good)
+	if rw.has("evil"): ResourceManager.modify_reputation("evil", rw.evil)
+	if rw.has("hero"): ResourceManager.modify_reputation("hero", rw.hero)
+	if rw.has("spirit"): ResourceManager.modify_reputation("spirit", rw.spirit)
 	_apply_roll_rewards()
 	if reward_text != "":
 		_show_reward_notification()
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":_total_rewards.get("gold",0)})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":gold_gained})
 	queue_free()
 
 func _apply_roll_rewards():
