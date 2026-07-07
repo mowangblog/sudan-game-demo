@@ -616,6 +616,7 @@ func _bottom() -> void:
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
 	# 资源卡（金币等可叠加）
+	_last_gold = ResourceManager.gold
 	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", ResourceManager.gold)
 	gold_card.drag_ended.connect(_on_hand_card_dropped)
 	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
@@ -886,32 +887,22 @@ func _refresh() -> void:
 	_sync_gold_card()
 	_refresh_intel_cards()
 
-# 同步金币卡数量和 ResourceManager
+# 金币卡数量同步 — 差值发新卡
+var _last_gold: int = 0
 func _sync_gold_card():
-	var count = ResourceManager.gold
-	if count <= 0:
-		# 移除金币卡
-		for i in range(hand_cards.size() - 1, -1, -1):
-			var c = hand_cards[i]
-			var dd = c.get_meta("drag_data", {})
-			if dd.get("name", "") == "金币":
-				hand_cards.remove_at(i)
-				c.queue_free()
-		return
-	# 找现有金币卡更新数量
-	for c in hand_cards:
-		var dd = c.get_meta("drag_data", {})
-		if dd.get("name", "") == "金币":
-			_update_card_count(c, count)
-			return
-	# 没有金币卡则创建
-	var gold_card = card_factory.make_resource_card("金币", "💰", "GOLD", count)
-	gold_card.drag_ended.connect(_on_hand_card_dropped)
-	gold_card.drag_started.connect(func(_c): hand_layout.arrange())
-	gold_card._on_right_click = func(): _split_resource_card(gold_card, "金币", "💰", "GOLD")
-	gold_card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", gold_card.get_meta("res_count", count))
-	hand_container.add_child(gold_card)
-	hand_cards.append(gold_card)
+	var cur = ResourceManager.gold
+	var delta = cur - _last_gold
+	_last_gold = cur
+	if delta <= 0: return
+	var card = card_factory.make_resource_card("金币", "💰", "GOLD", delta)
+	card.drag_ended.connect(_on_hand_card_dropped)
+	card.drag_started.connect(func(_c): hand_layout.arrange())
+	card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
+	card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", delta))
+	hand_container.add_child(card)
+	hand_cards.append(card)
+	resource_cards["金币"] = card
+	hand_layout.arrange()
 
 
 func _load_rites() -> Array:
