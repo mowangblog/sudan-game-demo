@@ -837,6 +837,10 @@ func _settle_next(index:int) -> void:
 		var nts: Array = result.get("notifications", [])
 		_show_toasts(nts)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
+		# 结算获得金币 → 发卡到手上
+		var gold_gained = result.get("gold_gained", 0)
+		if result.success and gold_gained > 0:
+			_give_gold_cards(gold_gained)
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
 				# 消耗金币
@@ -884,6 +888,17 @@ func _refresh() -> void:
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
+
+
+func _give_gold_cards(amount: int):
+	for _i in range(amount):
+		var card = card_factory.make_resource_card("金币", "💰", "GOLD", 1)
+		card.drag_ended.connect(_on_hand_card_dropped)
+		card.drag_started.connect(func(_c): hand_layout.arrange())
+		hand_container.add_child(card)
+		hand_cards.append(card)
+	hand_layout.arrange()
+
 
 # 同步金币卡数量和 ResourceManager
 
