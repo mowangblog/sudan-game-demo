@@ -1157,6 +1157,16 @@ func _find_insight_rites(card_type: String, drag_data: Dictionary) -> Array:
 
 
 func _insight_char_bubble(drag_data: Dictionary):
+	var cid = drag_data.get("id","")
+	var bubbles = {
+		"player": "嗯？",
+		"meji": "我的挚爱，我的坚定盟友。",
+		"zhaqiyi": "我的学生，很有潜力的年轻人。",
+		"tietou": "一个沉默寡言的铁匠。",
+		"kuaijiao": "路边的消息，往往最值钱。",
+	}
+	var text = bubbles.get(cid, drag_data.get("name","角色"))
+	_show_insight_bubble(text)
 
 
 func _give_random_book():
