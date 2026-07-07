@@ -920,7 +920,9 @@ func _refresh_intel_cards():
 				card.visible = false
 
 func slot_type_to_str(t: String) -> String:
-	return "character" if t == "character" else "sultan_card"
+	if t == "character": return "character"
+	if t == "sultan_card": return "sultan_card"
+	return "resource"
 
 # 卡牌从槽位移除时，恢复到手中
 func _return_card_to_hand(card_type: String, card_data: Dictionary):
