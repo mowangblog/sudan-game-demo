@@ -27,15 +27,15 @@ const SettlementPopup = preload("res://scripts/ui/SettlementPopup.gd")
 const SettlementScreen = preload("res://scripts/ui/SettlementScreen.gd")
 const ResourceCardManagerScript = preload("res://scripts/ui/ResourceCardManager.gd")
 const MapRitePanelScript = preload("res://scripts/ui/MapRitePanel.gd")
+const StatusBarScript = preload("res://scripts/ui/StatusBar.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
 var resource_card_manager = ResourceCardManagerScript.new()
 var map_rite_panel = MapRitePanelScript.new()
+var status_bar = StatusBarScript.new()
 
 # ============ UI 节点 ============
-var d_lbl:Label;var w_lbl:Label;var gd_lbl:Label
-var g_lbl:Label;var e_lbl:Label;var p_lbl:Label;var h_lbl:Label;var s_lbl:Label
 var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
 var hand_container: Control
 var event_detail_panel: PanelContainer
@@ -115,18 +115,8 @@ func _bg() -> void:
 	self_modulate = C.BG_DEEP
 
 func _status() -> void:
-	var b = HBoxContainer.new()
-	b.set_anchors_preset(Control.PRESET_TOP_WIDE); b.offset_bottom = 38
-	b.add_theme_constant_override("separation", 8)
-	add_child(b)
-	
-	d_lbl = _sl("第1天"); w_lbl = _sl("第1周"); gd_lbl = _sl("🎲金骰:3",C.GOLD)
-	g_lbl = _sl("善0",Color("5a9a5a")); e_lbl = _sl("恶0",C.FAIL)
-	p_lbl = _sl("权0",Color("9a6aba")); h_lbl = _sl("侠0",Color("5a8aba")); s_lbl = _sl("灵0",Color("6a8a5a"))
-	
-	for x in [d_lbl,_sl("│",C.GOLD_LO),w_lbl,_sl("│",C.GOLD_LO),
-		gd_lbl,_sl("│",C.GOLD_LO),g_lbl,e_lbl,p_lbl,h_lbl,s_lbl]:
-		b.add_child(x)
+	status_bar.setup(self, {"C": C})
+	status_bar.build()
 
 # 左侧地图 — 仪式节点直接散布，无地点分组
 func _map() -> void:
@@ -798,14 +788,7 @@ func _settle_next(index:int) -> void:
 	)
 
 func _refresh() -> void:
-	d_lbl.text = "第%d天" % TurnManager.current_day
-	w_lbl.text = "第%d周" % TurnManager.current_week
-	gd_lbl.text = "🎲金骰:%d" % ResourceManager.gold_dice
-	g_lbl.text = "善%d" % ResourceManager.reputations.good
-	e_lbl.text = "恶%d" % ResourceManager.reputations.evil
-	p_lbl.text = "权%d" % ResourceManager.reputations.power
-	h_lbl.text = "侠%d" % ResourceManager.reputations.hero
-	s_lbl.text = "灵%d" % ResourceManager.reputations.spirit
+	status_bar.refresh()
 	
 	var card = GameManager.active_sultan_card
 	if not is_instance_valid(cp): return
@@ -899,14 +882,6 @@ func _get_configured_for_loc(loc_id:String) -> Array:
 	for ar in active_rites:
 		if ar.rite.get("location","") == loc_id: result.append(ar)
 	return result
-
-func _sl(t:String, c:Color=Color.WHITE) -> Label:
-	var l = Label.new(); l.text=t; l.add_theme_color_override("font_color",c)
-	l.add_theme_font_size_override("font_size",13); l.vertical_alignment=3; return l
-
-func _cl(t:String, s:int, c:Color) -> Label:
-	var l = Label.new(); l.text=t; l.add_theme_font_size_override("font_size",s)
-	l.add_theme_color_override("font_color",c); l.horizontal_alignment=1; return l
 
 func _lbl(t:String, s:int, c:Color) -> Label:
 	var l = Label.new(); l.text=t; l.add_theme_font_size_override("font_size",s)
