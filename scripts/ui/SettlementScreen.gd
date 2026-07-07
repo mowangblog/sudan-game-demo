@@ -231,7 +231,6 @@ func _start_settlement():
 		_stages = rite_data.stages
 	else:
 		_stages = _auto_stage(rite_data)
-	_total_rewards = rite_data.get("rewards", {}).duplicate()
 	_stage_idx = 0
 	_stage_all_success = true
 	_animate_entrance()
