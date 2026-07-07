@@ -33,6 +33,10 @@ enum ResultSide {
 			rebuild()
 ## Local side the final result face points toward. Use -Z for dice that present toward a camera in front of the node.
 @export_enum("+Y", "-Y", "+Z", "-Z", "+X", "-X") var result_side: int = ResultSide.NEG_Z
+## When enabled, the stage layout plane is derived from result_side.
+@export var stage_side_follows_result: bool = true
+## Local side used as the stage normal when stage_side_follows_result is disabled.
+@export_enum("+Y", "-Y", "+Z", "-Z", "+X", "-X") var stage_side: int = ResultSide.NEG_Z
 ## Distance kept between the die center and the back of the stage at the final result pose.
 @export_range(0.0, 3.0, 0.01) var end_padding: float = 0.55
 ## Horizontal spacing between multiple dice when they settle.
@@ -328,7 +332,11 @@ func get_stage_vertical_direction() -> Vector3:
 
 
 func get_result_side_normal() -> Vector3:
-	match result_side:
+	return _get_side_normal(result_side)
+
+
+func _get_side_normal(side: int) -> Vector3:
+	match side:
 		ResultSide.POS_Y:
 			return Vector3.UP
 		ResultSide.NEG_Y:
@@ -745,7 +753,7 @@ func _get_stage_vertical_normal() -> Vector3:
 
 
 func _get_stage_axes() -> Dictionary:
-	var normal := get_result_side_normal().normalized()
+	var normal := (get_result_side_normal() if stage_side_follows_result else _get_side_normal(stage_side)).normalized()
 	var reference_up := Vector3.UP
 	if absf(normal.dot(reference_up)) > 0.95:
 		reference_up = Vector3.FORWARD
