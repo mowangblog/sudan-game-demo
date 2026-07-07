@@ -1480,11 +1480,12 @@
 		],
 		"rarity": 5,
 		"check": {
-			"attr": [
+			"type": "combined",
+			"attributes": [
 				"wisdom",
 				"social"
 			],
-			"difficulty": "Normal"
+			"required_successes": 2
 		},
 		"roll_rewards": [
 			{
