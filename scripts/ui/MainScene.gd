@@ -868,21 +868,21 @@ func _refresh() -> void:
 	s_lbl.text = "灵%d" % ResourceManager.reputations.spirit
 	
 	var card = GameManager.active_sultan_card
-	if not is_instance_valid(cp): return
-	cp.visible = not card.is_empty()
-	if not card.is_empty():
-		ct_lbl.text = TN.get(card.get("type",""),"？")
-		cr_lbl.text = RG.get(card.get("rank",""),"？")
-		cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
-		var tc = TC.get(card.get("type",""),C.LUST)
-		var rk_bg = SC.get(card.get("rank",""), Color("2a2018"))
-		var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
-		var sb = StyleBoxFlat.new(); sb.bg_color=rk_bg; sb.set_corner_radius_all(10)
-		sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-		sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
-		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
-		cp.add_theme_stylebox_override("panel",sb)
-		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
+	if is_instance_valid(cp):
+		cp.visible = not card.is_empty()
+		if not card.is_empty():
+			ct_lbl.text = TN.get(card.get("type",""),"？")
+			cr_lbl.text = RG.get(card.get("rank",""),"？")
+			cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
+			var tc = TC.get(card.get("type",""),C.LUST)
+			var rk_bg = SC.get(card.get("rank",""), Color("2a2018"))
+			var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
+			var sb = StyleBoxFlat.new(); sb.bg_color=rk_bg; sb.set_corner_radius_all(10)
+			sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
+			sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
+			sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
+			cp.add_theme_stylebox_override("panel",sb)
+			cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_sync_gold_card()
 	_refresh_intel_cards()
