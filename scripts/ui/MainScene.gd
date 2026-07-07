@@ -839,7 +839,7 @@ func _settle_next(index:int) -> void:
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		# 结算获得金币 → 发卡到手上
 		var gold_gained = result.get("gold_gained", 0)
-		if result.success and gold_gained > 0:
+		if gold_gained > 0:
 			_give_gold_cards(gold_gained)
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
