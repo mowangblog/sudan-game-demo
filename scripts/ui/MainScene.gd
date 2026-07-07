@@ -29,12 +29,16 @@ const ResourceCardManagerScript = preload("res://scripts/ui/ResourceCardManager.
 const MapRitePanelScript = preload("res://scripts/ui/MapRitePanel.gd")
 const StatusBarScript = preload("res://scripts/ui/StatusBar.gd")
 const RiteDetailPopupScript = preload("res://scripts/ui/RiteDetailPopup.gd")
+const RiteRewardApplierScript = preload("res://scripts/ui/RiteRewardApplier.gd")
+const RiteSettlementControllerScript = preload("res://scripts/ui/RiteSettlementController.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
 var resource_card_manager = ResourceCardManagerScript.new()
 var map_rite_panel = MapRitePanelScript.new()
 var status_bar = StatusBarScript.new()
+var rite_reward_applier = RiteRewardApplierScript.new()
+var rite_settlement_controller = RiteSettlementControllerScript.new()
 
 # ============ UI 节点 ============
 var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
@@ -51,7 +55,6 @@ var sort_btn: Button
 # ============ 状态 ============
 var active_rites: Array = []
 var log_msgs: Array[String] = []
-var settle_sultan_used: bool = false
 var _insight_used_keys: Array[String] = []
 var _map_area: Control
 var _rite_seed: int = 42
@@ -380,6 +383,24 @@ func _bottom() -> void:
 		resource_cards,
 		func(card, global_pos): _on_hand_card_dropped(card, global_pos)
 	)
+	rite_reward_applier.setup(
+		card_factory,
+		resource_card_manager,
+		hand_container,
+		hand_cards,
+		hand_layout,
+		func(card, global_pos): _on_hand_card_dropped(card, global_pos),
+		func(message): _log(message)
+	)
+	rite_settlement_controller.call("setup", self, active_rites, rite_reward_applier, {
+		"log": func(message): _log(message),
+		"refresh": func(): _refresh(),
+		"update_countdown": func(): _update_countdown_labels(),
+		"show_game_over": func(): popups.show_game_over(),
+		"restore_hand_cards": func(): _restore_hand_cards(),
+		"reset_rite_btn_labels": func(): _reset_all_rite_btn_labels(),
+		"show_toasts": func(notifications): _show_toasts(notifications),
+	})
 	
 	# 资源卡（金币、情报等可叠加）
 	var gold_card = resource_card_manager.make_gold_card(ResourceManager.gold)
@@ -492,83 +513,7 @@ func _next_press() -> void:
 	_insight_used_keys.clear()
 	# 检查是否有未执行的杀戮仪式，若是则第二天弹出荣誉杀戮
 	_check_pending_honor_kill()
-	if GameManager.is_game_over:
-		_log("⚰️ 游戏已结束。"); _refresh(); return
-	if active_rites.size() == 0:
-		_log("⚔ 无事发生，推进一天。")
-		active_rites.clear()
-		TurnManager.next_day()
-		_update_countdown_labels()
-		_refresh()
-		if GameManager.is_game_over: popups.show_game_over()
-		return
-	settle_sultan_used = false
-	_log("⚔ 开始结算 %d 个仪式..." % active_rites.size())
-	_settle_next(0)
-
-func _settle_next(index:int) -> void:
-	if index >= active_rites.size():
-		if settle_sultan_used:
-			GameManager.consume_sultan_card(0)
-			_log("🃏 苏丹卡已消耗。")
-		_restore_hand_cards()
-		# 检查是否有装修仪式完成
-		for ar in active_rites:
-			if ar.rite.has("s2_gold") and ar.rite.get("insight_trigger",{}).get("subtype","") == "LUXURY":
-				if not ar.char.is_empty():  # 有人执行了
-					GameManager.renovation_done = true
-					_log("🏠 装修已完成！")
-		active_rites.clear()
-		_reset_all_rite_btn_labels()
-		TurnManager.next_day()
-		_update_countdown_labels()
-		_log("✅ 所有仪式结算完毕。")
-		_refresh()
-		if GameManager.is_game_over: popups.show_game_over()
-		return
-	
-	var ar = active_rites[index]
-	
-	# 俺寻思事件必须有角色才结算
-	if ar.get("insight", false) and ar.char.is_empty():
-		_log("⚠ 「%s」缺少角色，跳过结算。" % ar.rite.get("name","?"))
-		_settle_next(index + 1)
-		return
-	
-	if not ar.sultan_card.is_empty(): settle_sultan_used = true
-	
-	var screen = SettlementScreen.new()
-	add_child(screen)
-	# 书店：预计算书籍名称用于结算展示
-	var pending_book = {}
-	if ar.rite.get("id", -1) == 16 and not ar.get("gold", {}).is_empty():
-		pending_book = _pick_random_book()
-	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card, "")
-	screen.settlement_done.connect(func(result:Dictionary):
-		var nts: Array = result.get("notifications", [])
-		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
-		# 结算获得金币 → 发金币卡到手上
-		var gold_gained = result.get("gold_gained", 0)
-		if gold_gained > 0:
-			_give_gold_cards(gold_gained)
-		if result.success and result.rite.get("id", -1) == 16:
-			if not pending_book.is_empty():
-				_give_random_book(pending_book)
-				nts.append("📖 获得《%s》" % pending_book.get("name", ""))
-			else:
-				_log("📖 逛了一圈，没买书。")
-		if result.success and result.rite.get("id", -1) == 300 and not ar.char.is_empty():
-			var book = ar.rite.get("book", {})
-			var attr_map = {"social":"soc","combat":"com","wisdom":"wis","charm":"cha","stealth":"ste","magic":"mag","physique":"phy","survival":"sur"}
-			var attr_key = attr_map.get(book.get("attr",""),"")
-			var gain = book.get("gain", 0)
-			if attr_key != "" and ar.char.has("attributes"):
-				ar.char["attributes"][attr_key] = ar.char["attributes"].get(attr_key, 0) + gain
-				var ai = card_factory.AI if card_factory.AI.has(attr_key) else attr_key
-				_log("📖 %s 读了《%s》，%s+%d" % [ar.char.get("name","?"), book.get("name","?"), ai, gain])
-		_show_toasts(nts)
-		_settle_next(index+1)
-	)
+	rite_settlement_controller.call("start")
 
 func _refresh() -> void:
 	status_bar.refresh()
@@ -867,11 +812,6 @@ func _insight_char_bubble(drag_data: Dictionary):
 	_show_insight_bubble(text)
 
 
-func _consume_gold_card(gold_data: Dictionary):
-	if gold_data.is_empty(): return
-	resource_card_manager.consume_gold_card(gold_data)
-
-
 func _show_toasts(nts: Array):
 	if nts.is_empty(): return
 	var text = nts.pop_front()
@@ -895,31 +835,3 @@ func _show_toasts(nts: Array):
 		if is_instance_valid(lbl): lbl.queue_free()
 		_show_toasts(nts)
 	)
-
-
-func _pick_random_book() -> Dictionary:
-	var pool = DataManager.books.duplicate()
-	if pool.is_empty(): return {}
-	for c in hand_cards:
-		var d = c.get_meta("drag_data", {})
-		if d.get("type","") == "book":
-			pool = pool.filter(func(b): return b.id != d.get("id",""))
-	if pool.is_empty(): return {}
-	return pool[randi() % pool.size()]
-
-
-func _give_gold_cards(amount: int):
-	resource_card_manager.give_gold_cards(amount)
-
-
-func _give_random_book(book: Dictionary = {}):
-	if book.is_empty():
-		book = _pick_random_book()
-		if book.is_empty(): return
-	var card = card_factory.make_book_card(book)
-	card.drag_ended.connect(_on_hand_card_dropped)
-	card.drag_started.connect(func(_c): hand_layout.arrange())
-	hand_container.add_child(card)
-	hand_cards.append(card)
-	hand_layout.arrange()
-	_log("📖 购得《%s》" % book.get("name","?"))

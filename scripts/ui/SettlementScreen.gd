@@ -415,41 +415,10 @@ func _finish_settlement():
 	var outcome_key = "success" if _stage_all_success else "fail"
 	var oc = rite_data.get("outcomes", {}).get(outcome_key, {})
 	var gold_gained = oc.get("gold", 0)
-	_apply_roll_rewards()
 	if reward_text != "":
 		_show_reward_notification()
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":gold_gained})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":gold_gained,"stage_success_counts":_stage_success_counts.duplicate(),"stages":_stages.duplicate(true)})
 	queue_free()
-
-func _apply_roll_rewards():
-	if _stage_success_counts.size() == 0:
-		# Fallback: stage结算数据不可得时，直接从rite_data.roll_rewards读取
-		var tiers = rite_data.get("roll_rewards", [])
-		var sc = 99 if _stage_all_success else 0
-		for tier in tiers:
-			if sc >= tier.min:
-				var intel_data = tier.intel
-				if intel_data.size() >= 2:
-					ResourceManager.add_intel(intel_data[0], intel_data[1])
-					_show_intel_notification(intel_data[0], intel_data[1])
-				break
-		return
-	for i in range(min(_stages.size(), _stage_success_counts.size())):
-		var stage = _stages[i]
-		var sc = _stage_success_counts[i]
-		var tiers = stage.get("roll_rewards", [])
-		for tier in tiers:
-			if sc >= tier.min:
-				var intel_data = tier.intel
-				if intel_data.size() >= 2:
-					ResourceManager.add_intel(intel_data[0], intel_data[1])
-					_show_intel_notification(intel_data[0], intel_data[1])
-				break
-
-func _show_intel_notification(type_name: String, grade: String):
-	var grade_texts = {"STONE": "石", "COPPER": "铜", "SILVER": "银"}
-	_notifications.append("+%s情报 %s" % [grade_texts.get(grade, grade), type_name])
-
 
 func _show_reward_notification():
 	_notifications.append(reward_text)
