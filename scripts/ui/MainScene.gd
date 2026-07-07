@@ -362,6 +362,16 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot_nodes.append(slot)
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
+		slot.resource_trimmed.connect(func(idx, excess_data):
+			# 数量溢出 → 创建新资源卡退回手牌
+			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
+			ecard.drag_ended.connect(_on_hand_card_dropped)
+			ecard.drag_started.connect(func(_c): hand_layout.arrange())
+			ecard._on_right_click = func(): _split_resource_card(ecard, excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"))
+			ecard._on_click = func(): popups.show_res_popup(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), ecard.get_meta("res_count", 1))
+			hand_container.add_child(ecard)
+			hand_cards.append(ecard)
+			hand_layout.arrange())
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
 				popups.show_sultan_popup(card_data)
