@@ -555,20 +555,24 @@ func _commit_assigned_cards(slot_nodes:Array):
 	_rite_popup.set_meta("assigned_cards", [])
 	hand_layout.arrange()
 
-	# 结算后恢复手牌（消费的卡不退回）
+	# 结算后恢复手牌，消费掉的卡从数量扣除
 func _restore_hand_cards():
-	# 先清理被消费的金币卡
+	# 消费金币
 	for ar in active_rites:
 		var gd = ar.get("gold", {})
 		if gd.is_empty(): continue
-		for i in range(hand_cards.size() - 1, -1, -1):
-			var c = hand_cards[i]
-			if not c.visible and is_instance_valid(c):
-				var dd = c.get_meta("drag_data", {})
-				if dd.get("name", "") == "金币":
-					hand_cards.remove_at(i)
-					c.queue_free()
-					break
+		var cost = gd.get("count", 1)
+		for c in hand_cards:
+			if not is_instance_valid(c): continue
+			var dd = c.get_meta("drag_data", {})
+			if dd.get("name", "") != "金币": continue
+			var cnt = c.get_meta("res_count", 1)
+			if cnt > cost:
+				_update_card_count(c, cnt - cost)
+			else:
+				hand_cards.erase(c)
+				c.queue_free()
+			break
 	for c in hand_cards:
 		if is_instance_valid(c) and not c.visible:
 			c.visible = true
