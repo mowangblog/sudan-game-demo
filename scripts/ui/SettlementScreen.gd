@@ -424,7 +424,7 @@ func _finish_settlement():
 	_apply_roll_rewards()
 	if reward_text != "":
 		_show_reward_notification()
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate()})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate(),"gold_gained":_total_rewards.get("gold",0)})
 	queue_free()
 
 func _apply_roll_rewards():
