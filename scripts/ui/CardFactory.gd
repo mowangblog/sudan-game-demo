@@ -168,7 +168,9 @@ func make_book_card(book_data: Dictionary) -> PanelContainer:
 
 	var icon_lbl = Label.new(); icon_lbl.text = "📖"; icon_lbl.add_theme_font_size_override("font_size", 32)
 	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
-	var nl = Label.new(); nl.text = book_data.get("name", "?"); nl.add_theme_font_size_override("font_size", 13)
+	var nl = Label.new(); nl.text = book_data.get("name", "?"); nl.add_theme_font_size_override("font_size", 11)
+	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	nl.custom_minimum_size = Vector2(62, 0)
 	nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
 	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
 	var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
