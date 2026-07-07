@@ -1482,8 +1482,8 @@
 		"check": {
 			"type": "combined",
 			"attributes": [
-				"wisdom",
-				"social"
+				"wis",
+				"soc"
 			],
 			"required_successes": 2
 		},
