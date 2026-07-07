@@ -149,3 +149,42 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 		card.add_theme_stylebox_override("panel", nsb)
 
 	return card
+
+
+func make_book_card(book_data: Dictionary) -> PanelContainer:
+	var card = preload("res://scripts/ui/DraggableCard.gd").new()
+	card.name = "Book_" + book_data.get("id", "?"); card.custom_minimum_size = Vector2(70, 152); card.mouse_filter = Control.MOUSE_FILTER_STOP
+	var quality = book_data.get("rank", "STONE")
+	var bg = SC.get(quality, Color("2a2018"))
+	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
+	var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
+	sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
+	sb.border_color = q_border; sb.content_margin_left = 4; sb.content_margin_right = 4
+	sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
+	card.add_theme_stylebox_override("panel", sb)
+
+	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
+
+	var icon_lbl = Label.new(); icon_lbl.text = "📖"; icon_lbl.add_theme_font_size_override("font_size", 32)
+	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
+	var nl = Label.new(); nl.text = book_data.get("name", "?"); nl.add_theme_font_size_override("font_size", 13)
+	nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
+	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
+	var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
+	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
+	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
+
+	card.set_meta("drag_data", {"type": "book", "id": book_data.get("id", ""), "name": book_data.get("name", ""), "data": book_data, "rank": quality})
+
+	card._on_hover_style = func(hovered: bool):
+		var nsb = StyleBoxFlat.new(); nsb.bg_color = bg; nsb.set_corner_radius_all(10)
+		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
+		nsb.content_margin_left = 4; nsb.content_margin_right = 4; nsb.content_margin_top = 4; nsb.content_margin_bottom = 4
+		if hovered:
+			nsb.border_color = q_border; nsb.shadow_size = 12; nsb.shadow_color = SC_GLOW.get(quality, Color("c8a84e80"))
+		else:
+			nsb.border_color = q_border.darkened(0.3); nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
+		card.add_theme_stylebox_override("panel", nsb)
+
+	return card
