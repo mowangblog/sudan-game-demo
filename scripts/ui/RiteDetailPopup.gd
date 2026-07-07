@@ -1,219 +1,362 @@
 # RiteDetailPopup.gd
-# 仪式详情弹窗 — 点击仪式后弹出，显示介绍 + 拖入卡牌区
-# 每个仪式有自己的 slots 配置，动态生成卡槽
+# Overlay popup for configuring a rite. Owns slots and assigned card nodes.
 
-extends Window
+class_name RiteDetailPopup
+extends PanelContainer
 
-signal rite_configured(rite_data: Dictionary, slot_cards: Array)
-signal cancelled()
+signal committed(config: Dictionary)
+signal cancelled(is_edit: bool, existing_entry)
+signal card_return_requested(card_type: String, card_data: Dictionary)
+signal resource_trimmed(slot_config: Dictionary, excess_data: Dictionary)
+signal card_clicked(slot_type: String, card_data: Dictionary)
+signal highlight_requested(slot)
+signal validation_failed(message: String)
 
-const C = {
-	BG_DEEP=Color("1a0f0a"),BG_PANEL=Color("2d1c12"),
-	GOLD=Color("c8a84e"),GOLD_HI=Color("e8d48b"),GOLD_LO=Color("8a6820"),
-	TEXT=Color("f0e6c8"),DIM=Color("a09070"),
-	FAIL=Color("aa3030"),SHADOW=Color("00000099"),
-}
+const RiteSlotDropScript = preload("res://scripts/ui/RiteSlotDrop.gd")
 
-var rite_data: Dictionary = {}
-var slot_containers: Array = []  # 每个元素是 {"node": Panel, "config": Dictionary, "card": Dictionary}
-var hand_cards: Array = []  # 可从底部手牌区获取
+var C: Dictionary = {}
+var AN: Dictionary = {}
+var rite: Dictionary = {}
+var existing_entry = null
+var is_edit: bool = false
+var slot_nodes: Array = []
+var assigned_cards: Array = []
 
-# 初始化弹窗
-func setup(rite: Dictionary, available_chars: Array, active_sultan_card: Dictionary):
-	rite_data = rite
-	title = "📜 %s" % rite.get("name", "?")
-	size = Vector2(520, 500)
-	unresizable = true
-	popup_window = true
-	initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_MAIN_WINDOW_SCREEN
-	
-	# 清空旧内容
-	for child in get_children():
-		child.queue_free()
-	
-	_build_content(rite, available_chars, active_sultan_card)
+func setup(p_rite: Dictionary, p_existing_entry, constants: Dictionary, viewport_size: Vector2) -> void:
+	rite = p_rite
+	existing_entry = p_existing_entry
+	is_edit = existing_entry != null
+	C = constants.get("C", {})
+	AN = constants.get("AN", {})
+	name = "RitePopup"
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	_configure_frame(viewport_size)
+	_build_content()
 
-# 构建内容
-func _build_content(rite: Dictionary, available_chars: Array, active_sultan_card: Dictionary):
-	var vb = VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 12)
-	vb.add_theme_constant_override("margin_left", 14)
-	vb.add_theme_constant_override("margin_right", 14)
-	vb.add_theme_constant_override("margin_top", 14)
-	vb.add_theme_constant_override("margin_bottom", 14)
-	add_child(vb)
-	
-	# ---- 标题 ----
-	var title_lbl = Label.new()
-	title_lbl.text = rite.get("name", "?")
-	title_lbl.add_theme_font_size_override("font_size", 18)
-	title_lbl.add_theme_color_override("font_color", C.GOLD)
-	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(title_lbl)
-	
-	# ---- 描述 ----
-	var desc_lbl = Label.new()
-	desc_lbl.text = rite.get("description", "")
-	desc_lbl.add_theme_font_size_override("font_size", 13)
-	desc_lbl.add_theme_color_override("font_color", C.TEXT)
-	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vb.add_child(desc_lbl)
-	
-	vb.add_child(_sep())
-	
-	# ---- 检定信息 ----
-	var check = rite.get("check", {})
-	var check_text = "检定："
-	if check.type == "solo":
-		var attr_name = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}.get(check.attribute, check.attribute)
-		check_text += "%s · 需%d成功" % [attr_name, check.required_successes]
-	elif check.type == "combined":
-		var attr_names = []
-		for a in check.get("attributes", []):
-			attr_names.append({"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}.get(a, a))
-		check_text += "、".join(attr_names) + " · 需%d成功" % check.required_successes
-	var check_lbl = Label.new()
-	check_lbl.text = check_text
-	check_lbl.add_theme_font_size_override("font_size", 12)
-	check_lbl.add_theme_color_override("font_color", C.DIM)
-	vb.add_child(check_lbl)
-	
-	# ---- 奖励信息 ----
-	var outcomes = rite.get("outcomes", {})
-	var success_out = outcomes.get("success", {})
-	var reward_text = "成功："
-	if success_out.has("gold"):
-		reward_text += "💰%+d " % success_out.gold
-	if success_out.has("power"):
-		reward_text += "权%+d " % success_out.power
-	if success_out.has("good"):
-		reward_text += "善%+d " % success_out.good
-	if success_out.has("evil"):
-		reward_text += "恶%+d " % success_out.evil
-	if success_out.has("hero"):
-		reward_text += "侠%+d " % success_out.hero
-	if success_out.has("spirit"):
-		reward_text += "灵%+d " % success_out.spirit
-	var reward_lbl = Label.new()
-	reward_lbl.text = reward_text
-	reward_lbl.add_theme_font_size_override("font_size", 12)
-	reward_lbl.add_theme_color_override("font_color", Color("4a9a3a"))
-	vb.add_child(reward_lbl)
-	
-	vb.add_child(_sep())
-	
-	# ---- 卡槽区 ----
-	vb.add_child(_lbl("🃏 拖入卡牌", 14, C.GOLD))
-	
-	slot_containers.clear()
+
+func try_drop_card(card: PanelContainer, global_pos: Vector2) -> bool:
+	for slot in slot_nodes:
+		if not is_instance_valid(slot) or not slot.has_method("_can_drop_data"):
+			continue
+		if not slot.get_global_rect().has_point(global_pos):
+			continue
+		var data = card.get_meta("drag_data", {})
+		if slot._can_drop_data(global_pos, data):
+			slot._drop_data(global_pos, data)
+			card.visible = false
+			if not assigned_cards.has(card):
+				assigned_cards.append(card)
+			return true
+	return false
+
+
+func restore_assigned_cards() -> void:
+	for card in assigned_cards:
+		if is_instance_valid(card):
+			card.visible = true
+	for slot in slot_nodes:
+		if is_instance_valid(slot) and slot.has_method("clear_card"):
+			slot.clear_card()
+	assigned_cards.clear()
+
+
+func commit_assigned_cards() -> void:
+	for slot in slot_nodes:
+		if is_instance_valid(slot) and slot.has_method("clear_card"):
+			slot.clear_card()
+	assigned_cards.clear()
+
+
+func _configure_frame(viewport_size: Vector2) -> void:
+	var pw = min(viewport_size.x - 60, 960)
+	var ph = min(viewport_size.y - 260, 480)
+	custom_minimum_size = Vector2(pw, ph)
+	size = Vector2(pw, ph)
+	position = Vector2((viewport_size.x - pw) / 2, max(40, viewport_size.y * 0.05))
+	var ops = StyleBoxFlat.new()
+	ops.bg_color = C.get("BG_PANEL", Color("2d1c12"))
+	ops.set_corner_radius_all(12)
+	ops.border_width_bottom = 3
+	ops.border_width_top = 3
+	ops.border_width_left = 3
+	ops.border_width_right = 3
+	ops.border_color = C.get("GOLD", Color("c8a84e"))
+	ops.shadow_size = 16
+	ops.shadow_color = C.get("SHADOW", Color("00000099"))
+	ops.content_margin_left = 12
+	ops.content_margin_right = 12
+	ops.content_margin_top = 10
+	ops.content_margin_bottom = 10
+	add_theme_stylebox_override("panel", ops)
+
+
+func _build_content() -> void:
+	var split = HSplitContainer.new()
+	split.split_offset = 440
+	add_child(split)
+	_build_left(split)
+	_build_right(split)
+
+
+func _build_left(split: HSplitContainer) -> void:
+	var left = PanelContainer.new()
+	var lps = StyleBoxFlat.new()
+	lps.bg_color = Color("0d0804")
+	lps.set_corner_radius_all(8)
+	lps.border_width_bottom = 1
+	lps.border_width_top = 1
+	lps.border_width_left = 1
+	lps.border_width_right = 1
+	lps.border_color = C.get("GOLD_LO", Color("8a6820"))
+	lps.content_margin_left = 14
+	lps.content_margin_right = 14
+	lps.content_margin_top = 12
+	lps.content_margin_bottom = 12
+	left.add_theme_stylebox_override("panel", lps)
+	split.add_child(left)
+
+	var lvb = VBoxContainer.new()
+	lvb.add_theme_constant_override("separation", 12)
+	lvb.alignment = BoxContainer.ALIGNMENT_CENTER
+	lvb.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left.add_child(lvb)
+
+	var title = Label.new()
+	title.text = "📜 " + rite.get("name", "") + (" (已配置)" if is_edit else "")
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", C.get("GREEN", Color("4a9a3a")) if is_edit else C.get("GOLD", Color("c8a84e")))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lvb.add_child(title)
+
+	var slot_flow = FlowContainer.new()
+	slot_flow.alignment = FlowContainer.ALIGNMENT_CENTER
+	slot_flow.add_theme_constant_override("h_separation", 16)
+	slot_flow.add_theme_constant_override("v_separation", 10)
+	lvb.add_child(slot_flow)
+
+	slot_nodes.clear()
 	var slots = rite.get("slots", [])
 	for i in range(slots.size()):
-		var slot_cfg = slots[i]
-		var slot_node = _create_slot(i, slot_cfg, available_chars, active_sultan_card)
-		vb.add_child(slot_node)
-		slot_containers.append({
-			"node": slot_node,
-			"config": slot_cfg,
-			"card": {}
-		})
-	
-	vb.add_child(_sep())
-	
-	# ---- 按钮区 ----
-	var btn_hb = HBoxContainer.new()
-	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_hb.add_theme_constant_override("separation", 20)
-	vb.add_child(btn_hb)
-	
-	var confirm_btn = Button.new()
-	confirm_btn.text = "✅ 确认配置"
-	confirm_btn.custom_minimum_size = Vector2(140, 40)
-	confirm_btn.add_theme_font_size_override("font_size", 14)
-	confirm_btn.pressed.connect(_on_confirm)
-	btn_hb.add_child(confirm_btn)
-	
-	var cancel_btn = Button.new()
-	cancel_btn.text = "取消"
-	cancel_btn.custom_minimum_size = Vector2(100, 40)
-	cancel_btn.add_theme_font_size_override("font_size", 14)
-	cancel_btn.pressed.connect(func():
-		cancelled.emit()
-		queue_free()
-	)
-	btn_hb.add_child(cancel_btn)
+		_add_slot_box(slot_flow, i, slots[i])
 
-# 创建卡槽
-func _create_slot(index: int, slot_cfg: Dictionary, available_chars: Array, active_sultan_card: Dictionary) -> PanelContainer:
-	var slot = PanelContainer.new()
-	slot.custom_minimum_size = Vector2(480, 70)
-	slot.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color("1a1210")
-	sb.set_corner_radius_all(8)
-	sb.border_width_bottom = 2
-	sb.border_width_top = 2
-	sb.border_width_left = 2
-	sb.border_width_right = 2
-	sb.border_color = C.GOLD_LO
-	sb.content_margin_left = 10
-	sb.content_margin_right = 10
-	sb.content_margin_top = 8
-	sb.content_margin_bottom = 8
-	slot.add_theme_stylebox_override("panel", sb)
-	
-	var hb = HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 10)
-	slot.add_child(hb)
-	
-	# 槽位标签
-	var slot_type = slot_cfg.get("type", "character")
-	var required_tags = slot_cfg.get("required_tags", [])
-	var optional = slot_cfg.get("optional", false)
-	
-	var tag_text = ""
-	if required_tags.size() > 0:
-		tag_text = "（需:%s）" % "、".join(required_tags)
-	var opt_text = "（可选）" if optional else ""
-	
+	var spacer = Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lvb.add_child(spacer)
+	_add_buttons(lvb)
+
+
+func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -> void:
+	var slot_box = VBoxContainer.new()
+	slot_box.add_theme_constant_override("separation", 4)
+	slot_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	slot_flow.add_child(slot_box)
+
+	var label_text = slot_cfg.get("label", "")
+	if label_text == "":
+		match slot_cfg.get("type", ""):
+			"character": label_text = "角色卡槽"
+			"sultan_card": label_text = "苏丹卡槽"
+			"gold": label_text = "金币卡槽"
+			_: label_text = "卡牌槽位"
+	if slot_cfg.get("optional", false) or not slot_cfg.get("required", true):
+		label_text += "（可选）"
+
 	var label = Label.new()
-	label.text = "槽位%d：%s%s %s" % [index+1, "角色" if slot_type=="character" else "苏丹卡", tag_text, opt_text]
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", C.DIM)
-	label.custom_minimum_size = Vector2(200, 0)
-	hb.add_child(label)
-	
-	# 拖放区域（占位符，实际拖放逻辑在主场景处理）
-	var drop_hint = Label.new()
-	drop_hint.text = "← 从下方手牌区拖入卡牌"
-	drop_hint.add_theme_font_size_override("font_size", 11)
-	drop_hint.add_theme_color_override("font_color", Color("605040"))
-	drop_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	drop_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hb.add_child(drop_hint)
-	
-	# 设置拖放数据
-	slot.set_meta("slot_index", index)
-	slot.set_meta("slot_config", slot_cfg)
-	
+	label.text = "🃏 " + label_text
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", C.get("DIM", Color("a09070")))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	slot_box.add_child(label)
+
+	var slot = _create_slot(index, slot_cfg)
+	slot.custom_minimum_size = Vector2(70, 152)
+	slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	slot_box.add_child(slot)
+	_prefill_slot(slot, slot_cfg)
+	slot_nodes.append(slot)
+
+
+func _create_slot(index: int, slot_cfg: Dictionary):
+	var slot = RiteSlotDropScript.new()
+	slot.slot_index = index
+	slot.slot_type = slot_cfg.get("type", "character")
+	slot.required_tags = slot_cfg.get("required_tags", [])
+	slot.is_optional = not slot_cfg.get("required", true)
+	slot.accept = slot_cfg.get("accept", "")
+	slot.max_cards = slot_cfg.get("max", 1)
+	slot.card_removed.connect(func(_idx, card_data): card_return_requested.emit(_slot_type_to_card_type(slot.slot_type), card_data))
+	slot.resource_trimmed.connect(func(_idx, excess_data): resource_trimmed.emit(slot_cfg, excess_data))
+	slot.card_clicked.connect(func(card_data): card_clicked.emit(slot.slot_type, card_data))
+	slot.empty_slot_clicked.connect(func(_idx): highlight_requested.emit(slot))
 	return slot
 
-# 确认配置
-func _on_confirm():
-	var slot_cards = []
-	for sc in slot_containers:
-		slot_cards.append(sc.get("card", {}))
-	rite_configured.emit(rite_data, slot_cards)
+
+func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
+	if not is_edit:
+		return
+	if slot_cfg.get("type", "") == "character" and not existing_entry.char.is_empty():
+		slot._drop_data(Vector2.ZERO, {"type": "character", "data": existing_entry.char})
+	elif slot_cfg.get("type", "") == "sultan_card" and not existing_entry.sultan_card.is_empty():
+		slot._drop_data(Vector2.ZERO, {"type": "sultan_card", "data": existing_entry.sultan_card})
+
+
+func _add_buttons(lvb: VBoxContainer) -> void:
+	var btn_hb = HBoxContainer.new()
+	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_hb.add_theme_constant_override("separation", 16)
+	lvb.add_child(btn_hb)
+
+	var confirm_btn = Button.new()
+	confirm_btn.text = "确认"
+	confirm_btn.custom_minimum_size = Vector2(100, 38)
+	confirm_btn.add_theme_font_size_override("font_size", 13)
+	confirm_btn.pressed.connect(_on_confirm_pressed)
+	btn_hb.add_child(confirm_btn)
+
+	var cancel_btn = Button.new()
+	cancel_btn.text = "取消"
+	cancel_btn.custom_minimum_size = Vector2(100, 38)
+	cancel_btn.add_theme_font_size_override("font_size", 13)
+	cancel_btn.pressed.connect(_on_cancel_pressed)
+	btn_hb.add_child(cancel_btn)
+
+
+func _build_right(split: HSplitContainer) -> void:
+	var right = PanelContainer.new()
+	var rps = StyleBoxFlat.new()
+	rps.bg_color = Color("0d0804")
+	rps.set_corner_radius_all(8)
+	rps.border_width_bottom = 1
+	rps.border_width_top = 1
+	rps.border_width_left = 1
+	rps.border_width_right = 1
+	rps.border_color = C.get("GOLD_LO", Color("8a6820"))
+	rps.content_margin_left = 14
+	rps.content_margin_right = 14
+	rps.content_margin_top = 12
+	rps.content_margin_bottom = 12
+	right.add_theme_stylebox_override("panel", rps)
+	split.add_child(right)
+
+	var rsc = ScrollContainer.new()
+	rsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rsc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(rsc)
+
+	var rvb = VBoxContainer.new()
+	rvb.add_theme_constant_override("separation", 12)
+	rvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rsc.add_child(rvb)
+
+	var close_row = HBoxContainer.new()
+	close_row.alignment = BoxContainer.ALIGNMENT_END
+	rvb.add_child(close_row)
+	var close_btn = Button.new()
+	close_btn.text = "✕"
+	close_btn.custom_minimum_size = Vector2(28, 28)
+	close_btn.add_theme_font_size_override("font_size", 14)
+	close_btn.pressed.connect(_on_cancel_pressed)
+	close_row.add_child(close_btn)
+
+	var desc = Label.new()
+	desc.text = rite.get("description", "")
+	desc.add_theme_font_size_override("font_size", 13)
+	desc.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rvb.add_child(desc)
+	rvb.add_child(HSeparator.new())
+	_add_check_info(rvb)
+	_add_reward_info(rvb)
+	rvb.add_child(HSeparator.new())
+	rvb.add_child(_label("🃏 将卡牌拖入左侧卡槽", 12, C.get("GOLD", Color("c8a84e"))))
+
+
+func _add_check_info(rvb: VBoxContainer) -> void:
+	var check = rite.get("check", {})
+	var text = "检定："
+	if check.get("type", "solo") == "solo":
+		text += "%s · 需%d成功" % [AN.get(check.get("attribute", ""), "?"), check.get("required_successes", 1)]
+	elif check.get("type") == "combined":
+		var names = []
+		for attr in check.get("attributes", []):
+			names.append(AN.get(attr, attr))
+		text += "、".join(names) + " · 需%d成功" % check.get("required_successes", 1)
+	var label = _label(text, 12, C.get("DIM", Color("a09070")))
+	rvb.add_child(label)
+
+
+func _add_reward_info(rvb: VBoxContainer) -> void:
+	var out = rite.get("outcomes", {}).get("success", {})
+	var text = "成功奖励："
+	if out.has("gold"): text += "💰%+d " % out.gold
+	if out.has("power"): text += "权%+d " % out.power
+	if out.has("good"): text += "善%+d " % out.good
+	if out.has("evil"): text += "恶%+d " % out.evil
+	if out.has("hero"): text += "侠%+d " % out.hero
+	if out.has("spirit"): text += "灵%+d " % out.spirit
+	rvb.add_child(_label(text, 12, C.get("GREEN", Color("4a9a3a"))))
+	rvb.add_child(HSeparator.new())
+
+	var fail_out = rite.get("outcomes", {}).get("fail", {})
+	var fail_text = fail_out.get("narrative", fail_out.get("description", "无特殊惩罚"))
+	var fail_label = _label("失败：" + fail_text, 11, C.get("DIM", Color("a09070")))
+	fail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rvb.add_child(fail_label)
+
+
+func _on_confirm_pressed() -> void:
+	var config = _collect_config()
+	if not config.get("valid", false):
+		validation_failed.emit("❌ 槽位未配置")
+		return
+	committed.emit(config)
+	commit_assigned_cards()
 	queue_free()
 
-# 辅助
-func _lbl(t: String, s: int, c: Color) -> Label:
-	var l = Label.new()
-	l.text = t
-	l.add_theme_font_size_override("font_size", s)
-	l.add_theme_color_override("font_color", c)
-	return l
 
-func _sep() -> HSeparator:
-	var s = HSeparator.new()
-	return s
+func _on_cancel_pressed() -> void:
+	cancelled.emit(is_edit, existing_entry)
+	restore_assigned_cards()
+	queue_free()
+
+
+func _collect_config() -> Dictionary:
+	var char_data = {}
+	var sultan_card_data = {}
+	var gold_card_data = {}
+	var valid = true
+	for slot in slot_nodes:
+		if not slot.current_card.is_empty():
+			if slot.slot_type == "character":
+				char_data = slot.current_card
+			elif slot.slot_type == "sultan_card":
+				sultan_card_data = slot.current_card
+			elif slot.slot_type == "gold" or slot.slot_type == "resource":
+				gold_card_data = slot.current_card
+		if not slot.is_optional and slot.current_card.is_empty():
+			valid = false
+	return {
+		"valid": valid,
+		"rite": rite,
+		"char": char_data,
+		"sultan_card": sultan_card_data,
+		"gold": gold_card_data,
+		"is_edit": is_edit,
+		"existing": existing_entry,
+	}
+
+
+func _slot_type_to_card_type(slot_type: String) -> String:
+	if slot_type == "character":
+		return "character"
+	if slot_type == "sultan_card":
+		return "sultan_card"
+	return "resource"
+
+
+func _label(text: String, size: int, color: Color) -> Label:
+	var label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	return label

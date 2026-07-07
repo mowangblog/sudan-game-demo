@@ -28,6 +28,7 @@ const SettlementScreen = preload("res://scripts/ui/SettlementScreen.gd")
 const ResourceCardManagerScript = preload("res://scripts/ui/ResourceCardManager.gd")
 const MapRitePanelScript = preload("res://scripts/ui/MapRitePanel.gd")
 const StatusBarScript = preload("res://scripts/ui/StatusBar.gd")
+const RiteDetailPopupScript = preload("res://scripts/ui/RiteDetailPopup.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
@@ -155,314 +156,107 @@ func _close_rite_popup() -> void:
 
 func _open_rite_detail(rite: Dictionary) -> void:
 	_close_rite_popup()
-	
-	var popup = PanelContainer.new()
-	popup.name = "RitePopup"
-	popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# 尺寸和定位：参考 SettlementScreen，大弹窗居中
-	var vs = get_viewport().size
-	var pw = min(vs.x - 60, 960); var ph = min(vs.y - 260, 480)
-	popup.custom_minimum_size = Vector2(pw, ph)
-	popup.size = Vector2(pw, ph)
-	popup.position = Vector2((vs.x - pw) / 2, max(40, vs.y * 0.05))
-	
-	# 外层样式（金边框+阴影，和 SettlementScreen 一致）
-	var ops = StyleBoxFlat.new()
-	ops.bg_color = C.BG_PANEL; ops.set_corner_radius_all(12)
-	ops.border_width_bottom=3; ops.border_width_top=3
-	ops.border_width_left=3; ops.border_width_right=3
-	ops.border_color = C.GOLD; ops.shadow_size=16; ops.shadow_color=C.SHADOW
-	ops.content_margin_left=12; ops.content_margin_right=12
-	ops.content_margin_top=10; ops.content_margin_bottom=10
-	popup.add_theme_stylebox_override("panel", ops)
-	
-	# 左右分栏
-	var split = HSplitContainer.new()
-	split.split_offset = 440  # 左侧卡槽区占大头
-	popup.add_child(split)
-	
-	# === 左侧：卡槽区 ===
-	var left = PanelContainer.new()
-	var lps = StyleBoxFlat.new()
-	lps.bg_color = Color("0d0804"); lps.set_corner_radius_all(8)
-	lps.border_width_bottom=1; lps.border_width_top=1; lps.border_width_left=1; lps.border_width_right=1
-	lps.border_color = C.GOLD_LO
-	lps.content_margin_left=14; lps.content_margin_right=14; lps.content_margin_top=12; lps.content_margin_bottom=12
-	left.add_theme_stylebox_override("panel", lps)
-	split.add_child(left)
-	
-	var lvb = VBoxContainer.new()
-	lvb.add_theme_constant_override("separation", 12)
-	lvb.alignment = BoxContainer.ALIGNMENT_CENTER
-	lvb.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	left.add_child(lvb)
-
 	current_rite_detail = rite
-	var existing = _find_configured_rite(rite)
-	var is_edit = existing != null
-	var check = rite.get("check",{})
-	var out = rite.get("outcomes",{}).get("success",{})
-	var slots = rite.get("slots",[])
-	var slot_nodes = []
+	var current_existing = _find_configured_rite(rite)
+	var rite_popup = RiteDetailPopupScript.new()
+	rite_popup.setup(rite, current_existing, {"C": C, "AN": AN}, get_viewport().size)
+	rite_popup.committed.connect(_on_rite_detail_committed)
+	rite_popup.cancelled.connect(_on_rite_detail_cancelled)
+	rite_popup.card_return_requested.connect(_return_card_to_hand)
+	rite_popup.resource_trimmed.connect(_on_rite_detail_resource_trimmed)
+	rite_popup.card_clicked.connect(_on_rite_detail_card_clicked)
+	rite_popup.highlight_requested.connect(_on_rite_detail_highlight_requested)
+	rite_popup.validation_failed.connect(func(message): _log(message))
+	add_child(rite_popup)
+	_rite_popup = rite_popup
 
-	# — 标题 —
-	var tl = Label.new()
-	tl.text = "📜 " + rite.get("name","") + (" (已配置)" if is_edit else "")
-	tl.add_theme_font_size_override("font_size", 18)
-	tl.add_theme_color_override("font_color", C.GREEN if is_edit else C.GOLD)
-	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lvb.add_child(tl)
 
-	# — 卡槽：横向排列，自动换行 —
-	var slot_flow = FlowContainer.new()
-	slot_flow.alignment = FlowContainer.ALIGNMENT_CENTER
-	slot_flow.add_theme_constant_override("h_separation", 16)
-	slot_flow.add_theme_constant_override("v_separation", 10)
-	lvb.add_child(slot_flow)
-
-	for i in range(slots.size()):
-		var slot_cfg = slots[i]
-		# 每个卡槽是一个 VBox（标签 + 槽位）
-		var slot_box = VBoxContainer.new()
-		slot_box.add_theme_constant_override("separation", 4)
-		slot_box.alignment = BoxContainer.ALIGNMENT_CENTER
-		slot_flow.add_child(slot_box)
-
-		var sc_lbl = Label.new()
-		var label_text = slot_cfg.get("label", "")
-		if label_text == "":
-			match slot_cfg.type:
-				"character": label_text = "角色卡槽"
-				"sultan_card": label_text = "苏丹卡槽"
-				"gold": label_text = "金币卡槽"
-				_: label_text = "卡牌槽位"
-		if slot_cfg.get("optional", false) or not slot_cfg.get("required", true): label_text += "（可选）"
-		sc_lbl.text = "🃏 " + label_text
-		sc_lbl.add_theme_font_size_override("font_size", 10)
-		sc_lbl.add_theme_color_override("font_color", C.DIM)
-		sc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		slot_box.add_child(sc_lbl)
-
-		var slot = _create_slot_ui(i, slot_cfg)
-		slot.custom_minimum_size = Vector2(70, 152)
-		slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		slot_box.add_child(slot)
-
-		if is_edit:
-			if slot_cfg.type == "character" and not existing.char.is_empty():
-				slot._drop_data(Vector2.ZERO, {"type":"character","data":existing.char})
-			elif slot_cfg.type == "sultan_card" and not existing.sultan_card.is_empty():
-				slot._drop_data(Vector2.ZERO, {"type":"sultan_card","data":existing.sultan_card})
-		slot_nodes.append(slot)
-		slot.card_removed.connect(func(idx, card_data):
-			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
-		slot.resource_trimmed.connect(func(idx, excess_data):
-			# 数量溢出 → 修改原卡数量为max，多余创建新卡退回
-			for c2 in hand_cards:
-				if not c2.visible and is_instance_valid(c2):
-					var dd = c2.get_meta("drag_data", {})
-					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
-						_update_card_count(c2, slot_cfg.get("max", 1))
-						break
-			resource_card_manager.give_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1)))
-		slot.card_clicked.connect(func(card_data):
-			if slot_cfg.type == "sultan_card":
-				popups.show_sultan_popup(card_data)
-			else:
-				popups.show_char_popup(card_data))
-		# 点击空槽位 → 高亮符合条件的卡牌
-		slot.empty_slot_clicked.connect(func(_idx):
-			_clear_all_highlights()
-			for card in hand_cards:
-				if not is_instance_valid(card) or not card.visible:
+func _on_rite_detail_committed(config: Dictionary) -> void:
+	var rite = config.get("rite", {})
+	var char_data = config.get("char", {})
+	var sultan_card_data = config.get("sultan_card", {})
+	var gold_card_data = config.get("gold", {})
+	var is_edit = config.get("is_edit", false)
+	var existing = config.get("existing", null)
+	var queue = {"character": null, "sultan_card": null, "gold": null}
+	if is_edit:
+		var old_q = existing.get("queue", {})
+		queue.character = old_q.get("character")
+		queue.sultan_card = old_q.get("sultan_card")
+		queue.gold = old_q.get("gold")
+	else:
+		var pairs = [["character", char_data], ["sultan_card", sultan_card_data], ["gold", gold_card_data]]
+		for pair in pairs:
+			var skey = pair[0]
+			var cdata = pair[1]
+			if cdata.is_empty():
+				continue
+			for i in range(hand_cards.size() - 1, -1, -1):
+				var card = hand_cards[i]
+				if not is_instance_valid(card) or card.visible:
 					continue
-				var drag_data = card.get_meta("drag_data", {})
-				if drag_data.is_empty():
-					continue
-				if slot._can_drop_data(Vector2.ZERO, drag_data):
-					card.set_highlight(true))
+				var dd = card.get_meta("drag_data", {})
+				if dd.get("id", "") == cdata.get("id", "") and dd.get("type", "") in ["character", "sultan_card", "resource"]:
+					hand_cards.remove_at(i)
+					queue[skey] = card
+					break
+	var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "queue": queue}
+	if is_edit:
+		var idx = active_rites.find(existing)
+		if idx != -1:
+			active_rites[idx] = entry
+	else:
+		active_rites.append(entry)
+	_log("✅ 已配置「%s」" % rite.get("name", ""))
+	_update_rite_btn_label(rite.get("id", -1), char_data.get("name", ""))
+	_rite_popup = null
+	_refresh()
 
-	# — 确认/取消按钮 —
-	var btn_hb = HBoxContainer.new()
-	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_hb.add_theme_constant_override("separation", 16)
-	var spacer = Control.new(); spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	lvb.add_child(spacer)
-	lvb.add_child(btn_hb)
 
-	var confirm_btn = Button.new()
-	confirm_btn.text = "确认"
-	confirm_btn.custom_minimum_size = Vector2(100, 38); confirm_btn.add_theme_font_size_override("font_size", 13)
-	confirm_btn.pressed.connect(func():
-		var char_data = {}; var sultan_card_data = {}; var gold_card_data = {}
-		for sn in slot_nodes:
-			if not sn.current_card.is_empty():
-				if sn.slot_type == "character": char_data = sn.current_card
-				elif sn.slot_type == "sultan_card": sultan_card_data = sn.current_card
-				elif sn.slot_type == "gold" or sn.slot_type == "resource": gold_card_data = sn.current_card
-		var valid = true
-		for sn in slot_nodes:
-			if not sn.is_optional and sn.current_card.is_empty():
-				valid = false; _log("❌ 槽位未配置")
-		if not valid: return
-		# 构建 queue：卡牌节点归属（character/sultan_card/gold），从手牌移出
-		var queue = {"character": null, "sultan_card": null, "gold": null}
-		if is_edit:
-			# 编辑已有仪式：继承旧 queue 的卡牌节点，保持配置不丢
-			var old_q = existing.get("queue", {})
-			queue.character = old_q.get("character")
-			queue.sultan_card = old_q.get("sultan_card")
-			queue.gold = old_q.get("gold")
-		else:
-			# 新建：从 hand_cards 收集已投入（invisible）的卡牌节点，按槽位类型分类
-			var pairs = [["character", char_data], ["sultan_card", sultan_card_data], ["gold", gold_card_data]]
-			for pair in pairs:
-				var skey = pair[0]; var cdata = pair[1]
-				if cdata.is_empty(): continue
-				for i in range(hand_cards.size() - 1, -1, -1):
-					var c = hand_cards[i]
-					if not c.visible and is_instance_valid(c):
-						var dd = c.get_meta("drag_data", {})
-						if dd.get("id", "") == cdata.get("id", "") and dd.get("type", "") in ["character","sultan_card","resource"]:
-							hand_cards.remove_at(i)
-							queue[skey] = c
-							break
-		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data, "queue": queue}
-		if is_edit:
-			var idx = active_rites.find(existing)
-			if idx != -1: active_rites[idx] = entry
-		else:
-			active_rites.append(entry)
-		_log("✅ 已配置「%s」" % rite.get("name",""))
-		_update_rite_btn_label(rite.get("id", -1), char_data.get("name",""))
-		_commit_assigned_cards(slot_nodes)
-		_close_rite_popup()
-		_refresh())
-	btn_hb.add_child(confirm_btn)
+func _on_rite_detail_cancelled(is_edit: bool, existing) -> void:
+	if is_edit:
+		var idx = active_rites.find(existing)
+		if idx != -1:
+			var old_entry = active_rites[idx]
+			active_rites.remove_at(idx)
+			_return_queue_to_hand(old_entry.get("queue", {}))
+		var rite = existing.get("rite", {}) if existing else {}
+		_update_rite_btn_label(rite.get("id", -1), "")
+		_log("🗑 已取消「%s」" % rite.get("name", ""))
+	_rite_popup = null
+	_refresh()
 
-	var cancel_btn = Button.new(); cancel_btn.text = "取消"
-	cancel_btn.custom_minimum_size = Vector2(100, 38); cancel_btn.add_theme_font_size_override("font_size", 13)
-	cancel_btn.pressed.connect(func():
-		if is_edit:
-			var idx = active_rites.find(existing)
-			if idx != -1:
-				var old_entry = active_rites[idx]
-				active_rites.remove_at(idx)
-				_return_queue_to_hand(old_entry.get("queue", {}))
-			_update_rite_btn_label(rite.get("id", -1), "")
-			_log("🗑 已取消「%s」" % rite.get("name",""))
-		_restore_assigned_cards(slot_nodes)
-		_close_rite_popup()
-		_refresh())
-	btn_hb.add_child(cancel_btn)
 
-	# === 右侧：描述/检定/奖励区 ===
-	var right = PanelContainer.new()
-	var rps = StyleBoxFlat.new()
-	rps.bg_color = Color("0d0804"); rps.set_corner_radius_all(8)
-	rps.border_width_bottom=1; rps.border_width_top=1; rps.border_width_left=1; rps.border_width_right=1
-	rps.border_color = C.GOLD_LO
-	rps.content_margin_left=14; rps.content_margin_right=14; rps.content_margin_top=12; rps.content_margin_bottom=12
-	right.add_theme_stylebox_override("panel", rps)
-	split.add_child(right)
+func _on_rite_detail_resource_trimmed(slot_cfg: Dictionary, excess_data: Dictionary) -> void:
+	for card in hand_cards:
+		if card.visible or not is_instance_valid(card):
+			continue
+		var dd = card.get_meta("drag_data", {})
+		if dd.get("type", "") == "resource" and dd.get("name", "") == excess_data.get("name", ""):
+			_update_card_count(card, slot_cfg.get("max", 1))
+			break
+	resource_card_manager.give_resource_card(excess_data.get("name", "?"), excess_data.get("icon", "💰"), excess_data.get("quality", "STONE"), excess_data.get("count", 1))
 
-	var rsc = ScrollContainer.new()
-	rsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rsc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.add_child(rsc)
 
-	var rvb = VBoxContainer.new()
-	rvb.add_theme_constant_override("separation", 12)
-	rvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rsc.add_child(rvb)
+func _on_rite_detail_card_clicked(slot_type: String, card_data: Dictionary) -> void:
+	if slot_type == "sultan_card":
+		popups.show_sultan_popup(card_data)
+	else:
+		popups.show_char_popup(card_data)
 
-	# 关闭按钮
-	var close_row = HBoxContainer.new()
-	close_row.alignment = BoxContainer.ALIGNMENT_END
-	rvb.add_child(close_row)
-	var close_btn = Button.new()
-	close_btn.text = "✕"; close_btn.custom_minimum_size = Vector2(28, 28)
-	close_btn.add_theme_font_size_override("font_size", 14)
-	close_btn.pressed.connect(_close_rite_popup)
-	close_row.add_child(close_btn)
 
-	# 描述
-	var dl = Label.new(); dl.text = rite.get("description","")
-	dl.add_theme_font_size_override("font_size", 13); dl.add_theme_color_override("font_color", C.TEXT)
-	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; rvb.add_child(dl)
-	rvb.add_child(_sep())
+func _on_rite_detail_highlight_requested(slot) -> void:
+	_clear_all_highlights()
+	for card in hand_cards:
+		if not is_instance_valid(card) or not card.visible:
+			continue
+		var drag_data = card.get_meta("drag_data", {})
+		if drag_data.is_empty():
+			continue
+		if slot._can_drop_data(Vector2.ZERO, drag_data):
+			card.set_highlight(true)
 
-	# 检定信息
-	var ck_txt = "检定："
-	if check.get("type", "solo") == "solo":
-		ck_txt += "%s · 需%d成功" % [AN.get(check.get("attribute",""),"?"), check.get("required_successes",1)]
-	elif check.get("type") == "combined":
-		var ans = []
-		for a in check.get("attributes",[]): ans.append(AN.get(a,a))
-		ck_txt += "、".join(ans) + " · 需%d成功" % check.get("required_successes",1)
-	var ck_lbl = Label.new(); ck_lbl.text = ck_txt
-	ck_lbl.add_theme_font_size_override("font_size", 12); ck_lbl.add_theme_color_override("font_color", C.DIM)
-	rvb.add_child(ck_lbl)
-
-	# 成功奖励
-	var rw_txt = "成功奖励："
-	if out.has("gold"): rw_txt += "💰%+d " % out.gold
-	if out.has("power"): rw_txt += "权%+d " % out.power
-	if out.has("good"): rw_txt += "善%+d " % out.good
-	if out.has("evil"): rw_txt += "恶%+d " % out.evil
-	if out.has("hero"): rw_txt += "侠%+d " % out.hero
-	if out.has("spirit"): rw_txt += "灵%+d " % out.spirit
-	var rw_lbl = Label.new(); rw_lbl.text = rw_txt
-	rw_lbl.add_theme_font_size_override("font_size", 12); rw_lbl.add_theme_color_override("font_color", C.GREEN)
-	rvb.add_child(rw_lbl)
-
-	# 失败后果
-	rvb.add_child(_sep())
-	var fail_out = rite.get("outcomes",{}).get("fail",{})
-	var fail_text = fail_out.get("narrative", fail_out.get("description", "无特殊惩罚"))
-	var fl = Label.new(); fl.text = "失败：" + fail_text
-	fl.add_theme_font_size_override("font_size", 11); fl.add_theme_color_override("font_color", C.DIM)
-	fl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; rvb.add_child(fl)
-
-	rvb.add_child(_sep())
-	rvb.add_child(_lbl("🃏 将卡牌拖入左侧卡槽", 12, C.GOLD))
-
-	popup.set_meta("slot_nodes", slot_nodes)
-	popup.set_meta("assigned_cards", [])
-	add_child(popup)
-	_rite_popup = popup
-
-func _create_slot_ui(index:int, slot_cfg:Dictionary) -> Node:
-	var slot = preload("res://scripts/ui/RiteSlotDrop.gd").new()
-	slot.slot_index = index
-	slot.slot_type = slot_cfg.get("type", "character")
-	slot.required_tags = slot_cfg.get("required_tags", [])
-	slot.is_optional = not slot_cfg.get("required", true)
-	slot.accept = slot_cfg.get("accept", "")
-	slot.max_cards = slot_cfg.get("max", 1)
-	return slot
-
-func _restore_assigned_cards(slot_nodes:Array):
-	if not _rite_popup: return
-	var assigned = _rite_popup.get_meta("assigned_cards", [])
-	for c in assigned:
-		if is_instance_valid(c): c.visible = true
-	for s in slot_nodes:
-		if is_instance_valid(s) and s.has_method("clear_card"):
-			s.clear_card()
-	_rite_popup.set_meta("assigned_cards", [])
-	hand_layout.arrange()
-
-func _commit_assigned_cards(slot_nodes:Array):
-	if not _rite_popup: return
-	for s in slot_nodes:
-		if is_instance_valid(s) and s.has_method("clear_card"):
-			s.clear_card()
-	_rite_popup.set_meta("assigned_cards", [])
-	hand_layout.arrange()
-
-	# 结算后回收卡牌：角色卡回手牌，苏丹卡/金币卡销毁（消费）
+# 结算后回收卡牌：角色卡回手牌，苏丹卡/金币卡销毁（消费）
 func _restore_hand_cards():
 	for ar in active_rites:
 		var q = ar.get("queue", {})
@@ -661,19 +455,8 @@ func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	
 	# 3. 检查仪式弹窗中的卡槽
 	if not dropped_in_slot and _rite_popup and is_instance_valid(_rite_popup):
-		var slot_nodes = _rite_popup.get_meta("slot_nodes", [])
-		for slot in slot_nodes:
-			if is_instance_valid(slot) and slot.has_method("_can_drop_data"):
-				if slot.get_global_rect().has_point(global_pos):
-					var data = card.get_meta("drag_data", {})
-					if slot._can_drop_data(global_pos, data):
-						slot._drop_data(global_pos, data)
-						card.visible = false
-						var assigned = _rite_popup.get_meta("assigned_cards", [])
-						assigned.append(card)
-						_rite_popup.set_meta("assigned_cards", assigned)
-						dropped_in_slot = true
-						break
+		if _rite_popup.has_method("try_drop_card"):
+			dropped_in_slot = _rite_popup.try_drop_card(card, global_pos)
 	
 	if not dropped_in_slot:
 		_reorder_card(card, global_pos)
