@@ -421,17 +421,10 @@ func _finish_settlement():
 		if _total_rewards.has("evil"): ResourceManager.modify_reputation("evil",_total_rewards.evil)
 		if _total_rewards.has("hero"): ResourceManager.modify_reputation("hero",_total_rewards.hero)
 		if _total_rewards.has("spirit"): ResourceManager.modify_reputation("spirit",_total_rewards.spirit)
-	# 应用各阶段的 roll_rewards（情报掉落）
 	_apply_roll_rewards()
-	# 收集奖励通知
 	if reward_text != "":
 		_show_reward_notification()
-	# 依次播放通知
-	_play_notifications()
-
-
-func _settle_and_free():
-	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success})
+	settlement_done.emit({"rite":rite_data,"char":char_data,"sultan_card":sultan_card_data,"success":_stage_all_success,"notifications":_notifications.duplicate()})
 	queue_free()
 
 func _apply_roll_rewards():

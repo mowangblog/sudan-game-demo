@@ -834,6 +834,8 @@ func _settle_next(index:int) -> void:
 		book_reward = "📖 获得《%s》" % pending_book.get("name", "") if not pending_book.is_empty() else ""
 	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card, book_reward)
 	screen.settlement_done.connect(func(result:Dictionary):
+		var nts: Array = result.get("notifications", [])
+		_show_toasts(nts)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
@@ -1222,6 +1224,31 @@ func _consume_gold_card(gold_data: Dictionary):
 			ResourceManager.spend_gold(gold_data.get("count", 1))
 			break
 	hand_layout.arrange()
+
+
+func _show_toasts(nts: Array):
+	if nts.is_empty(): return
+	var text = nts.pop_front()
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", C.GOLD_HI)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.modulate = Color(1, 1, 1, 0)
+	add_child(lbl)
+	lbl.reset_size()
+	await get_tree().process_frame
+	lbl.position = Vector2((size.x - lbl.size.x) / 2, -24)
+	var t = create_tween()
+	t.tween_property(lbl, "position:y", 8, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 1, 0.15)
+	t.tween_interval(1.0)
+	t.tween_property(lbl, "position:y", -24, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 0, 0.15)
+	t.tween_callback(func():
+		if is_instance_valid(lbl): lbl.queue_free()
+		_show_toasts(nts)
+	)
 
 
 func _pick_random_book() -> Dictionary:
