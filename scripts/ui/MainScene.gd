@@ -368,15 +368,22 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot_nodes.append(slot)
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
-		slot.card_consumed.connect(func(consumed: int):
-			# 减小手牌中原卡数量
+		slot.resource_trimmed.connect(func(idx, excess_data):
+			# 数量溢出 → 修改原卡数量为max，多余创建新卡退回
 			for c2 in hand_cards:
 				if not c2.visible and is_instance_valid(c2):
 					var dd = c2.get_meta("drag_data", {})
-					if dd.get("name", "") == "金币":
-						var cnt = c2.get_meta("res_count", 1)
-						_update_card_count(c2, cnt - consumed)
-						break)
+					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
+						_update_card_count(c2, slot_cfg.get("max", 1))
+						break
+			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
+			ecard.drag_ended.connect(_on_hand_card_dropped)
+			ecard.drag_started.connect(func(_c): hand_layout.arrange())
+			ecard._on_right_click = func(): _split_resource_card(ecard, excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"))
+			ecard._on_click = func(): popups.show_res_popup(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), ecard.get_meta("res_count", 1))
+			hand_container.add_child(ecard)
+			hand_cards.append(ecard)
+			hand_layout.arrange())
 		slot.card_clicked.connect(func(card_data):
 			if slot_cfg.type == "sultan_card":
 				popups.show_sultan_popup(card_data)
@@ -417,17 +424,6 @@ func _open_rite_detail(rite: Dictionary) -> void:
 			if not sn.is_optional and sn.current_card.is_empty():
 				valid = false; _log("❌ 槽位未配置")
 		if not valid: return
-		# 金币卡：消费已在拖入时完成，确认时清理残卡
-		for i in range(hand_cards.size() - 1, -1, -1):
-			var c = hand_cards[i]
-			if not c.visible and is_instance_valid(c):
-				var dd = c.get_meta("drag_data", {})
-				if dd.get("name", "") == "金币":
-					var cnt = c.get_meta("res_count", 1)
-					if cnt <= 0:
-						hand_cards.remove_at(i)
-						c.queue_free()
-					# cnt>0: 剩余金币取消时退回手牌
 		var entry = {"rite": rite, "char": char_data, "sultan_card": sultan_card_data, "gold": gold_card_data}
 		if is_edit:
 			var idx = active_rites.find(existing)
@@ -559,8 +555,20 @@ func _commit_assigned_cards(slot_nodes:Array):
 	_rite_popup.set_meta("assigned_cards", [])
 	hand_layout.arrange()
 
-# 结算后恢复手牌
+	# 结算后恢复手牌（消费的卡不退回）
 func _restore_hand_cards():
+	# 先清理被消费的金币卡
+	for ar in active_rites:
+		var gd = ar.get("gold", {})
+		if gd.is_empty(): continue
+		for i in range(hand_cards.size() - 1, -1, -1):
+			var c = hand_cards[i]
+			if not c.visible and is_instance_valid(c):
+				var dd = c.get_meta("drag_data", {})
+				if dd.get("name", "") == "金币":
+					hand_cards.remove_at(i)
+					c.queue_free()
+					break
 	for c in hand_cards:
 		if is_instance_valid(c) and not c.visible:
 			c.visible = true
@@ -841,12 +849,10 @@ func _settle_next(index:int) -> void:
 		var nts: Array = result.get("notifications", [])
 		_show_toasts(nts)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
-		# 结算获得金币 → 发卡到手上
-		var gold_gained = result.get("gold_gained", 0)
-		if gold_gained > 0:
-			_give_gold_cards(gold_gained)
 		if result.success and result.rite.get("id", -1) == 16:
 			if not pending_book.is_empty():
+				# 消耗金币
+				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
 			else:
 				_log("📖 逛了一圈，没买书。")
@@ -890,19 +896,6 @@ func _refresh() -> void:
 		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
-
-
-func _give_gold_cards(amount: int):
-	if amount <= 0: return
-	var card = card_factory.make_resource_card("金币", "💰", "GOLD", amount)
-	card.drag_ended.connect(_on_hand_card_dropped)
-	card.drag_started.connect(func(_c): hand_layout.arrange())
-	card._on_right_click = func(): _split_resource_card(card, "金币", "💰", "GOLD")
-	card._on_click = func(): popups.show_res_popup("金币", "💰", "GOLD", card.get_meta("res_count", amount))
-	hand_container.add_child(card)
-	hand_cards.append(card)
-	hand_layout.arrange()
-
 
 # 同步金币卡数量和 ResourceManager
 
@@ -1237,13 +1230,10 @@ func _consume_gold_card(gold_data: Dictionary):
 		var c = hand_cards[i]
 		if not is_instance_valid(c): continue
 		var dd = c.get_meta("drag_data", {})
-		if dd.get("name", "") == "金币" and c.visible:
-			var cnt = c.get_meta("res_count", 1)
-			if cnt > 1:
-				_update_card_count(c, cnt - 1)
-			else:
-				hand_cards.remove_at(i)
-				c.queue_free()
+		if dd.get("type","") == "resource" and dd.get("name","") == "金币":
+			hand_cards.remove_at(i)
+			c.queue_free()
+			ResourceManager.spend_gold(gold_data.get("count", 1))
 			break
 	hand_layout.arrange()
 
