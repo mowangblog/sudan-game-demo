@@ -369,12 +369,14 @@ func _open_rite_detail(rite: Dictionary) -> void:
 		slot.card_removed.connect(func(idx, card_data):
 			_return_card_to_hand(slot_type_to_str(slot_cfg.type), card_data))
 		slot.resource_trimmed.connect(func(idx, excess_data):
-			# 数量溢出 → 修改原卡数量为max，多余创建新卡退回
-			for c2 in hand_cards:
+			# 数量超出 — 删除原卡，多余数量退回手牌
+			for i in range(hand_cards.size() - 1, -1, -1):
+				var c2 = hand_cards[i]
 				if not c2.visible and is_instance_valid(c2):
 					var dd = c2.get_meta("drag_data", {})
 					if dd.get("type","") == "resource" and dd.get("name","") == excess_data.get("name",""):
-						_update_card_count(c2, slot_cfg.get("max", 1))
+						hand_cards.remove_at(i)
+						c2.queue_free()
 						break
 			var ecard = card_factory.make_resource_card(excess_data.get("name","?"), excess_data.get("icon","💰"), excess_data.get("quality","STONE"), excess_data.get("count",1))
 			ecard.drag_ended.connect(_on_hand_card_dropped)
