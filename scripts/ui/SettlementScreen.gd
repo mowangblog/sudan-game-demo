@@ -461,39 +461,26 @@ func _play_notifications():
 		_settle_and_free()
 		return
 	var text = _notifications.pop_front()
-	var pn = PanelContainer.new()
-	pn.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pn.custom_minimum_size = Vector2(300, 44)
-	pn.size = Vector2(300, 44)
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color(0, 0, 0, 0.85)
-	sb.set_corner_radius_all(22)
-	sb.border_width_bottom = 1; sb.border_width_top = 1; sb.border_width_left = 1; sb.border_width_right = 1
-	sb.border_color = GOLD_LO
-	sb.content_margin_left = 16; sb.content_margin_right = 16; sb.content_margin_top = 8; sb.content_margin_bottom = 8
-	pn.add_theme_stylebox_override("panel", sb)
-	pn.position = Vector2((size.x - 300) / 2, -60)
-	pn.modulate = Color(1, 1, 1, 0)
-	add_child(pn)
-	
 	var lbl = Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 14)
-	lbl.add_theme_color_override("font_color", GOLD)
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", GOLD_HI)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	pn.add_child(lbl)
+	lbl.modulate = Color(1, 1, 1, 0)
+	add_child(lbl)
+	# 自动宽度，居中定位
+	lbl.reset_size()
+	await get_tree().process_frame
+	lbl.position = Vector2((size.x - lbl.size.x) / 2, -24)
 	
 	var t = create_tween()
-	t.set_parallel(false)
-	t.tween_property(pn, "position:y", 20, 0.3).set_ease(Tween.EASE_OUT)
-	t.parallel().tween_property(pn, "modulate:a", 1, 0.2)
+	t.tween_property(lbl, "position:y", 8, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 1, 0.15)
 	t.tween_interval(1.0)
-	t.tween_property(pn, "position:y", -60, 0.3).set_ease(Tween.EASE_IN)
+	t.tween_property(lbl, "position:y", -24, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 0, 0.15)
 	t.tween_callback(func():
-		if is_instance_valid(pn): pn.queue_free()
+		if is_instance_valid(lbl): lbl.queue_free()
 		_play_notifications()
 	)
 
