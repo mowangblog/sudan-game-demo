@@ -897,7 +897,6 @@ func _settle_next(index:int) -> void:
 	screen.setup_and_show(ar.rite, ar.char, ar.sultan_card, "")
 	screen.settlement_done.connect(func(result:Dictionary):
 		var nts: Array = result.get("notifications", [])
-		_show_toasts(nts)
 		_log("  结算：「%s」%s" % [result.rite.get("name",""), "成功" if result.success else "失败"])
 		# 结算获得金币 → 发金币卡到手上
 		var gold_gained = result.get("gold_gained", 0)
@@ -908,7 +907,7 @@ func _settle_next(index:int) -> void:
 				# 消耗金币
 				_consume_gold_card(ar.get("gold", {}))
 				_give_random_book(pending_book)
-				_show_toasts(["📖 获得《%s》" % pending_book.get("name", "")])
+				nts.append("📖 获得《%s》" % pending_book.get("name", ""))
 			else:
 				_log("📖 逛了一圈，没买书。")
 		if result.success and result.rite.get("id", -1) == 300 and not ar.char.is_empty():
@@ -920,6 +919,7 @@ func _settle_next(index:int) -> void:
 				ar.char["attributes"][attr_key] = ar.char["attributes"].get(attr_key, 0) + gain
 				var ai = card_factory.AI if card_factory.AI.has(attr_key) else attr_key
 				_log("📖 %s 读了《%s》，%s+%d" % [ar.char.get("name","?"), book.get("name","?"), ai, gain])
+		_show_toasts(nts)
 		_settle_next(index+1)
 	)
 
