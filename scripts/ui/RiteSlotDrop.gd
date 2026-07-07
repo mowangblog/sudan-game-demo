@@ -89,6 +89,16 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		var l2 = Label.new(); l2.text=RANK_STARS.get(current_card.get("rank",""),"★")
 		l2.add_theme_font_size_override("font_size",13); l2.add_theme_color_override("font_color",C.GOLD)
 		l2.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l2)
+	elif slot_type == "gold" or slot_type == "resource":
+		var q = current_card.get("quality","STONE")
+		sb.bg_color = RANK_BG.get(q, Color("2a2018"))
+		sb.border_color = RANK_BORDER.get(q, C.GOLD_LO)
+		prev.add_theme_stylebox_override("panel", sb)
+		var l1 = Label.new(); l1.text=current_card.get("icon","💰")
+		l1.add_theme_font_size_override("font_size",32); l1.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l1)
+		var l2 = Label.new(); l2.text=current_card.get("name","?")
+		l2.add_theme_font_size_override("font_size",13); l2.add_theme_color_override("font_color",C.TEXT)
+		l2.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l2)
 	else:
 		var q = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
 		sb.bg_color = RANK_BG.get(q, Color("2a2018"))
