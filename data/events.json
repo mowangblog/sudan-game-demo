@@ -5,7 +5,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.1, "min_day": 3},
 	"text": "你曾经的朋友，如今站在了你的对立面。他或许是被收买，或许是被威胁——但这不重要了。\n\n'你不会真的下手吧？'他颤抖着问。",
 	"choices": [
-	  {"text": "动手——这是苏丹的命令", "outcome": {"consume_card": "LUST", "evil": 1}},
+	  {"text": "动手——这是摄政王的命令", "outcome": {"consume_card": "LUST", "evil": 1}},
 	  {"text": "放过他——我做不到", "outcome": {"good": 1, "relation_loss": "friend"}}
 	],
 	"priority": 3,
@@ -17,7 +17,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.15, "min_day": 1},
 	"text": "一个濒死的奴隶躺在路边。他的身体已被疾病侵蚀，眼神中只剩下乞求。\n\n'请……请结束我的痛苦。'他虚弱地说。",
 	"choices": [
-	  {"text": "让他的身体抵债——拖入俺寻思", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "让他的身体抵债——拖入灵光一现", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
 	  {"text": "给他食物和水——我们不是怪物", "outcome": {"good": 1, "gold": -1}},
 	  {"text": "无视他——这不是我的问题", "outcome": {}}
 	],
@@ -30,7 +30,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.10, "min_day": 2},
 	"text": "你的老友欠了一屁股债，逃到你这里来避风头。\n\n'帮帮我——只要几天就好！'他眼巴巴地看着你。",
 	"choices": [
-	  {"text": "找机会敲闷棍——拖入俺寻思", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "找机会敲闷棍——拖入灵光一现", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
 	  {"text": "帮他偿还债务", "outcome": {"gold": -2, "good": 1}},
 	  {"text": "赶走他——你自己惹的麻烦自己解决", "outcome": {"power": -1}}
 	],
@@ -54,7 +54,7 @@
 	"id": "event_005",
 	"name": "妻子的不满",
 	"trigger_condition": {"type": "character_idle", "character_id": "meji", "days_idle": 2},
-	"text": "梅姬站在窗前，脸色阴沉。\n\n'你已经好几天没和我说过话了。'她轻声说，声音里带着一种危险的平静。",
+	"text": "艾琳站在窗前，脸色阴沉。\n\n'你已经好几天没和我说过话了。'她轻声说，声音里带着一种危险的平静。",
 	"choices": [
 	  {"text": "陪她度过一天——仪式暂停", "outcome": {"meji_emotion": 2, "waste_day": true}},
 	  {"text": "给她买礼物——用金子消灾", "outcome": {"gold": -2, "meji_emotion": 1}},
@@ -67,11 +67,11 @@
 	"id": "event_006",
 	"name": "慷慨解囊",
 	"trigger_condition": {"type": "random", "chance": 0.08, "min_day": 5},
-	"text": "一个慈善募捐活动正在城市广场举行。捐赠一大笔钱可以——\n\n'慷慨的人会得到苏丹的青睐。'有人低声提醒你。",
+	"text": "一个慈善募捐活动正在城市广场举行。捐赠一大笔钱可以——\n\n'慷慨的人会得到摄政王的青睐。'有人低声提醒你。",
 	"choices": [
 	  {"text": "捐一大笔钱——消耗奢华卡", "outcome": {"consume_card": "LUXURY", "good": 2}, "requires_card": "LUXURY"},
 	  {"text": "象征性地捐一点", "outcome": {"gold": -1, "good": 1}},
-	  {"text": "转身离开——我还有苏丹的任务", "outcome": {}}
+	  {"text": "转身离开——我还有摄政王的任务", "outcome": {}}
 	],
 	"priority": 3,
 	"one_time": true
@@ -80,10 +80,10 @@
 	"id": "event_007",
 	"name": "诸地暴乱",
 	"trigger_condition": {"type": "random", "chance": 0.12, "min_day": 4},
-	"text": "叛乱在诸地同时爆发。苏丹需要有人去镇压——这是你展示军事力量的机会。\n\n'去，让他们知道谁才是这片土地的主人。'",
+	"text": "叛乱在诸地同时爆发。摄政王需要有人去镇压——这是你展示军事力量的机会。\n\n'去，让他们知道谁才是这片土地的主人。'",
 	"choices": [
 	  {"text": "亲自率军镇压", "outcome": {"consume_card": "CONQUEST", "power": 2, "evil": 1}, "requires_card": "CONQUEST"},
-	  {"text": "派遣铁头去指挥", "outcome": {"power": 1}, "requires_character": "tietou"},
+	  {"text": "派遣雷蒙德爵士去指挥", "outcome": {"power": 1}, "requires_character": "tietou"},
 	  {"text": "这不是我的战争", "outcome": {"power": -1}}
 	],
 	"priority": 2,
@@ -95,7 +95,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.10, "min_day": 3},
 	"text": "一个异教徒在集市上被卫兵拖了出来。他嘴里大喊着他的神的名字。\n\n'你竟敢敬拜异神！'队长怒吼道。",
 	"choices": [
-	  {"text": "你竟敢敬拜异神！——丢入俺寻思", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "你竟敢敬拜异神！——丢入灵光一现", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
 	  {"text": "放了他——信仰不是罪", "outcome": {"good": 1, "spirit": 1}},
 	  {"text": "让他受审——按法律来", "outcome": {"power": 1}}
 	],
@@ -106,7 +106,7 @@
 	"id": "event_009",
 	"name": "登山事件",
 	"trigger_condition": {"type": "insight", "card_type": "CONQUEST"},
-	"text": "将征服卡拖入俺寻思——你感觉到大山的召唤。据说山顶有一种稀有的白犀牛……\n\n但爬上去需要相当的生存能力。",
+	"text": "将征伐卡拖入灵光一现——你感觉到大山的召唤。据说山顶有一种稀有的白犀牛……\n\n但爬上去需要相当的生存能力。",
 	"choices": [
 	  {"text": "开始攀登", "outcome": {"consume_card": "CONQUEST"}, "check": {"sur": {"required_successes": 3}}},
 	  {"text": "还是算了——太危险", "outcome": {}}
@@ -120,7 +120,7 @@
 	"trigger_condition": {"type": "character_available", "character_id": "shamar_ref"},
 	"text": "夏玛邀请你参加一场极其私密的天体派对。所有参与者都将摘下面具——和衣服。\n\n气氛既紧张又诱惑。",
 	"choices": [
-	  {"text": "欣然参加——消耗金纵欲卡", "outcome": {"consume_card": "LUST"}, "requires_card": "LUST", "requires_rank": "GOLD"},
+	  {"text": "欣然参加——消耗金欢愉卡", "outcome": {"consume_card": "LUST"}, "requires_card": "LUST", "requires_rank": "GOLD"},
 	  {"text": "婉拒——这不是我的风格", "outcome": {"good": 1}}
 	],
 	"priority": 1,
@@ -130,9 +130,9 @@
 	"id": "event_011",
 	"name": "将军助我",
 	"trigger_condition": {"type": "hold_card", "card_type": "CONQUEST", "turns_held": 5},
-	"text": "你手中的征服卡已经握了很多天。一位将军注意到了你的困境。\n\n'大人，如果您需要帮助……我很乐意效劳。'",
+	"text": "你手中的征伐卡已经握了很多天。一位将军注意到了你的困境。\n\n'大人，如果您需要帮助……我很乐意效劳。'",
 	"choices": [
-	  {"text": "接受帮助——将军助我征服", "outcome": {"consume_card": "CONQUEST", "power": 1}, "check": {"com": {"required_successes": 3}}},
+	  {"text": "接受帮助——将军助我征伐", "outcome": {"consume_card": "CONQUEST", "power": 1}, "check": {"com": {"required_successes": 3}}},
 	  {"text": "我自己可以——委婉拒绝", "outcome": {}}
 	],
 	"priority": 2,
@@ -144,8 +144,8 @@
 	"trigger_condition": {"type": "random", "chance": 0.12, "min_day": 2},
 	"text": "宿舍里闹了鼠患。厨师的粮食被啃了个精光。\n\n'这些该死的老鼠！'厨师挥舞着菜刀，眼睛发红。",
 	"choices": [
-	  {"text": "把铜以下征服卡拖入——剿灭鼠患", "outcome": {"consume_card": "CONQUEST", "food": 1}},
-	  {"text": "把铜以下杀戮卡拖入——屠鼠", "outcome": {"consume_card": "MURDER"}},
+	  {"text": "把铜以下征伐卡拖入——剿灭鼠患", "outcome": {"consume_card": "CONQUEST", "food": 1}},
+	  {"text": "把铜以下清除卡拖入——屠鼠", "outcome": {"consume_card": "MURDER"}},
 	  {"text": "让厨师自己想办法", "outcome": {}}
 	],
 	"priority": 4,
@@ -157,8 +157,8 @@
 	"trigger_condition": {"type": "rite", "rite_id": 4, "chance": 0.3},
 	"text": "浴场里传来的消息——野外有一个狼穴，里面的狼群已经袭击了数个村庄。\n\n'谁敢去就是英雄。'有人咕哝道。",
 	"choices": [
-	  {"text": "率队讨伐——消耗铜征服卡", "outcome": {"consume_card": "CONQUEST", "hero": 2}, "check": {"com": {"required_successes": 3}}},
-	  {"text": "派铁头去——让他单独处理", "outcome": {"hero": 1}, "requires_character": "tietou"},
+	  {"text": "率队讨伐——消耗铜征伐卡", "outcome": {"consume_card": "CONQUEST", "hero": 2}, "check": {"com": {"required_successes": 3}}},
+	  {"text": "派雷蒙德爵士去——让他单独处理", "outcome": {"hero": 1}, "requires_character": "tietou"},
 	  {"text": "这太危险了——放弃", "outcome": {}}
 	],
 	"priority": 2,
@@ -170,7 +170,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.08, "min_day": 7},
 	"text": "有人在野外目击了一头白犀牛。传说击杀它能获得无尽的荣耀——和财富。\n\n'那是只有真正勇士才能战胜的野兽。'",
 	"choices": [
-	  {"text": "前去狩猎——消耗银征服卡", "outcome": {"consume_card": "CONQUEST", "hero": 3, "gold": 5}, "check": {"com": {"required_successes": 4}}, "requires_rank": "SILVER"},
+	  {"text": "前去狩猎——消耗银征伐卡", "outcome": {"consume_card": "CONQUEST", "hero": 3, "gold": 5}, "check": {"com": {"required_successes": 4}}, "requires_rank": "SILVER"},
 	  {"text": "记录下来——卖情报", "outcome": {"gold": 2}},
 	  {"text": "不相信——白犀牛早就绝种了", "outcome": {}}
 	],
@@ -207,9 +207,9 @@
 	"id": "event_017",
 	"name": "奸佞裁决",
 	"trigger_condition": {"type": "reputation", "reputation": "evil", "threshold": 5},
-	"text": "你在苏丹面前告发了一个同僚的罪行。苏丹很满意你的'忠诚'。\n\n'很好。但我希望你记住——如果你哪天也犯了事……'苏丹的笑容意味深长。",
+	"text": "你在摄政王面前告发了一个同僚的罪行。摄政王很满意你的'忠诚'。\n\n'很好。但我希望你记住——如果你哪天也犯了事……'摄政王的笑容意味深长。",
 	"choices": [
-	  {"text": "销卡——趁机消耗任意苏丹卡", "outcome": {"evil": 1, "consume_card": "ANY_SINGLE"}},
+	  {"text": "销卡——趁机消耗任意摄政王令", "outcome": {"evil": 1, "consume_card": "ANY_SINGLE"}},
 	  {"text": "拒绝——我不要这种权力", "outcome": {"good": 1, "power": -1}}
 	],
 	"priority": 1,
@@ -232,7 +232,7 @@
 	"id": "event_019",
 	"name": "心灵之战",
 	"trigger_condition": {"type": "reputation", "reputation": "spirit", "threshold": 2},
-	"text": "灵视开启了。你的意识被拉入了一个黑暗的维度——一个古老的存在在低语。\n\n'你的灵魂……我正在注视着你。'",
+	"text": "灵知开启了。你的意识被拉入了一个黑暗的维度——一个古老的存在在低语。\n\n'你的灵魂……我正在注视着你。'",
 	"choices": [
 	  {"text": "挑战心灵之战", "outcome": {"spirit": 2}, "check": {"mag": {"required_successes": 4}}},
 	  {"text": "退缩——这超出我的理解", "outcome": {"spirit": -1}},
@@ -245,7 +245,7 @@
 	"id": "event_020",
 	"name": "妻子的惊喜",
 	"trigger_condition": {"type": "character_idle", "character_id": "meji", "emotion_min": 8},
-	"text": "梅姬今天看起来格外明媚。她为你准备了一份惊喜——\n\n'我知道你这几天很辛苦。所以……'她把一个精致的小盒子放在你手中。",
+	"text": "艾琳今天看起来格外明媚。她为你准备了一份惊喜——\n\n'我知道你这几天很辛苦。所以……'她把一个精致的小盒子放在你手中。",
 	"choices": [
 	  {"text": "打开盒子——接受她的心意", "outcome": {"gold": 3, "meji_emotion": 1, "special_item": "wife_gift"}},
 	  {"text": "感动地拥抱她——这比什么礼物都好", "outcome": {"meji_emotion": 2}}
