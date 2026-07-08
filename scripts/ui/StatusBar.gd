@@ -1,5 +1,5 @@
 # StatusBar.gd
-# Top bar with day, countdown gauge, gold dice, and reputation counters.
+# Top bar with reputation(left), day+countdown gauge+gold dice(right).
 
 class_name StatusBar
 extends RefCounted
@@ -12,6 +12,7 @@ var C: Dictionary = {}
 var _bar: PanelContainer
 var day_lbl: Label
 var gold_dice_lbl: Label
+var gauge_lbl: Label
 var gauge_blocks: Array[ColorRect] = []
 var good_lbl: PanelContainer
 var evil_lbl: PanelContainer
@@ -42,42 +43,43 @@ func build() -> PanelContainer:
 	outer.add_theme_constant_override("separation", 0)
 	_bar.add_child(outer)
 
-	# 左侧：日期 + 倒计时刻度槽 + 金骰
-	var left = HBoxContainer.new(); left.add_theme_constant_override("separation", 8)
+	# 左侧：声望方块
+	var left = HBoxContainer.new(); left.add_theme_constant_override("separation", 4)
 	outer.add_child(left)
-	day_lbl = _l("第1天", 13, C.get("TEXT", Color("f0e6c8")))
-	left.add_child(day_lbl)
-	left.add_child(_sep())
-
-	# 倒计时刻度槽
-	var gauge = HBoxContainer.new(); gauge.add_theme_constant_override("separation", 2)
-	gauge.name = "CountdownGauge"
-	left.add_child(gauge)
-	for i in range(GAUGE_TOTAL):
-		var block = ColorRect.new(); block.name = "Block%d" % i
-		block.custom_minimum_size = Vector2(8, 16)
-		block.color = Color("333333")
-		gauge_blocks.append(block)
-		gauge.add_child(block)
-	left.add_child(_sep())
-
-	gold_dice_lbl = _l("🎲金骰:3", 13, C.get("GOLD_HI", Color("e8d48b")))
-	left.add_child(gold_dice_lbl)
+	good_lbl = _rep_chip("名望", Color("5a9a5a"), 0); left.add_child(good_lbl)
+	evil_lbl = _rep_chip("恶名", C.get("FAIL", Color("aa3030")), 0); left.add_child(evil_lbl)
+	power_lbl = _rep_chip("权势", Color("9a6aba"), 0); left.add_child(power_lbl)
+	hero_lbl = _rep_chip("义名", Color("5a8aba"), 0); left.add_child(hero_lbl)
+	spirit_lbl = _rep_chip("灵知", Color("6a8a5a"), 0); left.add_child(spirit_lbl)
 
 	# 弹性间隔
 	var spacer = Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer.add_child(spacer)
 
-	# 右侧：声望方块
-	var right = HBoxContainer.new(); right.add_theme_constant_override("separation", 4)
+	# 右侧：日期 + 倒计时刻度槽 + 天数 + 金骰
+	var right = HBoxContainer.new(); right.add_theme_constant_override("separation", 8)
 	right.alignment = BoxContainer.ALIGNMENT_END
 	outer.add_child(right)
 
-	good_lbl = _rep_chip("名望", Color("5a9a5a"), 0); right.add_child(good_lbl)
-	evil_lbl = _rep_chip("恶名", C.get("FAIL", Color("aa3030")), 0); right.add_child(evil_lbl)
-	power_lbl = _rep_chip("权势", Color("9a6aba"), 0); right.add_child(power_lbl)
-	hero_lbl = _rep_chip("义名", Color("5a8aba"), 0); right.add_child(hero_lbl)
-	spirit_lbl = _rep_chip("灵知", Color("6a8a5a"), 0); right.add_child(spirit_lbl)
+	day_lbl = _l("第1天", 13, C.get("TEXT", Color("f0e6c8")))
+	right.add_child(day_lbl)
+	right.add_child(_sep())
+
+	var gauge = HBoxContainer.new(); gauge.add_theme_constant_override("separation", 2)
+	for i in range(GAUGE_TOTAL):
+		var block = ColorRect.new()
+		block.custom_minimum_size = Vector2(8, 16)
+		block.color = Color("333333")
+		gauge_blocks.append(block)
+		gauge.add_child(block)
+	right.add_child(gauge)
+
+	gauge_lbl = _l("7 天", 13, C.get("GOLD_HI", Color("e8d48b")))
+	right.add_child(gauge_lbl)
+	right.add_child(_sep())
+
+	gold_dice_lbl = _l("🎲金骰:3", 13, C.get("GOLD_HI", Color("e8d48b")))
+	right.add_child(gold_dice_lbl)
 
 	return _bar
 
@@ -103,13 +105,14 @@ func _refresh_gauge() -> void:
 		var block := gauge_blocks[i]
 		if i < days_left:
 			if days_left >= 5:
-				block.color = Color("4a9a3a")       # 绿色 从容
+				block.color = Color("4a9a3a")
 			elif days_left >= 3:
-				block.color = Color("c8a84e")       # 金色 紧张
+				block.color = Color("c8a84e")
 			else:
-				block.color = Color("cc3333")       # 红色 危急
+				block.color = Color("cc3333")
 		else:
-			block.color = Color("333333")           # 暗灰 已消耗
+			block.color = Color("333333")
+	gauge_lbl.text = "%d 天" % days_left
 
 
 func _good(chip: PanelContainer, val: int) -> void:
