@@ -157,13 +157,9 @@ func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
 	var popup = PanelContainer.new()
 	popup.name = "EventPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var vs = _root.get_viewport().size
-	var pw = min(vs.x - 80, 600); var ph = min(vs.y - 80, 480)
+	var pw = min(vs.x - 80, 600); var ph = min(vs.y - 240, 480)
 	popup.custom_minimum_size = Vector2(pw, 0)
-	var el = (vs.y - ph) / 2
-	var hb_top = vs.y - 220  # 手牌区顶部（卡牌区约200px + 边距20）
-	if el + ph > hb_top:
-		el = max(40, hb_top - ph)
-	popup.position = Vector2((vs.x - pw) / 2, el)
+	popup.position = Vector2((vs.x - pw) / 2, 40)
 	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
 	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
 	ps.border_color = _C.get("GOLD", Color("c8a84e")); ps.shadow_size = 16; ps.shadow_color = Color("000000cc")
