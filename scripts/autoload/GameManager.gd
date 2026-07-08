@@ -16,6 +16,7 @@ var sultan_card_days_left: int = 0       # 摄政王令剩余天数
 var is_game_over: bool = false
 var ending_type: String = ""
 var renovation_done: bool = false  # 装修完成标记(仅一次)
+var _just_drawn: bool = false     # 新卡跳过当天day_ended减1
 
 
 func _ready() -> void:
@@ -45,7 +46,8 @@ func _draw_sultan_card() -> void:
 		return
 
 	active_sultan_card = card
-	sultan_card_days_left = 8
+	sultan_card_days_left = 7
+	_just_drawn = true
 	state = GameState.DAY_ACTIVE
 
 	EventBus.sultan_card_drawn.emit(card)
@@ -68,6 +70,9 @@ func _on_day_started(day: int) -> void:
 ## === 每日结束 ===
 func _on_day_ended(day: int) -> void:
 	if state == GameState.GAME_OVER:
+		return
+	if _just_drawn:
+		_just_drawn = false
 		return
 	sultan_card_days_left -= 1
 	if not active_sultan_card.is_empty():
