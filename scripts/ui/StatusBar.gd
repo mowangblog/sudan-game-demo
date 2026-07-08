@@ -7,6 +7,7 @@ extends RefCounted
 var root: Control
 var C: Dictionary = {}
 
+var _bar: PanelContainer
 var day_lbl: Label
 var week_lbl: Label
 var gold_dice_lbl: Label
@@ -21,28 +22,51 @@ func setup(p_root: Control, constants: Dictionary) -> void:
 	C = constants.get("C", {})
 
 
-func build() -> HBoxContainer:
-	var bar = HBoxContainer.new()
-	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	bar.offset_bottom = 38
-	bar.add_theme_constant_override("separation", 8)
-	root.add_child(bar)
+func build() -> PanelContainer:
+	_bar = PanelContainer.new()
+	_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_bar.offset_bottom = 38
+	var ps = StyleBoxFlat.new()
+	ps.bg_color = Color("1a0f0a").darkened(0.15)
+	ps.border_width_bottom = 2
+	ps.border_color = C.get("GOLD_LO", Color("8a6820"))
+	ps.content_margin_left = 12; ps.content_margin_right = 12
+	ps.content_margin_top = 4; ps.content_margin_bottom = 4
+	_bar.add_theme_stylebox_override("panel", ps)
+	root.add_child(_bar)
 
-	day_lbl = _make_label("第1天")
-	week_lbl = _make_label("第1周")
-	gold_dice_lbl = _make_label("🎲金骰:3", C.get("GOLD", Color("c8a84e")))
-	good_lbl = _make_label("善0", Color("5a9a5a"))
-	evil_lbl = _make_label("恶0", C.get("FAIL", Color("aa3030")))
-	power_lbl = _make_label("权0", Color("9a6aba"))
-	hero_lbl = _make_label("侠0", Color("5a8aba"))
-	spirit_lbl = _make_label("灵0", Color("6a8a5a"))
+	var outer = HBoxContainer.new()
+	outer.add_theme_constant_override("separation", 0)
+	_bar.add_child(outer)
 
-	for node in [
-		day_lbl, _separator(), week_lbl, _separator(),
-		gold_dice_lbl, _separator(), good_lbl, evil_lbl, power_lbl, hero_lbl, spirit_lbl
-	]:
-		bar.add_child(node)
-	return bar
+	# 左侧：日期 + 金骰
+	var left = HBoxContainer.new(); left.add_theme_constant_override("separation", 8)
+	outer.add_child(left)
+	day_lbl = _l("第1天", 13, C.get("TEXT", Color("f0e6c8")))
+	left.add_child(day_lbl)
+	left.add_child(_sep())
+	week_lbl = _l("第1周", 13, C.get("DIM", Color("a09070")))
+	left.add_child(week_lbl)
+	left.add_child(_sep())
+	gold_dice_lbl = _l("🎲金骰:3", 13, C.get("GOLD_HI", Color("e8d48b")))
+	left.add_child(gold_dice_lbl)
+
+	# 弹性间隔
+	var spacer = Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.add_child(spacer)
+
+	# 右侧：声望方块
+	var right = HBoxContainer.new(); right.add_theme_constant_override("separation", 4)
+	right.alignment = BoxContainer.ALIGNMENT_END
+	outer.add_child(right)
+
+	good_lbl = _rep_chip("名望", Color("5a9a5a"), 0); right.add_child(good_lbl)
+	evil_lbl = _rep_chip("恶名", C.get("FAIL", Color("aa3030")), 0); right.add_child(evil_lbl)
+	power_lbl = _rep_chip("权势", Color("9a6aba"), 0); right.add_child(power_lbl)
+	hero_lbl = _rep_chip("义名", Color("5a8aba"), 0); right.add_child(hero_lbl)
+	spirit_lbl = _rep_chip("灵知", Color("6a8a5a"), 0); right.add_child(spirit_lbl)
+
+	return _bar
 
 
 func refresh() -> void:
@@ -51,21 +75,39 @@ func refresh() -> void:
 	day_lbl.text = "第%d天" % TurnManager.current_day
 	week_lbl.text = "第%d周" % TurnManager.current_week
 	gold_dice_lbl.text = "🎲金骰:%d" % ResourceManager.gold_dice
-	good_lbl.text = "善%d" % ResourceManager.reputations.good
-	evil_lbl.text = "恶%d" % ResourceManager.reputations.evil
-	power_lbl.text = "权%d" % ResourceManager.reputations.power
-	hero_lbl.text = "侠%d" % ResourceManager.reputations.hero
-	spirit_lbl.text = "灵%d" % ResourceManager.reputations.spirit
+	_good(good_lbl, ResourceManager.reputations.good)
+	_good(evil_lbl, ResourceManager.reputations.evil)
+	_good(power_lbl, ResourceManager.reputations.power)
+	_good(hero_lbl, ResourceManager.reputations.hero)
+	_good(spirit_lbl, ResourceManager.reputations.spirit)
 
 
-func _separator() -> Label:
-	return _make_label("│", C.get("GOLD_LO", Color("8a6820")))
+func _good(lbl: Label, val: int) -> void:
+	var parts = lbl.text.split(" ")
+	if parts.size() >= 2:
+		lbl.text = "%s %d" % [parts[0], val]
 
 
-func _make_label(text: String, color: Color = Color.WHITE) -> Label:
-	var label = Label.new()
-	label.text = text
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", 13)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return label
+func _rep_chip(name: String, color: Color, val: int) -> PanelContainer:
+	var chip = PanelContainer.new()
+	var cps = StyleBoxFlat.new()
+	cps.bg_color = color * Color(1, 1, 1, 0.15)
+	cps.set_corner_radius_all(4)
+	cps.content_margin_left = 6; cps.content_margin_right = 6
+	cps.content_margin_top = 2; cps.content_margin_bottom = 2
+	chip.add_theme_stylebox_override("panel", cps)
+	var lbl = _l("%s %d" % [name, val], 12, color)
+	chip.add_child(lbl)
+	return chip
+
+
+func _sep() -> Label:
+	return _l("│", 13, C.get("GOLD_LO", Color("8a6820")))
+
+
+func _l(text: String, size: int, color: Color) -> Label:
+	var l = Label.new(); l.text = text
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return l
