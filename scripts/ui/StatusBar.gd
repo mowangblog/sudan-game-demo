@@ -1,10 +1,8 @@
 # StatusBar.gd
-# Top bar with reputation(left), day+countdown gauge+gold dice(right).
+# Top bar with reputation(left), day+countdown+gold dice(right).
 
 class_name StatusBar
 extends RefCounted
-
-const GAUGE_TOTAL := 7
 
 var root: Control
 var C: Dictionary = {}
@@ -12,8 +10,7 @@ var C: Dictionary = {}
 var _bar: PanelContainer
 var day_lbl: Label
 var gold_dice_lbl: Label
-var gauge_lbl: Label
-var gauge_blocks: Array[ColorRect] = []
+var countdown_lbl: Label
 var good_lbl: PanelContainer
 var evil_lbl: PanelContainer
 var power_lbl: PanelContainer
@@ -56,7 +53,7 @@ func build() -> PanelContainer:
 	var spacer = Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer.add_child(spacer)
 
-	# 右侧：日期 + 倒计时刻度槽 + 天数 + 金骰
+	# 右侧：日期 + 倒计时 + 金骰
 	var right = HBoxContainer.new(); right.add_theme_constant_override("separation", 8)
 	right.alignment = BoxContainer.ALIGNMENT_END
 	outer.add_child(right)
@@ -65,18 +62,9 @@ func build() -> PanelContainer:
 	right.add_child(day_lbl)
 	right.add_child(_sep())
 
-	var gauge = HBoxContainer.new(); gauge.add_theme_constant_override("separation", 2)
-	for i in range(GAUGE_TOTAL):
-		var block = ColorRect.new()
-		block.custom_minimum_size = Vector2(8, 16)
-		block.color = Color("333333")
-		gauge_blocks.append(block)
-		gauge.add_child(block)
-	right.add_child(gauge)
-
-	gauge_lbl = _l("7 天", 13, C.get("GOLD_HI", Color("e8d48b")))
-	right.add_child(gauge_lbl)
-	right.add_child(_sep())
+	countdown_lbl = _l("7", 22, Color("cc3333"))
+	countdown_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	right.add_child(countdown_lbl)
 
 	gold_dice_lbl = _l("🎲金骰:3", 13, C.get("GOLD_HI", Color("e8d48b")))
 	right.add_child(gold_dice_lbl)
@@ -89,7 +77,7 @@ func refresh() -> void:
 		return
 	day_lbl.text = "第%d天" % TurnManager.current_day
 	gold_dice_lbl.text = "🎲金骰:%d" % ResourceManager.gold_dice
-	_refresh_gauge()
+	_refresh_countdown()
 	_good(good_lbl, ResourceManager.reputations.good)
 	_good(evil_lbl, ResourceManager.reputations.evil)
 	_good(power_lbl, ResourceManager.reputations.power)
@@ -97,22 +85,23 @@ func refresh() -> void:
 	_good(spirit_lbl, ResourceManager.reputations.spirit)
 
 
-func _refresh_gauge() -> void:
-	if gauge_blocks.is_empty():
+func _refresh_countdown() -> void:
+	if not is_instance_valid(countdown_lbl):
 		return
-	var days_left := GameManager.sultan_card_days_left
-	for i in range(GAUGE_TOTAL):
-		var block := gauge_blocks[i]
-		if i < days_left:
-			if days_left >= 5:
-				block.color = Color("4a9a3a")
-			elif days_left >= 3:
-				block.color = Color("c8a84e")
-			else:
-				block.color = Color("cc3333")
-		else:
-			block.color = Color("333333")
-	gauge_lbl.text = "%d 天" % days_left
+	var d := GameManager.sultan_card_days_left
+	countdown_lbl.text = str(d)
+	if d <= 0:
+		countdown_lbl.add_theme_font_size_override("font_size", 14)
+		countdown_lbl.add_theme_color_override("font_color", Color("883333"))
+	elif d <= 1:
+		countdown_lbl.add_theme_font_size_override("font_size", 24)
+		countdown_lbl.add_theme_color_override("font_color", Color("ff2020"))
+	elif d <= 3:
+		countdown_lbl.add_theme_font_size_override("font_size", 22)
+		countdown_lbl.add_theme_color_override("font_color", Color("ee4040"))
+	else:
+		countdown_lbl.add_theme_font_size_override("font_size", 20)
+		countdown_lbl.add_theme_color_override("font_color", Color("cc5555"))
 
 
 func _good(chip: PanelContainer, val: int) -> void:
