@@ -105,17 +105,10 @@ func do_insight_with_card(card: PanelContainer) -> void:
 	await _do_think_animation()
 
 	var consumed := false
-	if picked.get("insight_trigger", {}).get("consume", false):
-		if card_type == "sultan_card":
-			GameManager.consume_sultan_card(0)
-			card.queue_free()
-			hand_cards.erase(card)
-			consumed = true
-
+	# 灵光一现不消耗摄政王令，总是归还手牌
 	_add_insight_rite_to_map(picked, drag_data, consumed, kill_rank)
-	if not consumed:
-		card.visible = true
-		hand_layout.arrange()
+	card.visible = true
+	hand_layout.arrange()
 
 
 func _book_attr_name(attr: String) -> String:
