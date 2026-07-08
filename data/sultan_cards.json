@@ -172,7 +172,7 @@
   },
   {
 	"id": "murder_stone",
-	"name": "石清除",
+	"name": "石杀戮",
 	"type": "MURDER",
 	"rank": "STONE",
 	"rank_order": 1,
@@ -186,7 +186,7 @@
   },
   {
 	"id": "murder_bronze",
-	"name": "铜清除",
+	"name": "铜杀戮",
 	"type": "MURDER",
 	"rank": "BRONZE",
 	"rank_order": 2,
@@ -201,7 +201,7 @@
   },
   {
 	"id": "murder_silver",
-	"name": "银清除",
+	"name": "银杀戮",
 	"type": "MURDER",
 	"rank": "SILVER",
 	"rank_order": 3,
@@ -214,7 +214,7 @@
   },
   {
 	"id": "murder_gold",
-	"name": "金清除",
+	"name": "金杀戮",
 	"type": "MURDER",
 	"rank": "GOLD",
 	"rank_order": 4,

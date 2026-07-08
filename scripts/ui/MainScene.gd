@@ -12,7 +12,7 @@ const C = {
 	LUST=Color("8b3a5c"),LUXURY=Color("3a5c8b"),CONQUEST=Color("3a5b3a"),MURDER=Color("6b2a2a"),
 }
 const TC = {"LUST":C.LUST,"LUXURY":C.LUXURY,"CONQUEST":C.CONQUEST,"MURDER":C.MURDER}
-const TN = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"清除"}
+const TN = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"杀戮"}
 const RG = {"STONE":"★","BRONZE":"★★","SILVER":"★★★","GOLD":"★★★★"}
 const AN = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}
 const AI = {"phy":"💪","com":"⚔","sur":"🏕","soc":"💬","cha":"💋","ste":"🕶","wis":"📚","mag":"🔮"}
@@ -66,7 +66,7 @@ var _all_rites: Array = []
 
 # 常驻仪式 id 列表
 const PERMANENT_RITE_IDS = [1, 2, 3, 4, 15]  # 本回合已寻思：角色用id，其他用类型
-var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉清除
+var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉杀戮
 var current_rite_detail: Dictionary = {}
 
 func _ready() -> void:
