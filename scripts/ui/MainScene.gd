@@ -140,14 +140,13 @@ func _map() -> void:
 	_map_area = map_rite_panel.build()
 	call_deferred("_place_permanent_rites")
 
-# ---- 令匣图标入口（右上角固定，随时回女术士页） ----
+# ---- 令匣图标入口（左上角固定，随时回女术士页换令/抽令/进度） ----
 func _build_sorceress_icon() -> void:
 	var sorceress_btn = Button.new()
 	sorceress_btn.name = "SorceressBtn"
 	sorceress_btn.text = "📜 令匣"
 	sorceress_btn.add_theme_font_size_override("font_size", 14)
 	sorceress_btn.add_theme_color_override("font_color", C.GOLD)
-	sorceress_btn.custom_minimum_size = Vector2(90, 36)
 	# 深底金边样式
 	var sb = StyleBoxFlat.new()
 	sb.bg_color = Color("1a1208")
@@ -167,9 +166,14 @@ func _build_sorceress_icon() -> void:
 	hsb.content_margin_left = 8; hsb.content_margin_right = 8
 	hsb.content_margin_top = 4; hsb.content_margin_bottom = 4
 	sorceress_btn.add_theme_stylebox_override("hover", hsb)
-	sorceress_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	sorceress_btn.offset_top = 36
-	sorceress_btn.offset_right = -16
+	# 明确 anchor 布局（全 0）+ offset 定位，避免 PRESET_TOP_RIGHT 导致尺寸塌缩不可见
+	sorceress_btn.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	sorceress_btn.offset_left = 12
+	sorceress_btn.offset_top = 44        # 状态栏下方，避免被全宽顶栏遮挡
+	sorceress_btn.offset_right = 12 + 90  # 宽 90
+	sorceress_btn.offset_bottom = 44 + 34 # 高 34
+	sorceress_btn.z_index = 50            # 高于状态栏与地图层，确保可点
+	sorceress_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	sorceress_btn.pressed.connect(_on_sorceress_icon_pressed)
 	add_child(sorceress_btn)
 
