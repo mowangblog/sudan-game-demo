@@ -54,6 +54,14 @@ func draw_sultan_card() -> Dictionary:
 	return card.duplicate()
 
 
+func return_sultan_card(card_id: String) -> void:
+	# 换令：把令放回令池
+	for card in sultan_cards:
+		if card.id == card_id:
+			_card_pool.append(card.duplicate())
+			return
+
+
 ## === 数据查询 ===
 func get_character_by_id(char_id: String) -> Dictionary:
 	for c in characters:

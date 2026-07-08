@@ -42,6 +42,7 @@ var rite_settlement_controller = RiteSettlementControllerScript.new()
 var insight_controller = InsightControllerScript.new()
 var event_checker = EventCheckerScript.new()
 var _pending_event_check: bool = false
+var _sorceress_scene: SorceressScene = null  # 女术士页面
 
 # ============ UI 节点 ============
 var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
@@ -82,6 +83,12 @@ func _ready() -> void:
 		if _map_area:
 			_place_rite_btn(rite, _map_area, map_rite_panel.get_existing_positions())
 	)
+	EventBus.sultan_card_needs_draw.connect(_on_sultan_card_needs_draw)
+	# 创建女术士页面（初始隐藏）
+	_sorceress_scene = SorceressScene.new()
+	_sorceress_scene.name = "SorceressScene"
+	_sorceress_scene.visible = false
+	add_child(_sorceress_scene)
 	GameManager.start_game()
 	_refresh()
 
@@ -117,6 +124,7 @@ func _build() -> void:
 	_bg()
 	_status()
 	_map()
+	_build_sorceress_icon()  # 地图边缘放女术士图标入口
 	_bottom()
 
 func _bg() -> void:
@@ -131,6 +139,39 @@ func _map() -> void:
 	map_rite_panel.setup(self, {"C": C}, func(rite): _open_rite_detail(rite))
 	_map_area = map_rite_panel.build()
 	call_deferred("_place_permanent_rites")
+
+# ---- 女术士图标入口（地图右上角固定位置） ----
+func _build_sorceress_icon() -> void:
+	var sorceress_btn = Button.new()
+	sorceress_btn.name = "SorceressBtn"
+	sorceress_btn.text = "🔮 女术士"
+	sorceress_btn.add_theme_font_size_override("font_size", 14)
+	sorceress_btn.add_theme_color_override("font_color", C.GOLD)
+	sorceress_btn.custom_minimum_size = Vector2(100, 36)
+	# 深底金边样式
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color("1a0a12")
+	sb.set_corner_radius_all(8)
+	sb.border_width_bottom = 2; sb.border_width_top = 2
+	sb.border_width_left = 2; sb.border_width_right = 2
+	sb.border_color = C.LUST
+	sb.content_margin_left = 8; sb.content_margin_right = 8
+	sb.content_margin_top = 4; sb.content_margin_bottom = 4
+	sorceress_btn.add_theme_stylebox_override("normal", sb)
+	var hsb = StyleBoxFlat.new()
+	hsb.bg_color = Color("2a1218")
+	hsb.set_corner_radius_all(8)
+	hsb.border_width_bottom = 2; hsb.border_width_top = 2
+	hsb.border_width_left = 2; hsb.border_width_right = 2
+	hsb.border_color = Color("e8a0c0")
+	hsb.content_margin_left = 8; hsb.content_margin_right = 8
+	hsb.content_margin_top = 4; hsb.content_margin_bottom = 4
+	sorceress_btn.add_theme_stylebox_override("hover", hsb)
+	sorceress_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	sorceress_btn.offset_top = 40
+	sorceress_btn.offset_right = -16
+	sorceress_btn.pressed.connect(_on_sorceress_icon_pressed)
+	add_child(sorceress_btn)
 
 
 func _place_permanent_rites():
@@ -577,6 +618,42 @@ func _next_press() -> void:
 	insight_controller.call("check_pending_honor_kill")
 	_pending_event_check = true
 	rite_settlement_controller.call("start")
+
+# ---- 女术士页面：抽令信号处理 ----
+func _on_sultan_card_needs_draw(is_first: bool) -> void:
+	if not is_instance_valid(_sorceress_scene):
+		return
+	var card_data: Dictionary = {}
+	_sorceress_scene.open_for_draw(card_data, is_first, func():
+		_refresh()
+	)
+
+# ---- 主动点击女术士图标 ----
+func _on_sorceress_icon_pressed() -> void:
+	if not is_instance_valid(_sorceress_scene):
+		return
+	# 如果手上无令，可以主动进入抽令流程
+	if GameManager.active_sultan_card.is_empty():
+		_sorceress_scene.open_for_draw({}, GameManager.has_drawn_first_card, func():
+			_refresh()
+		)
+	else:
+		# 手上有令，进入女术士闲聊/换令/查看进度
+		_sorceress_scene.open_for_greeting(
+			func():  # 抽令
+				_sorceress_scene.open_for_draw({}, false, func():
+					_refresh()
+				),
+			func():  # 换令
+				_sorceress_scene.open_for_swap(GameManager.swap_tokens, func():
+					# 换令确认后触发抽新令
+					GameManager.swap_sultan_card()
+				),
+			func():  # 进度（暂显示简单toast）
+				_log("存活 %d 天 | 折令进度 0/28 | 换令余 %d 次" % [TurnManager.current_day, GameManager.swap_tokens]),
+			func():  # 闲聊
+				pass  # 闲聊已在女术士页面内置
+		)
 
 func _refresh() -> void:
 	status_bar.refresh()
