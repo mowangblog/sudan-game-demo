@@ -317,6 +317,10 @@ func _restore_hand_cards():
 		for item in q.get("items", []):
 			if item and is_instance_valid(item):
 				item.queue_free()
+		# 书本卡：消费销毁
+		var bk = q.get("book_card")
+		if bk and is_instance_valid(bk):
+			bk.queue_free()
 	hand_layout.arrange()
 
 # 取消仪式时，queue 里的卡牌退回手牌（金币合并回手牌金币卡）

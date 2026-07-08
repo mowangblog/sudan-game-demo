@@ -1425,9 +1425,9 @@
                 "optional": false
             },
             {
-                "type": "resource",
-                "required_tags": [],
-                "optional": true
+                "type": "gold",
+                "required": true,
+                "max": 3
             }
         ],
         "time_limit": 1,
@@ -1444,7 +1444,7 @@
         "s2_gold": 3,
         "outcomes": {
             "success": {
-                "gold": -3,
+                "gold": 0,
                 "narrative": "石匠、木工和油漆工在[角色]的指挥下从天亮忙到了日落。他们修补了东侧漏水的屋顶，还把所有房间的门窗都换成了防风的橡木新框。\n\n如今的住所，虽然比不上一座真正的城堡，但至少不再是一间摇摇欲坠的老宅了。石质墙面有了新的温度，密度的安全感像第一堵新墙一样踏实。扩建完成。"
             },
             "fail": {
@@ -1468,9 +1468,9 @@
                 "optional": false
             },
             {
-                "type": "resource",
-                "required_tags": [],
-                "optional": true
+                "type": "gold",
+                "required": true,
+                "max": 5
             }
         ],
         "time_limit": 1,
@@ -1487,7 +1487,7 @@
         "s2_gold": 5,
         "outcomes": {
             "success": {
-                "gold": -5,
+                "gold": 0,
                 "narrative": "一座真正的贵族宅邸——这是[角色]要的。二层楼的扩建图纸由王都最好的建筑师绘制，施工队的规模是第一次整修的三倍。\n\n今天，最后一块幕墙落位时，所有人都退后了几步——阳光穿过新换的彩色玻璃把彩虹洒满了大厅。你站在新铺的大理石地板中央，感受着脚下真正的凉意。这里已经不再是一间老宅了。扩建完成。"
             },
             "fail": {
@@ -1511,9 +1511,9 @@
                 "optional": false
             },
             {
-                "type": "resource",
-                "required_tags": [],
-                "optional": true
+                "type": "gold",
+                "required": true,
+                "max": 10
             }
         ],
         "time_limit": 1,
@@ -1530,7 +1530,7 @@
         "s2_gold": 10,
         "outcomes": {
             "success": {
-                "gold": -10,
+                "gold": 0,
                 "narrative": "工匠们今天完成了更宏大的工程。[角色]站在工地高处，俯视着新翼楼的基座——石料是从边境采石场专门运来的灰色花岗岩。\n\n当最后一批梁木被安装到新大厅的穹顶上时，整座宅邸的气场都变了。这里不再是一座避难的居所，而是一个可以招待摄政王本人也不会失礼的宅第。扩建完成。"
             },
             "fail": {
@@ -1554,9 +1554,9 @@
                 "optional": false
             },
             {
-                "type": "resource",
-                "required_tags": [],
-                "optional": false
+                "type": "gold",
+                "required": true,
+                "max": 20
             }
         ],
         "time_limit": 1,
@@ -1573,7 +1573,7 @@
         "s2_gold": 20,
         "outcomes": {
             "success": {
-                "gold": -20,
+                "gold": 0,
                 "narrative": "城堡的天际线在半年內被改写了。[角色]的新翼楼群像一把折扇在庄园北方展开。今天竣工的钟楼是整个王都仅次于摄政王塔的第二高建筑。\n\n跨年晚宴上，你在大厅里踱步——仰头是彩色玻璃的星河，低头是抛光得能映出倒影的地板。连从摄政王府来的贵客看得都惊讶了片刻。扩建完成。权势+1。"
             },
             "fail": {

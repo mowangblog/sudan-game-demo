@@ -71,14 +71,12 @@ func do_insight_with_card(card: PanelContainer) -> void:
 	if card_type == "book":
 		card.visible = false
 		hand_layout.arrange()
-		hand_cards.erase(card)
-		card.queue_free()
 		await _do_think_animation()
 		var book_data = drag_data.get("data", {})
 		var attr_name = _book_attr_name(book_data.get("attr", ""))
 		var gain = book_data.get("gain", 0)
 		var rite = {"id":300,"name":book_data.get("name","读书"),"category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","label":"阅读者","required":true}],"book":book_data,"description":"阅读《%s》，使阅读者的%s永久提升%d点。" % [book_data.get("name","?"), attr_name, gain],"outcomes":{"success":{"narrative":"[角色]翻开《%s》的扉页，墨香扑面而来。书中的文字如同一把钥匙，打开了脑海中某个尘封已久的暗格——那些原来只是模糊直觉的东西，现在变得清晰而有条理。\n\n%+d %s" % [book_data.get("name","?"), gain, attr_name],book_data.get("attr",""): gain},"fail":{"narrative":"[角色]在《%s》面前坐了一个时辰，却一个字都没读进去。倒不是因为书太难——只是今天的心思被别的事情压得太重了。\n\n下次换个安静的日子再来吧。" % book_data.get("name","?")}}}
-		var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
+		var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true, "queue": {"book_card": card}}
 		active_rites.append(entry)
 		_call("place_rite", [rite])
 		await show_bubble("「%s」\n开始阅读" % book_data.get("name", "?"))
