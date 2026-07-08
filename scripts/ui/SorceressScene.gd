@@ -29,8 +29,10 @@ var _dialogues: Dictionary = {}
 var _phase: String = ""  # "greeting" / "type_intro" / "rank_intro" / "draw_box" / "card_reveal" / "swap" / "progress" / "chat"
 var _is_first_draw: bool = true
 var _current_card_data: Dictionary = {}
-var _typing_tween: Tween = null
-var _full_dialogue_text: String = ""  # 对话全文（用于点击跳过打字机）
+var _typing_timer: Timer = null
+var _typing_target: String = ""       # 目标全文
+var _typing_prefix: String = ""       # 追加前已有文本
+var _typing_pos: int = 0              # 当前进度（字符数）
 var _on_complete: Callable = func(): pass  # 抽令完成后回调
 
 # ---- 子节点 ----
@@ -362,48 +364,59 @@ func _finish_draw() -> void:
 	_on_complete.call()
 
 
-const TYPING_SPEED_MS = 15  # 每字15ms
+const CHARS_PER_TICK = 4  # 每帧推进4字符（Timer每60ms→等效15ms/字）
 
 # ---- 对话渲染 ----
 func _set_dialogue(text: String) -> void:
+	_stop_typing()
 	_dialogue_text.text = ""
-	_full_dialogue_text = text  # 保存全文供点击跳过
-	# 打字机效果
-	if _typing_tween:
-		_typing_tween.kill()
-	_typing_tween = create_tween()
-	var chars = text.length()
-	var duration = chars * TYPING_SPEED_MS / 1000.0
-	# 逐步显示文本
-	for i in range(chars + 1):
-		var delay = duration * i / max(chars, 1)
-		_typing_tween.tween_callback(func(): _dialogue_text.text = text.left(i)).set_delay(delay if i > 0 else 0)
+	_typing_prefix = ""
+	_typing_target = text
+	_typing_pos = 0
+	_start_typing()
 
 
 func _append_dialogue(text: String) -> void:
-	# 在现有对话后追加文本（打字机效果）
-	var current = _dialogue_text.text
-	var full = current + text
-	_full_dialogue_text = full  # 保存全文供点击跳过
-	if _typing_tween:
-		_typing_tween.kill()
-	_typing_tween = create_tween()
-	var start_idx = current.length()
-	var append_chars = text.length()
-	var duration = append_chars * TYPING_SPEED_MS / 1000.0
-	for i in range(append_chars + 1):
-		var idx = start_idx + i
-		var delay = duration * i / max(append_chars, 1)
-		_typing_tween.tween_callback(func(): _dialogue_text.text = full.left(idx)).set_delay(delay if i > 0 else 0)
+	_stop_typing()
+	_typing_prefix = _dialogue_text.text
+	_typing_target = text
+	_typing_pos = 0
+	_start_typing()
 
 
-# 点击跳过：立即显示全文
+func _start_typing() -> void:
+	if _typing_target.is_empty():
+		return
+	_typing_timer = Timer.new()
+	_typing_timer.wait_time = CHARS_PER_TICK * 15.0 / 1000.0  # 60ms/帧
+	_typing_timer.one_shot = false
+	_typing_timer.timeout.connect(_on_typing_tick)
+	add_child(_typing_timer)
+	_typing_timer.start()
+
+
+func _on_typing_tick() -> void:
+	_typing_pos += CHARS_PER_TICK
+	if _typing_pos >= _typing_target.length():
+		# 完成
+		_dialogue_text.text = _typing_prefix + _typing_target
+		_stop_typing()
+	else:
+		_dialogue_text.text = _typing_prefix + _typing_target.left(_typing_pos)
+
+
+func _stop_typing() -> void:
+	if _typing_timer:
+		_typing_timer.stop()
+		_typing_timer.queue_free()
+		_typing_timer = null
+
+
 func _skip_typing() -> void:
-	if _typing_tween:
-		_typing_tween.kill()
-		_typing_tween = null
-	if _full_dialogue_text != "":
-		_dialogue_text.text = _full_dialogue_text
+	_stop_typing()
+	if not _typing_target.is_empty():
+		_dialogue_text.text = _typing_prefix + _typing_target
+		_typing_target = ""
 
 
 func _on_dialogue_click(event: InputEvent) -> void:
