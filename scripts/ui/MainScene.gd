@@ -30,6 +30,7 @@ const RiteDetailPopupScript = preload("res://scripts/ui/RiteDetailPopup.gd")
 const RiteRewardApplierScript = preload("res://scripts/ui/RiteRewardApplier.gd")
 const RiteSettlementControllerScript = preload("res://scripts/ui/RiteSettlementController.gd")
 const InsightControllerScript = preload("res://scripts/game/InsightController.gd")
+const EventCheckerScript = preload("res://scripts/game/EventChecker.gd")
 var card_factory: CardFactory = CardFactory.new()
 var hand_layout: HandLayoutManager = HandLayoutManager.new()
 var popups: PopupManager = PopupManager.new()
@@ -39,6 +40,8 @@ var status_bar = StatusBarScript.new()
 var rite_reward_applier = RiteRewardApplierScript.new()
 var rite_settlement_controller = RiteSettlementControllerScript.new()
 var insight_controller = InsightControllerScript.new()
+var event_checker = EventCheckerScript.new()
+var _pending_event_check: bool = false
 
 # ============ UI 节点 ============
 var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
@@ -439,7 +442,11 @@ func _bottom() -> void:
 	)
 	rite_settlement_controller.call("setup", self, active_rites, rite_reward_applier, {
 		"log": func(message): _log(message),
-		"refresh": func(): _refresh(),
+		"refresh": func(): 
+			_refresh()
+			if _pending_event_check:
+				_pending_event_check = false
+				_process_event_queue(),
 		"update_countdown": func(): _update_countdown_labels(),
 		"show_game_over": func(): popups.show_game_over(),
 		"restore_hand_cards": func(): _restore_hand_cards(),
@@ -561,8 +568,8 @@ func _update_card_count(card: PanelContainer, count: int):
 
 func _next_press() -> void:
 	insight_controller.call("clear_used_keys")
-	# 检查是否有未执行的清除仪式，若是则第二天弹出荣誉清除
 	insight_controller.call("check_pending_honor_kill")
+	_pending_event_check = true
 	rite_settlement_controller.call("start")
 
 func _refresh() -> void:
@@ -703,3 +710,39 @@ func _show_toasts(nts: Array):
 		if is_instance_valid(lbl): lbl.queue_free()
 		_show_toasts(nts)
 	)
+
+
+func _process_event_queue() -> void:
+	var events = event_checker.get_triggered_events()
+	if events.is_empty(): return
+	for ev in events:
+		event_checker.mark_triggered(ev.get("id", ""))
+		var chosen_idx = await _await_event_choice(ev)
+		if chosen_idx >= 0 and chosen_idx < ev.choices.size():
+			_apply_event_outcome(ev.choices[chosen_idx].get("outcome", {}))
+
+func _await_event_choice(ev: Dictionary) -> int:
+	var result_idx: int = -1
+	popups.show_event_popup(ev, func(event, idx):
+		result_idx = idx
+	)
+	await Engine.get_main_loop().process_frame
+	while result_idx == -1:
+		await Engine.get_main_loop().process_frame
+	return result_idx
+
+func _apply_event_outcome(outcome: Dictionary) -> void:
+	if outcome.is_empty(): return
+	if outcome.has("gold"):
+		ResourceManager.add_gold(outcome.gold)
+	if outcome.has("good"):
+		ResourceManager.modify_reputation("good", outcome.good)
+	if outcome.has("evil"):
+		ResourceManager.modify_reputation("evil", outcome.evil)
+	if outcome.has("power"):
+		ResourceManager.modify_reputation("power", outcome.power)
+	if outcome.has("hero"):
+		ResourceManager.modify_reputation("hero", outcome.hero)
+	if outcome.has("spirit"):
+		ResourceManager.modify_reputation("spirit", outcome.spirit)
+
