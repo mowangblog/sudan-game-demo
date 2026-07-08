@@ -44,7 +44,7 @@ func _draw_sultan_card() -> void:
 		return
 
 	active_sultan_card = card
-	sultan_card_days_left = 7
+	sultan_card_days_left = 8
 	state = GameState.DAY_ACTIVE
 
 	EventBus.sultan_card_drawn.emit(card)
