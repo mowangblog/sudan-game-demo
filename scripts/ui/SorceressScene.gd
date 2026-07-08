@@ -309,10 +309,8 @@ func _on_box_clicked() -> void:
 		_add_btn("我知道了", func(): visible = false)
 		return
 
-	# 通知GameManager
-	GameManager.active_sultan_card = _current_card_data
-	GameManager.sultan_card_days_left = 7
-	EventBus.sultan_card_drawn.emit(_current_card_data)
+	# 通知GameManager记录令牌
+	GameManager.draw_sultan_card_via_sorceress(_current_card_data)
 
 	# 展示令牌大图
 	_card_box.show_card_display(_current_card_data, TN, RG, TC, SC, SC_BORDER)
