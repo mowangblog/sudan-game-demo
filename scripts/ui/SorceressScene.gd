@@ -229,7 +229,7 @@ func open_for_greeting(on_draw: Callable, on_swap: Callable, on_progress: Callab
 	_add_btn(draw_btn_data.get("draw", "抽取摄政王令"), func(): on_draw.call())
 	_add_btn(draw_btn_data.get("swap", "交换摄政王令"), func(): on_swap.call())
 	_add_btn(draw_btn_data.get("progress", "查看进度"), func(): on_progress.call())
-	_add_btn(draw_btn_data.get("chat", "与她聊聊"), func(): on_chat.call())
+	_add_btn(draw_btn_data.get("chat", "与她聊聊"), func(): _open_chat_menu())
 
 
 func open_for_swap(swap_tokens: int, on_confirm: Callable) -> void:
@@ -337,34 +337,37 @@ func _show_first_time_intro() -> void:
 
 
 func _show_intro_buttons() -> void:
-	# 一层：只保留「不同令的品级」入口 + 抽令；四种令按钮挪进二层菜单
+	# 一层：只保留抽令（品级询问已挪进「与她聊聊」常驻）
 	_clear_buttons()
-	_add_btn("不同令的品级", func(): _show_rank_type_menu())
 	var draw_btn_data = _dialogues.get("entry_buttons", {})
 	_add_btn(draw_btn_data.get("draw", "直接抽取摄政王令"), func(): _show_draw_prompt())
 
 
-func _show_rank_type_menu() -> void:
-	# 二层：点击「不同令的品级」后才出现；四种令各一个按钮 + 返回（按钮常驻）
+func _open_chat_menu() -> void:
+	# 「与她聊聊」：常驻的品级询问入口；四种令 + 返回（按钮常驻）
 	_phase = "rank_intro"
 	_clear_buttons()
 	_set_dialogue(_dialogues.get("rank_quality_intro", "") + "\n\n—— 选择一种令，查看它的四个品级 ——")
 	for type_key in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
 		var tname = TN.get(type_key, "?")
 		_add_btn("%s令" % tname, func(): _show_type_ranks(type_key))
-	_add_btn("返回", func(): _show_intro_buttons())
+	_add_btn("返回", func(): _back_to_greeting())
+
+
+func _back_to_greeting() -> void:
+	open_for_greeting(_greeting_cbs["draw"], _greeting_cbs["swap"], _greeting_cbs["progress"], _greeting_cbs["chat"])
 
 
 func _show_type_ranks(type_key: String) -> void:
-	# 不清空按钮：二层四个品级按钮保持常驻，点击不同令只切换下方说明
+	# 不清空按钮：四个令按钮常驻；四个品级合并成一段说明
 	var type_name = TN.get(type_key, "?")
-	var parts: PackedStringArray = []
-	parts.append("—— %s令的四个品级 ——" % type_name)
+	var ranks = _dialogues.get("rank_introduction", {})
+	var segs: PackedStringArray = []
 	for r in ["STONE", "BRONZE", "SILVER", "GOLD"]:
-		var rd = _dialogues.get("rank_introduction", {}).get(r, {})
-		var t = rd.get("short", "").replace("{type}", type_name)
-		parts.append("%s %s  %s" % [RN.get(r, ""), RG.get(r, ""), t])
-	_set_dialogue("\n".join(parts))
+		var t = ranks.get(r, {}).get("short", "").replace("{type}", type_name)
+		segs.append("%s%s·%s" % [RN.get(r, ""), RG.get(r, ""), t])
+	var merged = "—— %s令 · 四个品级（由低到高） ——\n%s" % [type_name, "  ｜  ".join(segs)]
+	_set_dialogue(merged)
 
 
 # ---- 抽令流程 ----
