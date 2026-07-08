@@ -140,7 +140,8 @@ func _sorceress_icon(cb: Callable) -> Button:
 	var sb = StyleBoxFlat.new()
 	sb.bg_color = Color("1a1208")
 	sb.set_corner_radius_all(6)
-	sb.border_width_all = 2
+	sb.border_width_top = 2; sb.border_width_bottom = 2
+	sb.border_width_left = 2; sb.border_width_right = 2
 	sb.border_color = C.get("GOLD", Color("c8a84e"))
 	sb.content_margin_left = 8; sb.content_margin_right = 8
 	sb.content_margin_top = 1; sb.content_margin_bottom = 1
@@ -148,7 +149,8 @@ func _sorceress_icon(cb: Callable) -> Button:
 	var hsb = StyleBoxFlat.new()
 	hsb.bg_color = Color("2a1a08")
 	hsb.set_corner_radius_all(6)
-	hsb.border_width_all = 2
+	hsb.border_width_top = 2; hsb.border_width_bottom = 2
+	hsb.border_width_left = 2; hsb.border_width_right = 2
 	hsb.border_color = Color("e8d48b")
 	hsb.content_margin_left = 8; hsb.content_margin_right = 8
 	hsb.content_margin_top = 1; hsb.content_margin_bottom = 1
