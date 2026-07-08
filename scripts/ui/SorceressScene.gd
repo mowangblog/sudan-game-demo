@@ -362,7 +362,7 @@ func _show_rank_type_menu() -> void:
 	_set_dialogue(_dialogues.get("rank_quality_intro", "") + "\n\n—— 选择一种令，查看它的四个品级 ——")
 	for type_key in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
 		var tname = TN.get(type_key, "?")
-		_add_btn("%s令的品级" % tname, func(): _show_type_ranks(type_key))
+		_add_btn("%s令" % tname, func(): _show_type_ranks(type_key))
 	_add_btn("返回", func(): _show_intro_buttons())
 
 
