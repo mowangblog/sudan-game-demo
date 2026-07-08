@@ -673,8 +673,10 @@ func _refresh() -> void:
 	
 	var card = GameManager.active_sultan_card
 	if not is_instance_valid(cp): return
-	cp.visible = not card.is_empty()
-	if not card.is_empty():
+	# 如果摄政王令已投入仪式队列中，不显示在手牌
+	var in_rite_queue = _is_sultan_card_in_rite_queue()
+	cp.visible = not card.is_empty() and not in_rite_queue
+	if not card.is_empty() and not in_rite_queue:
 		ct_lbl.text = TN.get(card.get("type",""),"？")
 		cr_lbl.text = RG.get(card.get("rank",""),"？")
 		cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
@@ -705,6 +707,13 @@ func _update_countdown_labels():
 
 func _refresh_intel_cards():
 	resource_card_manager.refresh_intel_cards()
+
+func _is_sultan_card_in_rite_queue() -> bool:
+	for entry in active_rites:
+		var q = entry.get("queue", {})
+		if q.get("sultan_card") != null:
+			return true
+	return false
 
 func slot_type_to_str(t: String) -> String:
 	if t == "character": return "character"
