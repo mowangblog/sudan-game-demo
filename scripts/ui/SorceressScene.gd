@@ -43,6 +43,8 @@ var _dialogue_area: VBoxContainer
 var _dialogue_text: Label
 var _btn_container: VBoxContainer
 var _card_box: CardBox
+var _swap_card: PanelContainer = null        # 换令时展示的只读当前令
+var _swap_on_confirm: Callable = func(): pass  # 换令确认回调（供卡牌点击复用）
 
 # ---- 品级讲解状态 ----
 var _intro_types_shown: Array = []  # 已展示的类型
@@ -202,6 +204,7 @@ func open_for_draw(card_data: Dictionary, is_first: bool, on_complete: Callable)
 	_on_complete = on_complete
 	visible = true
 	_card_box.reset_box()
+	_clear_swap_card()
 
 	if _is_first_draw:
 		_show_first_time_intro()
@@ -212,6 +215,7 @@ func open_for_draw(card_data: Dictionary, is_first: bool, on_complete: Callable)
 func open_for_greeting(on_draw: Callable, on_swap: Callable, on_progress: Callable, on_chat: Callable) -> void:
 	visible = true
 	_card_box.reset_box()
+	_clear_swap_card()
 	_clear_buttons()
 	_set_dialogue(_dialogues.get("greeting", {}).get("default", "尊贵的阁下……有什么我可以效劳的吗？"))
 
@@ -225,7 +229,9 @@ func open_for_greeting(on_draw: Callable, on_swap: Callable, on_progress: Callab
 func open_for_swap(swap_tokens: int, on_confirm: Callable) -> void:
 	visible = true
 	_card_box.reset_box()
+	_clear_swap_card()
 	_clear_buttons()
+	_swap_on_confirm = on_confirm
 	if swap_tokens <= 0:
 		_set_dialogue(_dialogues.get("swap_flow", {}).get("no_tokens", "您本局已用完所有换令机会。"))
 		_add_btn("我知道了", func(): visible = false)
@@ -235,11 +241,84 @@ func open_for_swap(swap_tokens: int, on_confirm: Callable) -> void:
 		_set_dialogue(_dialogues.get("swap_flow", {}).get("pool_empty", "令匣里已经空了……"))
 		_add_btn("我知道了", func(): visible = false)
 		return
+	var card = GameManager.active_sultan_card
+	if card.is_empty():
+		_set_dialogue("您手上现在还没有摄政王令，无法交换。")
+		_add_btn("我知道了", func(): visible = false)
+		return
+	_show_swap_card(card)
 	var prompt = _dialogues.get("swap_flow", {}).get("prompt", "")
 	prompt = prompt.replace("{n}", str(swap_tokens))
 	_set_dialogue(prompt)
-	_add_btn("确认换令", func(): on_confirm.call())
+	_add_btn("确认换令", func(): _show_swap_confirm(card))
 	_add_btn("还是算了", func(): visible = false)
+
+
+func _show_swap_confirm(card: Dictionary) -> void:
+	_clear_swap_card()
+	_clear_buttons()
+	_set_dialogue(_dialogues.get("swap_flow", {}).get("confirm", "您确定要将此令放回令匣吗？"))
+	_add_btn("确定放回令匣", func(): _swap_on_confirm.call())
+	_add_btn("再想想", func(): open_for_swap(GameManager.swap_tokens, _swap_on_confirm))
+
+
+func _show_swap_card(card_data: Dictionary) -> void:
+	_clear_swap_card()
+	var card = PanelContainer.new()
+	card.name = "SwapCardPreview"
+	card.custom_minimum_size = Vector2(90, 130)
+	var rank = card_data.get("rank", "STONE")
+	var card_type = card_data.get("type", "LUST")
+	var bg_color = SC.get(rank, Color("2a2018"))
+	var border_color = TC.get(card_type, C.LUST)
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = bg_color; sb.set_corner_radius_all(10)
+	sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
+	sb.border_color = border_color
+	sb.content_margin_left = 6; sb.content_margin_right = 6; sb.content_margin_top = 6; sb.content_margin_bottom = 6
+	card.add_theme_stylebox_override("panel", sb)
+
+	var vb = VBoxContainer.new()
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.add_theme_constant_override("separation", 6)
+	card.add_child(vb)
+
+	var tl = Label.new()
+	tl.text = TN.get(card_type, "?")
+	tl.add_theme_font_size_override("font_size", 16)
+	tl.add_theme_color_override("font_color", border_color)
+	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(tl)
+
+	var rl = Label.new()
+	rl.text = RG.get(rank, "★")
+	rl.add_theme_font_size_override("font_size", 12)
+	rl.add_theme_color_override("font_color", C.GOLD)
+	rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(rl)
+
+	var nl = Label.new()
+	nl.text = card_data.get("name", "?")
+	nl.add_theme_font_size_override("font_size", 11)
+	nl.add_theme_color_override("font_color", C.GOLD_HI)
+	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(nl)
+
+	# 只读展示：点击该令直接进入确认步骤（不可拖拽）
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT and ev.pressed:
+			_show_swap_confirm(card_data)
+	)
+	_dialogue_area.add_child(card)
+	_swap_card = card
+
+
+func _clear_swap_card() -> void:
+	if _swap_card and is_instance_valid(_swap_card):
+		_swap_card.queue_free()
+		_swap_card = null
 
 
 # ---- 首次抽令讲解 ----
@@ -459,6 +538,7 @@ func _add_btn(text: String, callback: Callable) -> void:
 func _on_leave() -> void:
 	visible = false
 	_card_box.reset_box()
+	_clear_swap_card()
 	if _phase == "draw_box" or _phase == "card_reveal":
 		# 离开抽令流程但令已抽，需要通知主场景刷新
 		_on_complete.call(_current_card_data)
