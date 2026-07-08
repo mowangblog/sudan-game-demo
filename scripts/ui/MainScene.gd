@@ -338,7 +338,7 @@ func _on_item_card_queued(card: PanelContainer, item_data: Dictionary) -> void:
 	if resource_cards.get(item_name) == card:
 		resource_cards.erase(item_name)
 
-# 结算后回收卡牌：角色卡回手牌，摄政王令/金币卡销毁（消费）
+# 结算后回收卡牌：角色卡回手牌，摄政王令挂回手牌（单例复用，下一抽令在原节点刷新），金币/道具/书本卡销毁（消费）
 func _restore_hand_cards():
 	for ar in active_rites:
 		var q = ar.get("queue", {})
@@ -347,10 +347,12 @@ func _restore_hand_cards():
 		if ch and is_instance_valid(ch):
 			hand_cards.append(ch)
 			ch.visible = true
-		# 摄政王令：销毁（原版消耗品，全局 consume_sultan_card 已扣计数）
+		# 摄政王令：消耗后从仪式队列摘下，挂回手牌数组（不销毁单例节点，下一抽令在原节点刷新）
 		var sc = q.get("sultan_card")
 		if sc and is_instance_valid(sc):
-			sc.queue_free()
+			if not hand_cards.has(sc):
+				hand_cards.append(sc)
+			sc.visible = false
 		# 金币卡：消费销毁
 		var g = q.get("gold")
 		if g and is_instance_valid(g):
@@ -363,6 +365,8 @@ func _restore_hand_cards():
 		if bk and is_instance_valid(bk):
 			bk.queue_free()
 	hand_layout.arrange()
+	# 回收后兜底刷新：若本帧内抽令已完成（cp已在hand_cards），确保cp显示/隐藏与当前active_sultan_card一致
+	_refresh()
 
 # 取消仪式时，queue 里的卡牌退回手牌（金币合并回手牌金币卡）
 func _return_queue_to_hand(q: Dictionary):
@@ -689,7 +693,7 @@ func _refresh() -> void:
 		sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
 		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
 		cp.add_theme_stylebox_override("panel",sb)
-		cp.set_meta("drag_data", {"type":"sultan_card", "name":card.get("name",""), "data":card})
+		cp.set_meta("drag_data", {"type":"sultan_card", "id":card.get("id",""), "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()
 
