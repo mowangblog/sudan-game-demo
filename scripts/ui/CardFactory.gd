@@ -5,8 +5,6 @@
 class_name CardFactory
 extends RefCounted
 
-const GLOW_SHADER := preload("res://shaders/card_glow.gdshader")
-
 # 注入的常量和回调
 var C: Dictionary = {}
 var SC: Dictionary = {}; var SC_BORDER: Dictionary = {}; var SC_HOVER: Dictionary = {}; var SC_GLOW: Dictionary = {}
@@ -151,8 +149,6 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 			nsb.border_color = q_border.darkened(0.3); nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
 		card.add_theme_stylebox_override("panel", nsb)
 
-	_apply_glow(card, quality)
-
 	return card
 
 
@@ -194,22 +190,4 @@ func make_book_card(book_data: Dictionary) -> PanelContainer:
 			nsb.border_color = q_border.darkened(0.3); nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
 		card.add_theme_stylebox_override("panel", nsb)
 
-	_apply_glow(card, quality)
-
 	return card
-
-
-func _apply_glow(card: PanelContainer, quality: String) -> void:
-	if quality not in ["SILVER", "GOLD"]:
-		return
-	var mat := ShaderMaterial.new()
-	mat.shader = GLOW_SHADER
-	if quality == "GOLD":
-		mat.set_shader_parameter("glow_color", Color(0.88, 0.72, 0.20, 1.0))
-		mat.set_shader_parameter("glow_intensity", 0.55)
-		mat.set_shader_parameter("glow_width", 0.20)
-	else:
-		mat.set_shader_parameter("glow_color", Color(0.60, 0.65, 0.70, 1.0))
-		mat.set_shader_parameter("glow_intensity", 0.35)
-		mat.set_shader_parameter("glow_width", 0.15)
-	card.material = mat
