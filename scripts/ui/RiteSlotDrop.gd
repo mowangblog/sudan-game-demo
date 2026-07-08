@@ -84,7 +84,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		sb.bg_color = RANK_BG.get(current_card.get("rank",""), Color("2a2018"))
 		sb.border_color = C.GOLD
 		prev.add_theme_stylebox_override("panel", sb)
-		var l1 = Label.new(); l1.text={"LUST":"纵欲","LUXURY":"奢靡","CONQUEST":"征服","MURDER":"杀戮"}.get(current_card.get("type",""),"?")
+		var l1 = Label.new(); l1.text={"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"清除"}.get(current_card.get("type",""),"?")
 		l1.add_theme_font_size_override("font_size",20); l1.add_theme_color_override("font_color",C.GOLD)
 		l1.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l1)
 		var l2 = Label.new(); l2.text=RANK_STARS.get(current_card.get("rank",""),"★")
@@ -159,7 +159,7 @@ func _draw_card_preview():
 	
 	if slot_type == "sultan_card":
 		var label = Label.new()
-		label.text = {"LUST":"纵欲","LUXURY":"奢靡","CONQUEST":"征服","MURDER":"杀戮"}.get(current_card.get("type",""), "?")
+		label.text = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"清除"}.get(current_card.get("type",""), "?")
 		label.add_theme_font_size_override("font_size", 20)
 		label.add_theme_color_override("font_color", C.GOLD)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -237,7 +237,7 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	if slot_type == "character":
 		return drag_type == "character"
 	
-	# 苏丹卡槽
+	# 摄政王令槽
 	if slot_type == "sultan_card":
 		if drag_type != "sultan_card": return false
 		if data.has("data") and not required_tags.is_empty():

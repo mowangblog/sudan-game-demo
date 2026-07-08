@@ -1,5 +1,5 @@
 # PopupManager.gd
-# 弹窗管理器 — 角色/苏丹卡/资源/游戏结束弹窗
+# 弹窗管理器 — 角色/摄政王令/资源/游戏结束弹窗
 # 从 MainScene 提取 (Phase 2)
 
 class_name PopupManager
@@ -144,7 +144,7 @@ func show_game_over():
 	var tl = Label.new(); tl.text = "💀 游戏结束"; tl.add_theme_font_size_override("font_size", 24)
 	tl.add_theme_color_override("font_color", _C.get("RED", Color("ff4040"))); tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(tl)
-	var sub = Label.new(); sub.text = "苏丹卡逾期未处理，头身分离术已执行"
+	var sub = Label.new(); sub.text = "摄政王令逾期未处理，头身分离术已执行"
 	sub.add_theme_font_size_override("font_size", 13); sub.add_theme_color_override("font_color", _C.get("DIM", Color("a09070")))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(sub)
 

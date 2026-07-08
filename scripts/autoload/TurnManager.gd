@@ -1,6 +1,6 @@
 # TurnManager.gd
 # AutoLoad 回合管理器 — 驱动每日/每周循环
-# 管理天数、周数、苏丹卡倒计时、仪式限时结算
+# 管理天数、周数、摄政王令倒计时、仪式限时结算
 
 extends Node
 
@@ -42,7 +42,7 @@ func next_day() -> void:
 
 
 func _begin_day() -> void:
-	# 1. 苏丹卡倒计时 -1
+	# 1. 摄政王令倒计时 -1
 	update_sultan_card_countdowns()
 	# 2. 所有仪式限时 -1、用时 -1
 	update_rite_timers()
@@ -70,12 +70,12 @@ func _spawn_daily_rites() -> void:
 
 func _start_new_week() -> void:
 	EventBus.week_started.emit(current_week)
-	# GameManager 响应此信号 → 抽取新苏丹卡
+	# GameManager 响应此信号 → 抽取新摄政王令
 
 
-## === 苏丹卡倒计时管理 ===
+## === 摄政王令倒计时管理 ===
 func update_sultan_card_countdowns() -> void:
-	# GameManager 持有当前苏丹卡数据，这里发送信号让 GameManager 处理
+	# GameManager 持有当前摄政王令数据，这里发送信号让 GameManager 处理
 	EventBus.sultan_card_countdown_tick.emit("", 0)  # 占位，由 GameManager 实际处理
 
 

@@ -10,7 +10,7 @@ signal day_ended(day_number: int)
 signal week_started(week_number: int)
 signal week_ended(week_number: int)
 
-## === 苏丹卡信号 ===
+## === 摄政王令信号 ===
 signal sultan_card_drawn(card_data: Dictionary)
 signal sultan_card_consumed(card_id: String, week_number: int)
 signal sultan_card_expired(card_id: String)       # 逾期未消耗 → 触发死亡
@@ -45,5 +45,5 @@ signal relationship_changed(char_id: String, new_status: String)
 signal game_over(ending_type: String)
 signal game_started()
 
-## === "俺寻思" 信号 ===
+## === "灵光一现" 信号 ===
 signal insight_triggered(card_data: Dictionary)

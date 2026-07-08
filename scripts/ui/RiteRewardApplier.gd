@@ -62,7 +62,7 @@ func apply_queue_consumption(active_rites: Array) -> Array:
 	for active_rite in active_rites:
 		if not consumed_sultan and not active_rite.get("sultan_card", {}).is_empty():
 			GameManager.consume_sultan_card(active_rite.get("rite", {}).get("id", 0))
-			notifications.append("🃏 苏丹卡已消耗。")
+			notifications.append("🃏 摄政王令已消耗。")
 			consumed_sultan = true
 		_apply_consumed_gold(active_rite, notifications)
 		_apply_consumed_items(active_rite, notifications)
@@ -131,10 +131,10 @@ func _apply_rite_completion_flags(active_rite: Dictionary, notifications: Array)
 func _reputation_label(key: String) -> String:
 	var labels = {
 		"power": "权势",
-		"good": "善名",
+		"good": "名望",
 		"evil": "恶名",
-		"hero": "侠名",
-		"spirit": "灵视",
+		"hero": "义名",
+		"spirit": "灵知",
 	}
 	return labels.get(key, key)
 

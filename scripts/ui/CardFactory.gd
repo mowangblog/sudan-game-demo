@@ -1,5 +1,5 @@
 # CardFactory.gd
-# 卡牌工厂 — 创建角色卡/苏丹卡/资源卡
+# 卡牌工厂 — 创建角色卡/摄政王令/资源卡
 # 从 MainScene 提取，依赖 C/SC 等常量通过 set_constants 注入
 
 class_name CardFactory
@@ -90,7 +90,7 @@ func make_sultan_card() -> PanelContainer:
 	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
 
-	var tl = Label.new(); tl.name = "TypeLbl"; tl.text = "纵欲"
+	var tl = Label.new(); tl.name = "TypeLbl"; tl.text = "欢愉"
 	tl.add_theme_font_size_override("font_size", 20); tl.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_child(tl)

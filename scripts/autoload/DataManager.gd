@@ -10,7 +10,7 @@ var rites: Array = []
 var events: Array = []
 var books: Array = []
 
-var _card_pool: Array = []   # 牌盒（待抽取的苏丹卡）
+var _card_pool: Array = []   # 牌盒（待抽取的摄政王令）
 
 
 func _ready() -> void:

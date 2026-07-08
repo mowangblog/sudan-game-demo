@@ -1,20 +1,20 @@
 # GameManager.gd
 # AutoLoad 游戏状态管理器 — 核心协调者
-# 管理苏丹卡生命周期、游戏状态、结束判定
+# 管理摄政王令生命周期、游戏状态、结束判定
 
 extends Node
 
 enum GameState {
 	INIT,         # 初始化中
-	WEEK_START,   # 周开始（抽苏丹卡）
+	WEEK_START,   # 周开始（抽摄政王令）
 	DAY_ACTIVE,   # 每日行动中
 	DAY_SETTLE,   # 每日结算中
 	GAME_OVER     # 游戏结束
 }
 
 var state: GameState = GameState.INIT
-var active_sultan_card: Dictionary = {}  # 当前活跃的苏丹卡
-var sultan_card_days_left: int = 0       # 苏丹卡剩余天数
+var active_sultan_card: Dictionary = {}  # 当前活跃的摄政王令
+var sultan_card_days_left: int = 0       # 摄政王令剩余天数
 var is_game_over: bool = false
 var ending_type: String = ""
 var renovation_done: bool = false  # 装修完成标记(仅一次)
@@ -48,9 +48,9 @@ func _start_week() -> void:
 	_draw_sultan_card()
 
 
-## === 苏丹卡抽取 ===
+## === 摄政王令抽取 ===
 func _draw_sultan_card() -> void:
-	# 从牌盒随机抽取一张苏丹卡
+	# 从牌盒随机抽取一张摄政王令
 	var card = DataManager.draw_sultan_card()
 	if card.is_empty():
 		return
@@ -70,7 +70,7 @@ func _on_day_started(day: int, week: int) -> void:
 	if state == GameState.INIT:
 		return  # 游戏尚未启动，忽略早期的 day_started
 
-	# 苏丹卡倒计时 -1
+	# 摄政王令倒计时 -1
 	sultan_card_days_left -= 1
 	if not active_sultan_card.is_empty():
 		EventBus.sultan_card_countdown_tick.emit(active_sultan_card.get("id", ""), sultan_card_days_left)
@@ -82,7 +82,7 @@ func _on_day_started(day: int, week: int) -> void:
 		_trigger_death()
 
 
-## === 苏丹卡消耗 ===
+## === 摄政王令消耗 ===
 func consume_sultan_card(rite_id: int) -> void:
 	if active_sultan_card.is_empty():
 		return

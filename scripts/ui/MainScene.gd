@@ -1,4 +1,4 @@
-# MainScene.gd — 苏丹的游戏复刻
+# MainScene.gd — 摄政王的游戏复刻
 # 参考原版布局：顶部状态栏 + 左侧地图 + 右侧事件面板 + 底部手牌
 
 extends Control
@@ -12,7 +12,7 @@ const C = {
 	LUST=Color("8b3a5c"),LUXURY=Color("3a5c8b"),CONQUEST=Color("3a5b3a"),MURDER=Color("6b2a2a"),
 }
 const TC = {"LUST":C.LUST,"LUXURY":C.LUXURY,"CONQUEST":C.CONQUEST,"MURDER":C.MURDER}
-const TN = {"LUST":"纵欲","LUXURY":"奢靡","CONQUEST":"征服","MURDER":"杀戮"}
+const TN = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"清除"}
 const RG = {"STONE":"★","BRONZE":"★★","SILVER":"★★★","GOLD":"★★★★"}
 const AN = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}
 const AI = {"phy":"💪","com":"⚔","sur":"🏕","soc":"💬","cha":"💋","ste":"🕶","wis":"📚","mag":"🔮"}
@@ -61,7 +61,7 @@ var _all_rites: Array = []
 
 # 常驻仪式 id 列表
 const PERMANENT_RITE_IDS = [1, 2, 3, 4, 15]  # 本回合已寻思：角色用id，其他用类型
-var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉杀戮
+var _pending_honor_kill: bool = false          # 下次刷新时展示荣誉清除
 var current_rite_detail: Dictionary = {}
 
 func _ready() -> void:
@@ -292,7 +292,7 @@ func _on_item_card_queued(card: PanelContainer, item_data: Dictionary) -> void:
 	if resource_cards.get(item_name) == card:
 		resource_cards.erase(item_name)
 
-# 结算后回收卡牌：角色卡回手牌，苏丹卡/金币卡销毁（消费）
+# 结算后回收卡牌：角色卡回手牌，摄政王令/金币卡销毁（消费）
 func _restore_hand_cards():
 	for ar in active_rites:
 		var q = ar.get("queue", {})
@@ -301,7 +301,7 @@ func _restore_hand_cards():
 		if ch and is_instance_valid(ch):
 			hand_cards.append(ch)
 			ch.visible = true
-		# 苏丹卡：销毁（原版消耗品，全局 consume_sultan_card 已扣计数）
+		# 摄政王令：销毁（原版消耗品，全局 consume_sultan_card 已扣计数）
 		var sc = q.get("sultan_card")
 		if sc and is_instance_valid(sc):
 			sc.queue_free()
@@ -380,7 +380,7 @@ func _bottom() -> void:
 	
 	hand_cards.clear()
 	
-	# 俺寻思 — 左下角骷髅
+	# 灵光一现 — 左下角骷髅
 	var insight = _make_insight_button()
 	insight.position = Vector2(10, 0)
 	insight.size.x = 86
@@ -396,7 +396,7 @@ func _bottom() -> void:
 		card.drag_ended.connect(_on_hand_card_dropped)
 		hand_container.add_child(card); hand_cards.append(card)
 	
-	# 苏丹卡
+	# 摄政王令
 	cp = card_factory.make_sultan_card()
 	ct_lbl = cp.get_node("VB/TypeLbl") as Label
 	cr_lbl = cp.get_node("VB/RankLbl") as Label
@@ -488,7 +488,7 @@ func _make_insight_button() -> PanelContainer:
 	# 单击 → 提示拖入卡牌
 	insight.gui_input.connect(func(e):
 		if e is InputEventMouseButton and e.pressed and e.button_index==MOUSE_BUTTON_LEFT:
-			_log("💀 俺寻思：将卡牌拖入此处以探索/处理")
+			_log("💀 灵光一现：将卡牌拖入此处以探索/处理")
 	)
 	var iv = VBoxContainer.new(); iv.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	iv.alignment=BoxContainer.ALIGNMENT_CENTER; insight.add_child(iv)
@@ -503,7 +503,7 @@ func _make_insight_button() -> PanelContainer:
 func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
 	var dropped_in_slot = false
 	
-	# 1. 检查是否拖到了俺寻思
+	# 1. 检查是否拖到了灵光一现
 	var insight = hand_container.get_node_or_null("InsightBtn")
 	if insight and insight.get_global_rect().has_point(global_pos):
 		insight_controller.call("do_insight_with_card", card)
@@ -561,7 +561,7 @@ func _update_card_count(card: PanelContainer, count: int):
 
 func _next_press() -> void:
 	insight_controller.call("clear_used_keys")
-	# 检查是否有未执行的杀戮仪式，若是则第二天弹出荣誉杀戮
+	# 检查是否有未执行的清除仪式，若是则第二天弹出荣誉清除
 	insight_controller.call("check_pending_honor_kill")
 	rite_settlement_controller.call("start")
 
@@ -631,14 +631,14 @@ func _return_card_to_hand(card_type: String, card_data: Dictionary):
 		hand_layout.arrange()
 		return
 	else:
-		# 苏丹卡：从 GameManager 取当前数据
+		# 摄政王令：从 GameManager 取当前数据
 		var scard = GameManager.active_sultan_card
 		if not scard.is_empty():
 			cp.visible = true
 			hand_layout.arrange()
 			return
 		else:
-			# 没有活跃苏丹卡，不创建
+			# 没有活跃摄政王令，不创建
 			return
 	
 	new_card.drag_ended.connect(_on_hand_card_dropped)

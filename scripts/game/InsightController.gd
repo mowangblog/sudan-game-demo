@@ -1,5 +1,5 @@
 # InsightController.gd
-# Owns the "俺寻思" card interaction flow.
+# Owns the "灵光一现" card interaction flow.
 
 class_name InsightController
 extends RefCounted
@@ -44,7 +44,7 @@ func check_pending_honor_kill() -> void:
 				if not honor_rite.is_empty():
 					var entry = {"rite": honor_rite, "char": {}, "sultan_card": {}, "insight": true}
 					active_rites.append(entry)
-					_call("log", ["⚔ 荣誉杀戮的机会出现了——趁还来得及。"])
+					_call("log", ["⚔ 荣誉清除的机会出现了——趁还来得及。"])
 					_call("refresh")
 			active_rite.insight_kill_used = true
 			break

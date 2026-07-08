@@ -1,4 +1,4 @@
-# MainMenu.gd — 苏丹的游戏 主菜单
+# MainMenu.gd — 摄政王的游戏 主菜单
 
 extends Control
 
@@ -38,7 +38,7 @@ func _build():
 	add_child(cv)
 	
 	# 标题
-	var title = Label.new(); title.text = "🕌 苏丹的游戏"
+	var title = Label.new(); title.text = "🕌 摄政王的游戏"
 	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", C.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

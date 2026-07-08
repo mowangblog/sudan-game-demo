@@ -155,7 +155,7 @@ func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -
 	if label_text == "":
 		match slot_cfg.get("type", ""):
 			"character": label_text = "角色卡槽"
-			"sultan_card": label_text = "苏丹卡槽"
+			"sultan_card": label_text = "摄政王令槽"
 			"gold": label_text = "金币卡槽"
 			"item": label_text = "物品卡槽"
 			_: label_text = "卡牌槽位"
