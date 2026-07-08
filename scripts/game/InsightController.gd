@@ -75,7 +75,9 @@ func do_insight_with_card(card: PanelContainer) -> void:
 		card.queue_free()
 		await _do_think_animation()
 		var book_data = drag_data.get("data", {})
-		var rite = {"id":300,"name":book_data.get("name","读书"),"category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","label":"阅读者","required":true}],"book":book_data}
+		var attr_name = _book_attr_name(book_data.get("attr", ""))
+		var gain = book_data.get("gain", 0)
+		var rite = {"id":300,"name":book_data.get("name","读书"),"category":"insight","time_limit":1,"insight_trigger":{"type":"book","subtype":"READ"},"duration":1,"slots":[{"type":"character","label":"阅读者","required":true}],"book":book_data,"description":"阅读《%s》，使阅读者的%s永久提升%d点。" % [book_data.get("name","?"), attr_name, gain],"outcomes":{"success":{book_data.get("attr",""): gain}}}
 		var entry = {"rite": rite, "char": {}, "sultan_card": {}, "insight": true}
 		active_rites.append(entry)
 		_call("place_rite", [rite])
@@ -114,6 +116,19 @@ func do_insight_with_card(card: PanelContainer) -> void:
 	if not consumed:
 		card.visible = true
 		hand_layout.arrange()
+
+
+func _book_attr_name(attr: String) -> String:
+	match attr:
+		"social": return "社交"
+		"combat": return "战斗"
+		"wisdom": return "智慧"
+		"charm": return "魅力"
+		"stealth": return "隐匿"
+		"magic": return "魔力"
+		"physique": return "体魄"
+		"survival": return "生存"
+		_: return attr
 
 
 func show_bubble(text: String) -> void:

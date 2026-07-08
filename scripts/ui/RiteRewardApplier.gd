@@ -52,7 +52,9 @@ func apply_result(active_rite: Dictionary, result: Dictionary, context: Dictiona
 			_log.call("📖 逛了一圈，没买书。")
 
 	if result.success and result.rite.get("id", -1) == 300 and not active_rite.char.is_empty():
-		_apply_reading_reward(active_rite)
+		var reading_note = _apply_reading_reward(active_rite)
+		if reading_note != "":
+			notifications.append(reading_note)
 	return notifications
 
 
@@ -203,12 +205,13 @@ func give_book(book: Dictionary = {}) -> void:
 	_log.call("📖 购得《%s》" % book.get("name", "?"))
 
 
-func _apply_reading_reward(active_rite: Dictionary) -> void:
+func _apply_reading_reward(active_rite: Dictionary) -> String:
 	var book = active_rite.rite.get("book", {})
 	var attr_map = {"social":"soc","combat":"com","wisdom":"wis","charm":"cha","stealth":"ste","magic":"mag","physique":"phy","survival":"sur"}
 	var attr_key = attr_map.get(book.get("attr", ""), "")
 	var gain = book.get("gain", 0)
-	if attr_key != "" and active_rite.char.has("attributes"):
-		active_rite.char["attributes"][attr_key] = active_rite.char["attributes"].get(attr_key, 0) + gain
-		var ai = card_factory.AI.get(attr_key, attr_key)
-		_log.call("📖 %s 读了《%s》，%s+%d" % [active_rite.char.get("name", "?"), book.get("name", "?"), ai, gain])
+	if attr_key == "" or gain == 0:
+		return ""
+	active_rite.char["attributes"][attr_key] = active_rite.char["attributes"].get(attr_key, 0) + gain
+	var ai = card_factory.AI.get(attr_key, attr_key)
+	return "📖 %s %s+%d" % [active_rite.char.get("name", "?"), ai, gain]

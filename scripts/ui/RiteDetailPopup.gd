@@ -305,6 +305,9 @@ func _add_reward_info(rvb: VBoxContainer) -> void:
 	if out.has("evil"): text += "恶%+d " % out.evil
 	if out.has("hero"): text += "侠%+d " % out.hero
 	if out.has("spirit"): text += "灵%+d " % out.spirit
+	for attr in ["phy","com","sur","soc","cha","ste","wis","mag"]:
+		if out.has(attr):
+			text += "%s%+d " % [AN.get(attr, attr), out[attr]]
 	rvb.add_child(_label(text, 12, C.get("GREEN", Color("4a9a3a"))))
 	rvb.add_child(HSeparator.new())
 
