@@ -309,10 +309,16 @@ func _add_reward_info(rvb: VBoxContainer) -> void:
 	rvb.add_child(HSeparator.new())
 
 	var fail_out = rite.get("outcomes", {}).get("fail", {})
-	var fail_text = fail_out.get("narrative", fail_out.get("description", "无特殊惩罚"))
-	if fail_text.length() > 60:
-		fail_text = fail_text.substr(0, 60) + "……"
-	var fail_label = _label("失败：" + fail_text, 11, C.get("DIM", Color("a09070")))
+	var fail_text = "失败后果："
+	if fail_out.has("gold"): fail_text += "💰%+d " % fail_out.gold
+	if fail_out.has("power"): fail_text += "权%+d " % fail_out.power
+	if fail_out.has("good"): fail_text += "善%+d " % fail_out.good
+	if fail_out.has("evil"): fail_text += "恶%+d " % fail_out.evil
+	if fail_out.has("hero"): fail_text += "侠%+d " % fail_out.hero
+	if fail_out.has("spirit"): fail_text += "灵%+d " % fail_out.spirit
+	if fail_text == "失败后果：":
+		fail_text = "失败：无特殊惩罚"
+	var fail_label = _label(fail_text, 11, C.get("DIM", Color("a09070")))
 	fail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rvb.add_child(fail_label)
 
