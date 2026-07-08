@@ -62,6 +62,19 @@ func return_sultan_card(card_id: String) -> void:
 			return
 
 
+# 令池剩余统计：{type: {rank: count}}，供进度面板
+func get_card_pool_stats() -> Dictionary:
+	var stats: Dictionary = {}
+	for tkey in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
+		stats[tkey] = {"STONE": 0, "BRONZE": 0, "SILVER": 0, "GOLD": 0}
+	for card in _card_pool:
+		var t = card.get("type", "")
+		var r = card.get("rank", "")
+		if stats.has(t) and stats[t].has(r):
+			stats[t][r] += 1
+	return stats
+
+
 ## === 数据查询 ===
 func get_character_by_id(char_id: String) -> Dictionary:
 	for c in characters:

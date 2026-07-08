@@ -623,7 +623,7 @@ func _on_sorceress_icon_pressed() -> void:
 				),
 			func():
 				_sorceress_scene.		func():
-			_log("存活 %d 天 | 折令进度 0/28 | 换令余 %d 次" % [TurnManager.current_day, GameManager.swap_tokens])
+			_sorceress_scene.open_for_progress()
 		,
 			func():
 				pass

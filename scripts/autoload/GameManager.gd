@@ -10,6 +10,7 @@ var is_game_over: bool = false
 var renovation_done: bool = false
 var has_drawn_first_card: bool = false  # 是否已抽过第一张令
 var swap_tokens: int = 7               # 换令次数
+var consumed_cards: Array = []         # 已折断的摄政王令记录（type/rank/name），供进度面板
 
 
 func _ready() -> void:
@@ -24,6 +25,7 @@ func start_game() -> void:
 	renovation_done = false
 	has_drawn_first_card = false
 	swap_tokens = 7
+	consumed_cards = []
 	ResourceManager.reset()
 	TurnManager.reset()
 	EventBus.game_started.emit()
@@ -67,6 +69,7 @@ func consume_sultan_card(rite_id: int) -> void:
 		return
 	var card_id = active_sultan_card.id
 	var card_name = active_sultan_card.name
+	consumed_cards.append(active_sultan_card.duplicate())  # 记录折断，供进度面板
 	active_sultan_card = {}
 	sultan_card_days_left = 0
 	EventBus.sultan_card_consumed.emit(card_id)

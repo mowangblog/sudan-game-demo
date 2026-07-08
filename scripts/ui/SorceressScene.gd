@@ -46,6 +46,12 @@ var _card_box: CardBox
 var _swap_card: PanelContainer = null        # 换令时展示的只读当前令
 var _swap_on_confirm: Callable = func(): pass  # 换令确认回调（供卡牌点击复用）
 
+# ---- 进度面板 ----
+var _progress_panel: ScrollContainer = null    # 进度面板（懒构建，复用对话区空间）
+var _progress_inner: VBoxContainer = null
+var _greeting_cbs: Dictionary = {}            # 缓存问候页回调，供进度页「返回」复用
+var _noop: Callable = func(): pass
+
 # ---- 品级讲解状态 ----
 var _intro_types_shown: Array = []  # 已展示的类型
 var _intro_current_type: String = ""
@@ -205,6 +211,7 @@ func open_for_draw(card_data: Dictionary, is_first: bool, on_complete: Callable)
 	visible = true
 	_card_box.reset_box()
 	_clear_swap_card()
+	_hide_progress_panel()
 
 	if _is_first_draw:
 		_show_first_time_intro()
@@ -213,9 +220,11 @@ func open_for_draw(card_data: Dictionary, is_first: bool, on_complete: Callable)
 
 
 func open_for_greeting(on_draw: Callable, on_swap: Callable, on_progress: Callable, on_chat: Callable) -> void:
+	_greeting_cbs = {"draw": on_draw, "swap": on_swap, "progress": on_progress, "chat": on_chat}
 	visible = true
 	_card_box.reset_box()
 	_clear_swap_card()
+	_hide_progress_panel()
 	_clear_buttons()
 	_set_dialogue(_dialogues.get("greeting", {}).get("default", "尊贵的阁下……有什么我可以效劳的吗？"))
 
@@ -230,6 +239,7 @@ func open_for_swap(swap_tokens: int, on_confirm: Callable) -> void:
 	visible = true
 	_card_box.reset_box()
 	_clear_swap_card()
+	_hide_progress_panel()
 	_clear_buttons()
 	_swap_on_confirm = on_confirm
 	if swap_tokens <= 0:
@@ -539,6 +549,101 @@ func _on_leave() -> void:
 	visible = false
 	_card_box.reset_box()
 	_clear_swap_card()
+	_hide_progress_panel()
 	if _phase == "draw_box" or _phase == "card_reveal":
 		# 离开抽令流程但令已抽，需要通知主场景刷新
 		_on_complete.call(_current_card_data)
+
+
+# ---- 进度面板（Phase 4） ----
+func open_for_progress() -> void:
+	visible = true
+	_stop_typing()
+	_card_box.reset_box()
+	_clear_swap_card()
+	_clear_buttons()
+	_dialogue_text.visible = false
+	_show_progress_panel()
+	_add_btn("返回", func():
+		_hide_progress_panel()
+		open_for_greeting(
+			_greeting_cbs.get("draw", _noop),
+			_greeting_cbs.get("swap", _noop),
+			_greeting_cbs.get("progress", _noop),
+			_greeting_cbs.get("chat", _noop)
+		)
+	)
+
+
+func _ensure_progress_panel() -> void:
+	if is_instance_valid(_progress_panel):
+		return
+	_progress_panel = ScrollContainer.new()
+	_progress_panel.name = "ProgressPanel"
+	_progress_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_progress_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dialogue_area.add_child(_progress_panel)
+	_progress_inner = VBoxContainer.new()
+	_progress_inner.add_theme_constant_override("separation", 4)
+	_progress_inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_progress_panel.add_child(_progress_inner)
+
+
+func _show_progress_panel() -> void:
+	_ensure_progress_panel()
+	_progress_panel.visible = true
+	for c in _progress_inner.get_children():
+		c.queue_free()
+	var lines = _build_progress_text().split("\n")
+	for line in lines:
+		var lbl = Label.new()
+		lbl.text = line
+		lbl.add_theme_font_size_override("font_size", 12)
+		if line.begins_with("——"):
+			lbl.add_theme_color_override("font_color", C.GOLD_HI)
+		else:
+			lbl.add_theme_color_override("font_color", C.TEXT)
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_progress_inner.add_child(lbl)
+
+
+func _hide_progress_panel() -> void:
+	if is_instance_valid(_progress_panel):
+		_progress_panel.visible = false
+	_dialogue_text.visible = true
+
+
+func _build_progress_text() -> String:
+	var day = TurnManager.current_day
+	var broken: Array = GameManager.consumed_cards
+	var total = DataManager.sultan_cards.size()
+	var lines: PackedStringArray = []
+	lines.append("—— 当前进度 ——")
+	lines.append("已存活 %d 天" % day)
+	lines.append("折令 %d / %d" % [broken.size(), total])
+	lines.append("")
+	lines.append("—— 已折断的摄政王令 ——")
+	if broken.is_empty():
+		lines.append("（尚无）")
+	else:
+		for c in broken:
+			var tn = TN.get(c.get("type", ""), "?")
+			var rg = RG.get(c.get("rank", ""), "★")
+			lines.append("%s %s  ✓" % [rg, tn])
+	lines.append("")
+	lines.append("—— 令池剩余 ——")
+	var stats = DataManager.get_card_pool_stats()
+	for tkey in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
+		var tn = TN.get(tkey, "?")
+		var s = stats.get(tkey, {})
+		lines.append("%s：石%d 铜%d 银%d 金%d" % [tn, s.get("STONE", 0), s.get("BRONZE", 0), s.get("SILVER", 0), s.get("GOLD", 0)])
+	lines.append("")
+	var cur = GameManager.active_sultan_card
+	lines.append("—— 当前手中 ——")
+	if cur.is_empty():
+		lines.append("（无摄政王令）")
+	else:
+		var tn = TN.get(cur.get("type", ""), "?")
+		var rg = RG.get(cur.get("rank", ""), "★")
+		lines.append("%s%s  （剩余 %d 天）" % [rg, tn, GameManager.sultan_card_days_left])
+	return lines.join("\n")
