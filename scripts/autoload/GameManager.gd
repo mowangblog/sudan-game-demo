@@ -20,6 +20,7 @@ var renovation_done: bool = false  # 装修完成标记(仅一次)
 
 func _ready() -> void:
 	EventBus.day_started.connect(_on_day_started)
+	EventBus.day_ended.connect(_on_day_ended)
 
 
 ## === 游戏启动 ===
@@ -44,7 +45,7 @@ func _draw_sultan_card() -> void:
 		return
 
 	active_sultan_card = card
-	sultan_card_days_left = 8
+	sultan_card_days_left = 7
 	state = GameState.DAY_ACTIVE
 
 	EventBus.sultan_card_drawn.emit(card)
@@ -57,17 +58,20 @@ func _on_day_started(day: int) -> void:
 		return
 	if state == GameState.INIT:
 		return
-
-	# 摄政王令倒计时 -1
-	sultan_card_days_left -= 1
-	if not active_sultan_card.is_empty():
-		EventBus.sultan_card_countdown_tick.emit(active_sultan_card.get("id", ""), sultan_card_days_left)
-
 	print("[GameManager] Day %d — Sultan card days left: %d" % [day, sultan_card_days_left])
 
 	# 检查是否逾期
 	if sultan_card_days_left <= 0 and _is_card_unspent():
 		_trigger_death()
+
+
+## === 每日结束 ===
+func _on_day_ended(day: int) -> void:
+	if state == GameState.GAME_OVER:
+		return
+	sultan_card_days_left -= 1
+	if not active_sultan_card.is_empty():
+		EventBus.sultan_card_countdown_tick.emit(active_sultan_card.get("id", ""), sultan_card_days_left)
 
 
 ## === 摄政王令消耗 ===
