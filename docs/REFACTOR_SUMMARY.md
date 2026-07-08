@@ -10,7 +10,7 @@
 |------|--------|------|
 | MainScene | 1 个文件 1129 行 | 654 行 |
 | 新增/强化模块 | 0 | 9 个独立协作模块 |
-| 主要风险区 | 手牌、仪式、结算、俺寻思混在 MainScene | 已拆出可单独演进的模块 |
+| 主要风险区 | 手牌、仪式、结算、灵光一现混在 MainScene | 已拆出可单独演进的模块 |
 | 奖励应用 | 分散在 SettlementScreen / MainScene / ResourceManager | 结算后效果集中到 RiteRewardApplier |
 
 ## 当前模块边界
@@ -18,16 +18,16 @@
 | 模块 | 行数 | 职责 |
 |------|------|------|
 | `MainScene.gd` | 654 | 场景组装、系统协调、少量拖放胶水 |
-| `CardFactory.gd` | 192 | 角色卡、苏丹卡、资源卡、书籍卡创建 |
+| `CardFactory.gd` | 192 | 角色卡、摄政王令、资源卡、书籍卡创建 |
 | `HandLayoutManager.gd` | 118 | 手牌排列、排序、资源自动合并 |
-| `PopupManager.gd` | 159 | 角色/苏丹卡/资源/游戏结束弹窗 |
+| `PopupManager.gd` | 159 | 角色/摄政王令/资源/游戏结束弹窗 |
 | `ResourceCardManager.gd` | 159 | 金币/情报等资源卡创建、拆分、刷新、同步 |
 | `MapRitePanel.gd` | 203 | 地图仪式按钮、位置、倒计时、可见性 |
-| `StatusBar.gd` | 71 | 顶部日期、声望、苏丹卡倒计时 |
+| `StatusBar.gd` | 71 | 顶部日期、声望、摄政王令倒计时 |
 | `RiteDetailPopup.gd` | 365 | 仪式详情弹窗、槽位创建、拖入、确认/取消 |
 | `RiteSettlementController.gd` | 81 | active rites 的逐个结算推进 |
 | `RiteRewardApplier.gd` | 193 | 结算后奖励/消耗/完成标记应用 |
-| `InsightController.gd` | 237 | 俺寻思、书籍、特殊仪式生成 |
+| `InsightController.gd` | 237 | 灵光一现、书籍、特殊仪式生成 |
 | `SettlementScreen.gd` | 587 | 骰子动画、检定过程、结算文本、返回 result |
 
 ## 已完成阶段
@@ -49,15 +49,15 @@
 
 - `RiteSettlementController` 管 active rites 的逐个推进。
 - `SettlementScreen` 只返回 result，不再决定奖励怎么进手牌。
-- 苏丹卡消费、装修完成标记已从队列控制器迁到奖励应用层。
+- 摄政王令消费、装修完成标记已从队列控制器迁到奖励应用层。
 
-### Phase 5：俺寻思/书店特殊逻辑
+### Phase 5：灵光一现/书店特殊逻辑
 
 - `InsightController` 负责：
-  - 拖入俺寻思后的特殊仪式生成
+  - 拖入灵光一现后的特殊仪式生成
   - 书籍阅读仪式
   - 书店买书预处理
-  - 荣誉杀戮等 insight 入口
+  - 荣誉清除等 insight 入口
 - MainScene 只保留 drop 协调。
 
 ### Phase 6：数据效果系统收口
@@ -68,7 +68,7 @@
   - roll rewards 情报
   - 书籍获得
   - 读书属性增长
-  - 仪式队列中的金币卡/苏丹卡消耗记录
+  - 仪式队列中的金币卡/摄政王令消耗记录
   - 装修完成标记
 - `SettlementPopup` 旧弹窗已不再直接应用资源。
 - `SettlementScreen` 不再从 outcomes 中提取金币，只负责骰子与文本。
@@ -80,7 +80,7 @@
 3. `SettlementScreen` 的边界是“检定过程 + 结果返回”，不是奖励系统。
 4. 结算后给东西、扣东西、改声望，优先进入 `RiteRewardApplier`。
 5. 情报卡显示与手牌同步交给 `ResourceCardManager`，不要在奖励层手写卡牌刷新逻辑。
-6. 俺寻思产生的新仪式入口继续放在 `InsightController`，避免 MainScene 回涨。
+6. 灵光一现产生的新仪式入口继续放在 `InsightController`，避免 MainScene 回涨。
 
 ## 近期提交
 
@@ -192,7 +192,7 @@ bc60f49 refactor: extract resource card manager
    - 放入情报后骰数增加、重投次数增加。
    - 取消仪式时情报回手牌。
    - 结算后情报从手牌消失，资源数量同步。
-   - 书店/扩建/俺寻思特殊仪式不因 item 槽破坏。
+   - 书店/扩建/灵光一现特殊仪式不因 item 槽破坏。
 
 ## 风险
 

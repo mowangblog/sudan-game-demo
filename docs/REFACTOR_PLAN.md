@@ -23,7 +23,7 @@ Game (场景根，<300行)
  ├── MapPanel（地点网格 + 仪式按钮）
  ├── HandZone（手牌区）
  │    ├── HandLayoutManager    ← 排列/折叠/排序
- │    ├── CardFactory           ← 角色卡/苏丹卡/资源卡创建
+ │    ├── CardFactory           ← 角色卡/摄政王令/资源卡创建
  │    ├── CardDragController    ← 拖放到槽位/合并/拆分
  │    └── ResourceCardManager   ← 金币卡叠加/拆分/同步
  ├── RitePanel（仪式详情 + 槽位）
