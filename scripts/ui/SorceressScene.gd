@@ -337,22 +337,11 @@ func _show_first_time_intro() -> void:
 
 
 func _show_intro_buttons() -> void:
-	# 一层：四种令按钮 + 单个「不同令的品级」入口 + 抽令（保持精简，品级详情在二层展开）
+	# 一层：只保留「不同令的品级」入口 + 抽令；四种令按钮挪进二层菜单
 	_clear_buttons()
-	var type_intro = _dialogues.get("type_introduction", {})
-	for type_key in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
-		var tdata = type_intro.get(type_key, {})
-		_add_btn(tdata.get("name", TN.get(type_key, "?")) + "令", func(): _show_type_detail(type_key))
 	_add_btn("不同令的品级", func(): _show_rank_type_menu())
 	var draw_btn_data = _dialogues.get("entry_buttons", {})
 	_add_btn(draw_btn_data.get("draw", "直接抽取摄政王令"), func(): _show_draw_prompt())
-
-
-func _show_type_detail(type_key: String) -> void:
-	var type_intro = _dialogues.get("type_introduction", {})
-	var tdata = type_intro.get(type_key, {})
-	_set_dialogue(tdata.get("desc", ""))
-	_show_intro_buttons()   # 一层按钮保持常驻
 
 
 func _show_rank_type_menu() -> void:
