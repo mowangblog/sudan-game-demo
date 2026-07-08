@@ -310,6 +310,8 @@ func _add_reward_info(rvb: VBoxContainer) -> void:
 
 	var fail_out = rite.get("outcomes", {}).get("fail", {})
 	var fail_text = fail_out.get("narrative", fail_out.get("description", "无特殊惩罚"))
+	if fail_text.length() > 60:
+		fail_text = fail_text.substr(0, 60) + "……"
 	var fail_label = _label("失败：" + fail_text, 11, C.get("DIM", Color("a09070")))
 	fail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rvb.add_child(fail_label)
