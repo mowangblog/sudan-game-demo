@@ -337,13 +337,13 @@ func _show_first_time_intro() -> void:
 
 
 func _show_intro_buttons() -> void:
-	# 四种令 + 各自的「品级」按钮（常驻），最后接抽令按钮
+	# 一层：四种令按钮 + 单个「不同令的品级」入口 + 抽令（保持精简，品级详情在二层展开）
 	_clear_buttons()
 	var type_intro = _dialogues.get("type_introduction", {})
 	for type_key in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
 		var tdata = type_intro.get(type_key, {})
-		var tname = tdata.get("name", TN.get(type_key, "?"))
-		_add_type_rank_row(type_key, tname)
+		_add_btn(tdata.get("name", TN.get(type_key, "?")) + "令", func(): _show_type_detail(type_key))
+	_add_btn("不同令的品级", func(): _show_rank_type_menu())
 	var draw_btn_data = _dialogues.get("entry_buttons", {})
 	_add_btn(draw_btn_data.get("draw", "直接抽取摄政王令"), func(): _show_draw_prompt())
 
@@ -352,27 +352,30 @@ func _show_type_detail(type_key: String) -> void:
 	var type_intro = _dialogues.get("type_introduction", {})
 	var tdata = type_intro.get(type_key, {})
 	_set_dialogue(tdata.get("desc", ""))
-	_show_intro_buttons()   # 四种令 + 品级按钮保持常驻
+	_show_intro_buttons()   # 一层按钮保持常驻
 
 
-func _show_type_rank_menu(type_key: String) -> void:
+func _show_rank_type_menu() -> void:
+	# 二层：点击「不同令的品级」后才出现；四种令各一个按钮 + 返回（按钮常驻）
 	_phase = "rank_intro"
 	_clear_buttons()
-	var type_name = TN.get(type_key, "?")
-	var intro = _dialogues.get("rank_quality_intro", "")
-	_set_dialogue(intro + "\n\n—— %s令的四个品级（点击查看详解） ——" % type_name)
-	for r in ["STONE", "BRONZE", "SILVER", "GOLD"]:
-		var label = "%s %s" % [RN.get(r, "?"), RG.get(r, "")]
-		_add_btn(label, func(): _show_rank_explanation(type_key, r))
+	_set_dialogue(_dialogues.get("rank_quality_intro", "") + "\n\n—— 选择一种令，查看它的四个品级 ——")
+	for type_key in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
+		var tname = TN.get(type_key, "?")
+		_add_btn("%s令的品级" % tname, func(): _show_type_ranks(type_key))
 	_add_btn("返回", func(): _show_intro_buttons())
 
 
-func _show_rank_explanation(type_key: String, rank: String) -> void:
-	# 不清空按钮：四个品级按钮保持常驻，便于对照查看
+func _show_type_ranks(type_key: String) -> void:
+	# 不清空按钮：二层四个品级按钮保持常驻，点击不同令只切换下方说明
 	var type_name = TN.get(type_key, "?")
-	var rank_data = _dialogues.get("rank_introduction", {}).get(rank, {})
-	var text = rank_data.get("prefix", "").replace("{type}", type_name)
-	_set_dialogue(text)
+	var parts: PackedStringArray = []
+	parts.append("—— %s令的四个品级 ——" % type_name)
+	for r in ["STONE", "BRONZE", "SILVER", "GOLD"]:
+		var rd = _dialogues.get("rank_introduction", {}).get(r, {})
+		var t = rd.get("short", "").replace("{type}", type_name)
+		parts.append("%s %s  %s" % [RN.get(r, ""), RG.get(r, ""), t])
+	_set_dialogue("\n".join(parts))
 
 
 # ---- 抽令流程 ----
@@ -549,15 +552,6 @@ func _make_btn(text: String, callback: Callable) -> Button:
 
 func _add_btn(text: String, callback: Callable) -> void:
 	_btn_container.add_child(_make_btn(text, callback))
-
-
-func _add_type_rank_row(type_key: String, tname: String) -> void:
-	var hb = HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 6)
-	hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hb.add_child(_make_btn("%s令" % tname, func(): _show_type_detail(type_key)))
-	hb.add_child(_make_btn("· %s的品级" % tname, func(): _show_type_rank_menu(type_key)))
-	_btn_container.add_child(hb)
 
 
 func _on_leave() -> void:
