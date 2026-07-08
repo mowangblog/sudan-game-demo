@@ -622,9 +622,8 @@ func _on_sorceress_icon_pressed() -> void:
 					GameManager.swap_sultan_card()
 				),
 			func():
-				_sorceress_scene.		func():
-			_sorceress_scene.open_for_progress()
-		,
+				_sorceress_scene.open_for_progress()
+			,
 			func():
 				pass
 		)
