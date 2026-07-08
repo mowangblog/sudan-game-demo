@@ -745,15 +745,30 @@ func _await_event_choice(ev: Dictionary) -> int:
 
 func _apply_event_outcome(outcome: Dictionary) -> void:
 	if outcome.is_empty(): return
+	var nts: Array[String] = []
 	if outcome.has("gold"):
-		ResourceManager.add_gold(outcome.gold)
+		var v = outcome.gold
+		if v > 0:
+			resource_card_manager.give_gold_cards(v)
+			nts.append("💰 %+d金币" % v)
+		elif v < 0:
+			ResourceManager.add_gold(v)
+			nts.append("💰 %d金币" % v)
 	if outcome.has("good"):
 		ResourceManager.modify_reputation("good", outcome.good)
+		nts.append("名望 %+d" % outcome.good)
 	if outcome.has("evil"):
 		ResourceManager.modify_reputation("evil", outcome.evil)
+		nts.append("恶名 %+d" % outcome.evil)
 	if outcome.has("power"):
 		ResourceManager.modify_reputation("power", outcome.power)
+		nts.append("权势 %+d" % outcome.power)
 	if outcome.has("hero"):
 		ResourceManager.modify_reputation("hero", outcome.hero)
+		nts.append("义名 %+d" % outcome.hero)
 	if outcome.has("spirit"):
 		ResourceManager.modify_reputation("spirit", outcome.spirit)
+		nts.append("灵知 %+d" % outcome.spirit)
+	if nts.size() > 0:
+		_show_toasts(nts)
+	_refresh()
