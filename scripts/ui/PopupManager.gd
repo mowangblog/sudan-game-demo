@@ -148,8 +148,12 @@ func show_game_over():
 	sub.add_theme_font_size_override("font_size", 13); sub.add_theme_color_override("font_color", _C.get("DIM", Color("a09070")))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(sub)
 
-	var rb = Button.new(); rb.text = "🔄 重开一局"; rb.custom_minimum_size = Vector2(160, 40)
+	var rb = Button.new(); rb.text = "🏠 返回主菜单"; rb.custom_minimum_size = Vector2(160, 40)
 	rb.add_theme_font_size_override("font_size", 14); vb.add_child(rb)
+	rb.pressed.connect(func():
+		popup.queue_free()
+		_root.get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	)
 
 	_root.add_child(popup)
 
