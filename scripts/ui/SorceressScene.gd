@@ -15,6 +15,7 @@ const C = {
 const TC = {"LUST": C.LUST, "LUXURY": C.LUXURY, "CONQUEST": C.CONQUEST, "MURDER": C.MURDER}
 const TN = {"LUST": "欢愉", "LUXURY": "奢靡", "CONQUEST": "征伐", "MURDER": "杀戮"}
 const RG = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}
+const RN = {"STONE": "岩石", "BRONZE": "青铜", "SILVER": "白银", "GOLD": "黄金"}
 const SC = {
 	"STONE": Color("2a2018"), "BRONZE": Color("3a2e18"),
 	"SILVER": Color("4a4028"), "GOLD": Color("5a5038"),
@@ -51,10 +52,6 @@ var _progress_panel: ScrollContainer = null    # 进度面板（懒构建，复�
 var _progress_inner: VBoxContainer = null
 var _greeting_cbs: Dictionary = {}            # 缓存问候页回调，供进度页「返回」复用
 var _noop: Callable = func(): pass
-
-# ---- 品级讲解状态 ----
-var _intro_types_shown: Array = []  # 已展示的类型
-var _intro_current_type: String = ""
 
 
 func _ready() -> void:
@@ -334,43 +331,48 @@ func _clear_swap_card() -> void:
 # ---- 首次抽令讲解 ----
 func _show_first_time_intro() -> void:
 	_phase = "type_intro"
-	_intro_types_shown = []
-	_intro_current_type = ""
 	_clear_buttons()
 	_set_dialogue(_dialogues.get("rank_introduction", {}).get("first_time_intro", ""))
-	# 显示4种类型按钮
+	_show_intro_buttons()
+
+
+func _show_intro_buttons() -> void:
+	# 四种令 + 各自的「品级」按钮（常驻），最后接抽令按钮
+	_clear_buttons()
 	var type_intro = _dialogues.get("type_introduction", {})
-	var draw_btn_data = _dialogues.get("entry_buttons", {})
 	for type_key in ["LUST", "LUXURY", "CONQUEST", "MURDER"]:
 		var tdata = type_intro.get(type_key, {})
-		var label = "%s令 — %s" % [tdata.get("name", TN.get(type_key, "?")), tdata.get("desc", "")]
-		label = label.left(40)  # 截断长文本做按钮
-		_add_btn(tdata.get("name", TN.get(type_key, "?")) + "令", func(): _show_type_detail(type_key))
-	# 品级讲解按钮
-	_add_btn("不同令的品级", func(): _show_rank_quality_intro())
-	# 「开始抽令」按钮（跳过讲解）
+		var tname = tdata.get("name", TN.get(type_key, "?"))
+		_add_type_rank_row(type_key, tname)
+	var draw_btn_data = _dialogues.get("entry_buttons", {})
 	_add_btn(draw_btn_data.get("draw", "直接抽取摄政王令"), func(): _show_draw_prompt())
 
 
 func _show_type_detail(type_key: String) -> void:
 	var type_intro = _dialogues.get("type_introduction", {})
 	var tdata = type_intro.get(type_key, {})
-	_clear_buttons()
 	_set_dialogue(tdata.get("desc", ""))
-	_intro_types_shown.append(type_key)
-	# 继续查看其他类型或直接抽令
-	var remaining = ["LUST", "LUXURY", "CONQUEST", "MURDER"].filter(func(k): return not k in _intro_types_shown)
-	for k in remaining:
-		var kd = type_intro.get(k, {})
-		_add_btn(kd.get("name", TN.get(k, "?")) + "令", func(): _show_type_detail(k))
-	_add_btn("不同令的品级", func(): _show_rank_quality_intro())
-	_add_btn("我知道了，抽令吧", func(): _show_draw_prompt())
+	_show_intro_buttons()   # 四种令 + 品级按钮保持常驻
 
 
-func _show_rank_quality_intro() -> void:
+func _show_type_rank_menu(type_key: String) -> void:
+	_phase = "rank_intro"
 	_clear_buttons()
-	_set_dialogue(_dialogues.get("rank_quality_intro", ""))
-	_add_btn("我知道了，抽令吧", func(): _show_draw_prompt())
+	var type_name = TN.get(type_key, "?")
+	var intro = _dialogues.get("rank_quality_intro", "")
+	_set_dialogue(intro + "\n\n—— %s令的四个品级（点击查看详解） ——" % type_name)
+	for r in ["STONE", "BRONZE", "SILVER", "GOLD"]:
+		var label = "%s %s" % [RN.get(r, "?"), RG.get(r, "")]
+		_add_btn(label, func(): _show_rank_explanation(type_key, r))
+	_add_btn("返回", func(): _show_intro_buttons())
+
+
+func _show_rank_explanation(type_key: String, rank: String) -> void:
+	# 不清空按钮：四个品级按钮保持常驻，便于对照查看
+	var type_name = TN.get(type_key, "?")
+	var rank_data = _dialogues.get("rank_introduction", {}).get(rank, {})
+	var text = rank_data.get("prefix", "").replace("{type}", type_name)
+	_set_dialogue(text)
 
 
 # ---- 抽令流程 ----
@@ -516,7 +518,7 @@ func _clear_buttons() -> void:
 		child.queue_free()
 
 
-func _add_btn(text: String, callback: Callable) -> void:
+func _make_btn(text: String, callback: Callable) -> Button:
 	var btn = Button.new()
 	btn.text = text
 	btn.add_theme_font_size_override("font_size", 12)
@@ -542,7 +544,20 @@ func _add_btn(text: String, callback: Callable) -> void:
 	btn.add_theme_stylebox_override("hover", hover_sb)
 
 	btn.pressed.connect(callback)
-	_btn_container.add_child(btn)
+	return btn
+
+
+func _add_btn(text: String, callback: Callable) -> void:
+	_btn_container.add_child(_make_btn(text, callback))
+
+
+func _add_type_rank_row(type_key: String, tname: String) -> void:
+	var hb = HBoxContainer.new()
+	hb.add_theme_constant_override("separation", 6)
+	hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hb.add_child(_make_btn("%s令" % tname, func(): _show_type_detail(type_key)))
+	hb.add_child(_make_btn("· %s的品级" % tname, func(): _show_type_rank_menu(type_key)))
+	_btn_container.add_child(hb)
 
 
 func _on_leave() -> void:
