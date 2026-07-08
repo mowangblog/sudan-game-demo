@@ -359,14 +359,15 @@ func _back_to_greeting() -> void:
 
 
 func _show_type_ranks(type_key: String) -> void:
-	# 不清空按钮：四个令按钮常驻；四个品级合并成一段说明
+	# 不清空按钮：四个令按钮常驻；令牌描述 + 品级描述合并成一段
 	var type_name = TN.get(type_key, "?")
+	var type_desc = _dialogues.get("type_introduction", {}).get(type_key, {}).get("desc", "")
 	var ranks = _dialogues.get("rank_introduction", {})
 	var segs: PackedStringArray = []
 	for r in ["STONE", "BRONZE", "SILVER", "GOLD"]:
 		var t = ranks.get(r, {}).get("short", "").replace("{type}", type_name)
 		segs.append("%s%s·%s" % [RN.get(r, ""), RG.get(r, ""), t])
-	var merged = "—— %s令 · 四个品级（由低到高） ——\n%s" % [type_name, "  ｜  ".join(segs)]
+	var merged = "%s\n\n—— %s令 · 四个品级（由低到高） ——\n%s" % [type_desc, type_name, "  ｜  ".join(segs)]
 	_set_dialogue(merged)
 
 
