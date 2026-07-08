@@ -58,6 +58,8 @@ var sort_btn: Button
 # ============ 状态 ============
 var active_rites: Array = []
 var log_msgs: Array[String] = []
+var _toast_queue: Array[String] = []
+var _toast_running: bool = false
 var _map_area: Control
 var _rite_seed: int = 42
 var _all_rites: Array = []
@@ -688,8 +690,18 @@ func _log(msg:String) -> void:
 
 
 func _show_toasts(nts: Array):
-	if nts.is_empty(): return
-	var text = nts.pop_front()
+	for t in nts:
+		if t != "":
+			_toast_queue.append(t)
+	if _toast_running: return
+	_play_next_toast()
+
+func _play_next_toast():
+	if _toast_queue.is_empty():
+		_toast_running = false
+		return
+	_toast_running = true
+	var text = _toast_queue.pop_front()
 	var lbl = Label.new()
 	lbl.text = text
 	lbl.add_theme_font_size_override("font_size", 13)
@@ -708,7 +720,7 @@ func _show_toasts(nts: Array):
 	t.parallel().tween_property(lbl, "modulate:a", 0, 0.15)
 	t.tween_callback(func():
 		if is_instance_valid(lbl): lbl.queue_free()
-		_show_toasts(nts)
+		_play_next_toast()
 	)
 
 
@@ -745,4 +757,3 @@ func _apply_event_outcome(outcome: Dictionary) -> void:
 		ResourceManager.modify_reputation("hero", outcome.hero)
 	if outcome.has("spirit"):
 		ResourceManager.modify_reputation("spirit", outcome.spirit)
-
