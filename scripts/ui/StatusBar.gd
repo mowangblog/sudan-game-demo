@@ -1,21 +1,24 @@
 # StatusBar.gd
-# Top bar for day/week, gold dice, and reputation counters.
+# Top bar with day, countdown gauge, gold dice, and reputation counters.
 
 class_name StatusBar
 extends RefCounted
+
+const GAUGE_TOTAL := 7
 
 var root: Control
 var C: Dictionary = {}
 
 var _bar: PanelContainer
 var day_lbl: Label
-var week_lbl: Label
 var gold_dice_lbl: Label
+var gauge_blocks: Array[ColorRect] = []
 var good_lbl: PanelContainer
 var evil_lbl: PanelContainer
 var power_lbl: PanelContainer
 var hero_lbl: PanelContainer
 var spirit_lbl: PanelContainer
+
 
 func setup(p_root: Control, constants: Dictionary) -> void:
 	root = p_root
@@ -39,15 +42,25 @@ func build() -> PanelContainer:
 	outer.add_theme_constant_override("separation", 0)
 	_bar.add_child(outer)
 
-	# 左侧：日期 + 金骰
+	# 左侧：日期 + 倒计时刻度槽 + 金骰
 	var left = HBoxContainer.new(); left.add_theme_constant_override("separation", 8)
 	outer.add_child(left)
 	day_lbl = _l("第1天", 13, C.get("TEXT", Color("f0e6c8")))
 	left.add_child(day_lbl)
 	left.add_child(_sep())
-	week_lbl = _l("第1周", 13, C.get("DIM", Color("a09070")))
-	left.add_child(week_lbl)
+
+	# 倒计时刻度槽
+	var gauge = HBoxContainer.new(); gauge.add_theme_constant_override("separation", 2)
+	gauge.name = "CountdownGauge"
+	left.add_child(gauge)
+	for i in range(GAUGE_TOTAL):
+		var block = ColorRect.new(); block.name = "Block%d" % i
+		block.custom_minimum_size = Vector2(8, 16)
+		block.color = Color("333333")
+		gauge_blocks.append(block)
+		gauge.add_child(block)
 	left.add_child(_sep())
+
 	gold_dice_lbl = _l("🎲金骰:3", 13, C.get("GOLD_HI", Color("e8d48b")))
 	left.add_child(gold_dice_lbl)
 
@@ -73,13 +86,30 @@ func refresh() -> void:
 	if not is_instance_valid(day_lbl):
 		return
 	day_lbl.text = "第%d天" % TurnManager.current_day
-	week_lbl.text = "第%d周" % TurnManager.current_week
 	gold_dice_lbl.text = "🎲金骰:%d" % ResourceManager.gold_dice
+	_refresh_gauge()
 	_good(good_lbl, ResourceManager.reputations.good)
 	_good(evil_lbl, ResourceManager.reputations.evil)
 	_good(power_lbl, ResourceManager.reputations.power)
 	_good(hero_lbl, ResourceManager.reputations.hero)
 	_good(spirit_lbl, ResourceManager.reputations.spirit)
+
+
+func _refresh_gauge() -> void:
+	if gauge_blocks.is_empty():
+		return
+	var days_left := GameManager.sultan_card_days_left
+	for i in range(GAUGE_TOTAL):
+		var block := gauge_blocks[i]
+		if i < days_left:
+			if days_left >= 5:
+				block.color = Color("4a9a3a")       # 绿色 从容
+			elif days_left >= 3:
+				block.color = Color("c8a84e")       # 金色 紧张
+			else:
+				block.color = Color("cc3333")       # 红色 危急
+		else:
+			block.color = Color("333333")           # 暗灰 已消耗
 
 
 func _good(chip: PanelContainer, val: int) -> void:
