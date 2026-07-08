@@ -22,6 +22,7 @@ func start_game() -> void:
 	ResourceManager.reset()
 	TurnManager.reset()
 	EventBus.game_started.emit()
+	_draw_sultan_card()  # 开局直接抽第一张卡
 
 
 # ---- 每天开始：无卡则抽，有卡则检查逾期 ----
