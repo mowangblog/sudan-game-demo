@@ -73,7 +73,7 @@ func _build_ui() -> void:
 	_bg.z_index = 100
 	add_child(_bg)
 
-	# 主面板
+	# 主面板 — 横长方形，手牌区上方
 	_main_panel = PanelContainer.new()
 	_main_panel.name = "SorceressPanel"
 	_main_panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -81,9 +81,10 @@ func _build_ui() -> void:
 
 	var vs = get_viewport().get_visible_rect().size
 	var pw = min(vs.x - 60, 700)
-	var ph = min(vs.y - 80, 550)
+	var ph = min(vs.y - 260, 380)  # 留手牌区200+状态栏32+间距28
 	_main_panel.custom_minimum_size = Vector2(pw, ph)
-	_main_panel.position = Vector2((vs.x - pw) / 2, (vs.y - ph) / 2)
+	# 置顶偏上
+	_main_panel.position = Vector2((vs.x - pw) / 2, 36)
 
 	var ps = StyleBoxFlat.new()
 	ps.bg_color = Color("120808")
@@ -92,18 +93,18 @@ func _build_ui() -> void:
 	ps.border_width_left = 4; ps.border_width_right = 4
 	ps.border_color = C.GOLD
 	ps.shadow_size = 20; ps.shadow_color = Color("c8a84e30")
-	ps.content_margin_left = 24; ps.content_margin_right = 24
-	ps.content_margin_top = 20; ps.content_margin_bottom = 20
+	ps.content_margin_left = 20; ps.content_margin_right = 20
+	ps.content_margin_top = 14; ps.content_margin_bottom = 14
 	_main_panel.add_theme_stylebox_override("panel", ps)
 	add_child(_main_panel)
 
 	var outer_hb = HBoxContainer.new()
-	outer_hb.add_theme_constant_override("separation", 16)
+	outer_hb.add_theme_constant_override("separation", 14)
 	_main_panel.add_child(outer_hb)
 
-	# ---- 左侧：女术士立绘区 ----
+	# ---- 左侧：女术士立绘区（缩小，固定高度） ----
 	_portrait_area = PanelContainer.new()
-	_portrait_area.custom_minimum_size = Vector2(180, 0)
+	_portrait_area.custom_minimum_size = Vector2(140, 0)
 	_portrait_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var port_sb = StyleBoxFlat.new()
 	port_sb.bg_color = Color("1a0a12")
@@ -124,30 +125,30 @@ func _build_ui() -> void:
 	# 女术士emoji头像（暂用文字替代美术资源）
 	var avatar_lbl = Label.new()
 	avatar_lbl.text = "🔮"
-	avatar_lbl.add_theme_font_size_override("font_size", 64)
+	avatar_lbl.add_theme_font_size_override("font_size", 48)
 	avatar_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	port_vb.add_child(avatar_lbl)
 
 	var name_lbl = Label.new()
 	name_lbl.text = _dialogues.get("npc_name", "女术士")
-	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_font_size_override("font_size", 14)
 	name_lbl.add_theme_color_override("font_color", C.LUST)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	port_vb.add_child(name_lbl)
 
 	var desc_lbl = Label.new()
 	desc_lbl.text = _dialogues.get("npc_description", "")
-	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.add_theme_font_size_override("font_size", 10)
 	desc_lbl.add_theme_color_override("font_color", C.DIM)
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_lbl.custom_minimum_size = Vector2(164, 0)
+	desc_lbl.custom_minimum_size = Vector2(124, 0)
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	port_vb.add_child(desc_lbl)
 
 	# ---- 右侧：对话区+按钮区 ----
 	var right_vb = VBoxContainer.new()
 	right_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right_vb.add_theme_constant_override("separation", 12)
+	right_vb.add_theme_constant_override("separation", 6)
 	outer_hb.add_child(right_vb)
 
 	# 关闭按钮行
@@ -158,24 +159,24 @@ func _build_ui() -> void:
 	close_hb.add_child(spacer)
 	var close_btn = Button.new()
 	close_btn.text = "✕ 离开"
-	close_btn.add_theme_font_size_override("font_size", 13)
+	close_btn.add_theme_font_size_override("font_size", 12)
 	close_btn.add_theme_color_override("font_color", C.DIM)
-	close_btn.custom_minimum_size = Vector2(80, 32)
+	close_btn.custom_minimum_size = Vector2(70, 28)
 	close_btn.pressed.connect(_on_leave)
 	close_hb.add_child(close_btn)
 
 	# 对话文本区
 	_dialogue_area = VBoxContainer.new()
-	_dialogue_area.add_theme_constant_override("separation", 8)
+	_dialogue_area.add_theme_constant_override("separation", 6)
 	_dialogue_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_vb.add_child(_dialogue_area)
 
 	_dialogue_text = Label.new()
 	_dialogue_text.name = "DialogueText"
-	_dialogue_text.add_theme_font_size_override("font_size", 15)
+	_dialogue_text.add_theme_font_size_override("font_size", 13)
 	_dialogue_text.add_theme_color_override("font_color", C.TEXT)
 	_dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dialogue_text.custom_minimum_size = Vector2(pw - 240, 0)
+	_dialogue_text.custom_minimum_size = Vector2(pw - 200, 0)
 	_dialogue_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_dialogue_text.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialogue_text.gui_input.connect(_on_dialogue_click)
@@ -190,7 +191,7 @@ func _build_ui() -> void:
 	# 按钮区
 	_btn_container = VBoxContainer.new()
 	_btn_container.name = "BtnContainer"
-	_btn_container.add_theme_constant_override("separation", 8)
+	_btn_container.add_theme_constant_override("separation", 4)
 	right_vb.add_child(_btn_container)
 
 
@@ -433,9 +434,9 @@ func _clear_buttons() -> void:
 func _add_btn(text: String, callback: Callable) -> void:
 	var btn = Button.new()
 	btn.text = text
-	btn.add_theme_font_size_override("font_size", 14)
+	btn.add_theme_font_size_override("font_size", 12)
 	btn.add_theme_color_override("font_color", C.GOLD)
-	btn.custom_minimum_size = Vector2(0, 36)
+	btn.custom_minimum_size = Vector2(0, 30)
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var btn_sb = StyleBoxFlat.new()
 	btn_sb.bg_color = Color("2a1810")
