@@ -625,3 +625,219 @@ func _on_sorceress_icon_pressed() -> void:
 		var cb_chat = func():
 			pass
 		_sorceress_scene.open_for_greeting(cb_draw, cb_swap, cb_progress, cb_chat)
+
+
+
+# ---- 令牌落入手牌动画 ----
+func _animate_card_into_hand() -> void:
+	if not is_instance_valid(cp) or not cp.visible:
+		return
+	# 从上方滑入
+	var target_y = cp.position.y
+	cp.position.y = -80
+	cp.modulate = Color(1, 1, 1, 0)
+	var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(cp, "position:y", target_y, 0.35)
+	t.parallel().tween_property(cp, "modulate", Color.WHITE, 0.15)
+
+func _refresh() -> void:
+	status_bar.refresh()
+	
+	var card = GameManager.active_sultan_card
+	if not is_instance_valid(cp): return
+	# 双队列：cp在hand_cards则显示，不在则已被投入仪式队列，不显示
+	if not hand_cards.has(cp):
+		return
+	cp.visible = not card.is_empty()
+	if not card.is_empty():
+		ct_lbl.text = TN.get(card.get("type",""),"？")
+		cr_lbl.text = RG.get(card.get("rank",""),"？")
+		cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
+		var tc = TC.get(card.get("type",""),C.LUST)
+		var rk_bg = SC.get(card.get("rank",""), Color("2a2018"))
+		var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
+		var sb = StyleBoxFlat.new(); sb.bg_color=rk_bg; sb.set_corner_radius_all(10)
+		sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
+		sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
+		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
+		cp.add_theme_stylebox_override("panel",sb)
+		cp.set_meta("drag_data", {"type":"sultan_card", "id":card.get("id",""), "name":card.get("name",""), "data":card})
+	hand_layout.arrange()
+	_refresh_intel_cards()
+
+# 同步金币卡数量和 ResourceManager
+
+func _load_rites() -> Array:
+	var f = FileAccess.open("res://data/rites.json",FileAccess.READ)
+	if f == null: return []
+	var d = JSON.parse_string(f.get_as_text()); f.close()
+	if d == null: return []
+	return d
+
+func _update_countdown_labels():
+	map_rite_panel.update_countdown_labels()
+
+
+func _refresh_intel_cards():
+	resource_card_manager.refresh_intel_cards()
+
+func slot_type_to_str(t: String) -> String:
+	if t == "character": return "character"
+	if t == "sultan_card": return "sultan_card"
+	return "resource"
+
+# 卡牌从槽位移除时，恢复到手中
+func _return_card_to_hand(card_type: String, card_data: Dictionary):
+	# 先找已隐藏的匹配卡牌
+	for c in hand_cards:
+		if not c.visible and is_instance_valid(c):
+			var dd = c.get_meta("drag_data", {})
+			if dd.get("type","") == card_type and dd.get("id","") == card_data.get("id",""):
+				c.visible = true
+				if card_type == "resource" and card_data.has("count"):
+					_update_card_count(c, card_data.get("count", 1))
+				hand_layout.arrange()
+				return
+	
+	# 找不到（如确认后重开再拖出），重新创建一张
+	var new_card: PanelContainer
+	if card_type == "character":
+		new_card = card_factory.make_char_card(card_data)
+	elif card_type == "resource":
+		new_card = resource_card_manager.give_resource_card(card_data.get("name", "?"), card_data.get("icon", "📦"), card_data.get("quality", "STONE"), card_data.get("count", 1))
+		resource_cards[card_data.get("name", "?")] = new_card
+		hand_layout.arrange()
+		return
+	else:
+		# 摄政王令：从 GameManager 取当前数据
+		var scard = GameManager.active_sultan_card
+		if not scard.is_empty():
+			cp.visible = true
+			hand_layout.arrange()
+			return
+		else:
+			# 没有活跃摄政王令，不创建
+			return
+	
+	new_card.drag_ended.connect(_on_hand_card_dropped)
+	new_card.drag_started.connect(func(_c): hand_layout.arrange())
+	hand_container.add_child(new_card)
+	hand_cards.append(new_card)
+	hand_layout.arrange()
+
+
+
+func _clear_all_highlights():
+	for card in hand_cards:
+		if is_instance_valid(card) and card.has_method("set_highlight"):
+			card.set_highlight(false)
+
+func _find_configured_rite(rite:Dictionary):
+	for ar in active_rites:
+		if ar.rite.get("id", -1) == rite.get("id", -2):
+			return ar
+	return null
+
+func _get_configured_for_loc(loc_id:String) -> Array:
+	var result = []
+	for ar in active_rites:
+		if ar.rite.get("location","") == loc_id: result.append(ar)
+	return result
+
+func _lbl(t:String, s:int, c:Color) -> Label:
+	var l = Label.new(); l.text=t; l.add_theme_font_size_override("font_size",s)
+	l.add_theme_color_override("font_color",c); return l
+
+func _sep() -> HSeparator:
+	return HSeparator.new()
+
+func _log(msg:String) -> void:
+	log_msgs.append(msg)
+	if log_msgs.size() > 50: log_msgs.pop_front()
+	_refresh()
+	print("[MainScene]", msg)
+
+
+func _show_toasts(nts: Array):
+	for t in nts:
+		if t != "":
+			_toast_queue.append(t)
+	if _toast_running: return
+	_play_next_toast()
+
+func _play_next_toast():
+	if _toast_queue.is_empty():
+		_toast_running = false
+		return
+	_toast_running = true
+	var text = _toast_queue.pop_front()
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", C.GOLD_HI)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.modulate = Color(1, 1, 1, 0)
+	add_child(lbl)
+	lbl.reset_size()
+	await get_tree().process_frame
+	lbl.position = Vector2((size.x - lbl.size.x) / 2, -24)
+	var t = create_tween()
+	t.tween_property(lbl, "position:y", 8, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 1, 0.15)
+	t.tween_interval(1.0)
+	t.tween_property(lbl, "position:y", -24, 0.2)
+	t.parallel().tween_property(lbl, "modulate:a", 0, 0.15)
+	t.tween_callback(func():
+		if is_instance_valid(lbl): lbl.queue_free()
+		_play_next_toast()
+	)
+
+
+func _process_event_queue() -> void:
+	var events = event_checker.get_triggered_events()
+	if events.is_empty(): return
+	for ev in events:
+		event_checker.mark_triggered(ev.get("id", ""))
+		var chosen_idx = await _await_event_choice(ev)
+		if chosen_idx >= 0 and chosen_idx < ev.choices.size():
+			_apply_event_outcome(ev.choices[chosen_idx].get("outcome", {}))
+
+func _await_event_choice(ev: Dictionary) -> int:
+	var result_idx: int = -1
+	popups.show_event_popup(ev, func(event, idx):
+		result_idx = idx
+	)
+	await Engine.get_main_loop().process_frame
+	while result_idx == -1:
+		await Engine.get_main_loop().process_frame
+	return result_idx
+
+func _apply_event_outcome(outcome: Dictionary) -> void:
+	if outcome.is_empty(): return
+	var nts: Array[String] = []
+	if outcome.has("gold"):
+		var v = outcome.gold
+		if v > 0:
+			resource_card_manager.give_gold_cards(v)
+			nts.append("💰 %+d金币" % v)
+		elif v < 0:
+			ResourceManager.add_gold(v)
+			nts.append("💰 %d金币" % v)
+	if outcome.has("good"):
+		ResourceManager.modify_reputation("good", outcome.good)
+		nts.append("名望 %+d" % outcome.good)
+	if outcome.has("evil"):
+		ResourceManager.modify_reputation("evil", outcome.evil)
+		nts.append("恶名 %+d" % outcome.evil)
+	if outcome.has("power"):
+		ResourceManager.modify_reputation("power", outcome.power)
+		nts.append("权势 %+d" % outcome.power)
+	if outcome.has("hero"):
+		ResourceManager.modify_reputation("hero", outcome.hero)
+		nts.append("义名 %+d" % outcome.hero)
+	if outcome.has("spirit"):
+		ResourceManager.modify_reputation("spirit", outcome.spirit)
+		nts.append("灵知 %+d" % outcome.spirit)
+	if nts.size() > 0:
+		_show_toasts(nts)
+	_refresh()
