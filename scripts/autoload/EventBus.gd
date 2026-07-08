@@ -5,14 +5,12 @@
 extends Node
 
 ## === 回合/时间信号 ===
-signal day_started(day_number: int, week_number: int)
+signal day_started(day_number: int)
 signal day_ended(day_number: int)
-signal week_started(week_number: int)
-signal week_ended(week_number: int)
 
 ## === 摄政王令信号 ===
 signal sultan_card_drawn(card_data: Dictionary)
-signal sultan_card_consumed(card_id: String, week_number: int)
+signal sultan_card_consumed(card_id: String)
 signal sultan_card_expired(card_id: String)       # 逾期未消耗 → 触发死亡
 signal sultan_card_countdown_tick(card_id: String, remaining_days: int)
 
