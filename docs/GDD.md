@@ -31,7 +31,7 @@
 
 | 项目 | 说明 |
 |------|------|
-| **游戏名称** | 摄政王的游戏（Sultan's Game） — 复刻学习版 |
+| **游戏名称** | 苏丹的游戏（Sultan's Game） — 复刻学习版 |
 | **原版开发商** | Double Cross / 2P Games |
 | **复刻性质** | 非商业学习项目，用于美术与 UI 设计练习 |
 | **游戏类型** | 卡牌驱动的回合制策略生存 RPG |
@@ -806,7 +806,7 @@
 
 - BWIKI: https://wiki.biligame.com/sultansgame/
 - Steam 商店页: https://store.steampowered.com/app/3117820/
-- IGN JP 访谈: 摄政王的游戏开发内幕
+- IGN JP 访谈: 苏丹的游戏开发内幕
 
 ### C. 文档版本历史
 
