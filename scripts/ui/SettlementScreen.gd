@@ -257,7 +257,7 @@ func _auto_stage(rite: Dictionary) -> Array:
 	if not c.is_empty():
 		s["check"] = c
 		s["text"] = rite.get("description", "")
-	var char_name = char_data.get("name","") if not char_data.is_empty() else ""
+		var char_name = char_data.get("name","") if not char_data.is_empty() else ""
 		s["success_text"] = rite.get("outcomes",{}).get("success",{}).get("narrative","")
 		s["failure_text"] = rite.get("outcomes",{}).get("fail",{}).get("narrative","")
 		if char_name != "":
