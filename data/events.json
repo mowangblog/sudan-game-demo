@@ -17,7 +17,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.15, "min_day": 1},
 	"text": "在通往市集的石板路上，一个枯瘦的身影蜷缩在墙角。他的皮肤呈蜡黄色，眼睛深陷，呼吸浅得像风中烛火。路人纷纷掩鼻而过，没人愿意多看他一眼。\n\n你走近时，他猛地抓住你的衣角——枯槁的手骨节分明。\n\n'求求您……结束这一切。我已经痛了太久。'他的声音几乎被街市的嘈杂淹没，但那双眼睛里的乞求却清晰得让人心里发毛。",
 	"choices": [
-	  {"text": "让他的身体抵债——拖入灵光一现", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "让他的身体抵债", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
 	  {"text": "给他食物和水——我们不是怪物", "outcome": {"good": 1, "gold": -1}},
 	  {"text": "无视他——这不是我的问题", "outcome": {}}
 	],
@@ -30,7 +30,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.10, "min_day": 2},
 	"text": "深夜，急促的敲门声打破了寂静。你开门，看见一张熟悉却瘦削的脸——是你年轻时一起闯荡的老友。他的外衣破了几处，脸上有新伤的痕迹，眼神里全是惊恐。\n\n他几乎是一头撞进来的，抓起桌上的酒壶灌了一大口，然后瘫坐在椅子上。\n\n'他们给了我三个月，现在只剩三天了。我没有其他人可以找了——帮帮我，只要几天就好！'他的眼眶红了，但你不确定那是真心的绝望，还是又一个谎言的开端。",
 	"choices": [
-	  {"text": "找机会敲闷棍——拖入灵光一现", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "找机会敲闷棍", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
 	  {"text": "帮他偿还债务", "outcome": {"gold": -2, "good": 1}},
 	  {"text": "赶走他——你自己惹的麻烦自己解决", "outcome": {"power": -1}}
 	],
@@ -56,8 +56,8 @@
 	"trigger_condition": {"type": "character_idle", "character_id": "meji", "days_idle": 2},
 	"text": "黄昏的光从窗棂斜射进来，在艾琳的侧脸上投下金红色的阴影。她站在窗前，背对着你，肩膀的线条紧绷得像一张拉满的弓。桌上摆着早已凉透的晚餐。\n\n'连续几天了，你回来得越来越晚。'她的声音平静得过分，但你太了解她了——这种平静是最危险的信号。\n\n她慢慢转过身，手里捏着你上次送她的那只银镯子，指节发白。'我在这个家里，还算是你的妻子吗？'",
 	"choices": [
-	  {"text": "陪她度过一天——仪式暂停", "outcome": {"meji_emotion": 2, "waste_day": true}},
-	  {"text": "给她买礼物——用金子消灾", "outcome": {"gold": -2, "meji_emotion": 1}},
+	  {"text": "陪她度过一天", "outcome": {"meji_emotion": 2, "waste_day": true}},
+	  {"text": "给她买礼物", "outcome": {"gold": -2, "meji_emotion": 1}},
 	  {"text": "我这周很忙——再等等", "outcome": {"meji_emotion": -2}}
 	],
 	"priority": 2,
@@ -69,7 +69,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.08, "min_day": 5},
 	"text": "广场中央支起了彩色的帐篷，摄政王的使者站在高台上，面前放着一只镀金的大碗。今天是为饥荒地区募捐的日子。人群密密麻麻，有富商，有平民，也有瞪着眼睛数金币的宫廷书记官。\n\n你手中沉甸甸的钱袋让你犹豫了几秒。你知道，捐得越多，摄政王的眼睛就盯得越紧——他不知道会解读成慷慨，还是炫耀。\n\n但身边有人低声提醒你：'慷慨的人会得到摄政王的青睐。前提是他觉得你的银子本来属于他。'",
 	"choices": [
-	  {"text": "捐一大笔钱——消耗奢靡卡", "outcome": {"consume_card": "LUXURY", "good": 2}, "requires_card": "LUXURY"},
+	  {"text": "捐一大笔钱", "outcome": {"consume_card": "LUXURY", "good": 2}, "requires_card": "LUXURY"},
 	  {"text": "象征性地捐一点", "outcome": {"gold": -1, "good": 1}},
 	  {"text": "转身离开——我还有摄政王的任务", "outcome": {}}
 	],
@@ -95,7 +95,7 @@
 	"trigger_condition": {"type": "random", "chance": 0.10, "min_day": 3},
 	"text": "集市中央，一名身着异域长袍的年轻人被按在地上，卫队长的皮靴踩着他的后背。他满脸泥污，却仍在大声吟诵着一种你从未听过的祈祷词，每一个音节都像在燃烧。\n\n'异端！'队长拔出了剑，围观的人群发出兴奋的低吼。\n\n年轻人艰难地抬起头，正好对上你的眼睛。那双眼睛里没有恐惧，只有一种让人不安的炽热信念。他的手被绑在身后，手指却仍在划着某种奇怪的手势。\n\n队长转向你：'大人，您来判断。'",
 	"choices": [
-	  {"text": "你竟敢敬拜异神！——丢入灵光一现", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
+	  {"text": "你竟敢敬拜异神！", "outcome": {"consume_card": "MURDER", "evil": 1, "insight_trigger": true}, "requires_card": "MURDER"},
 	  {"text": "放了他——信仰不是罪", "outcome": {"good": 1, "spirit": 1}},
 	  {"text": "让他受审——按法律来", "outcome": {"power": 1}}
 	],
@@ -120,7 +120,7 @@
 	"trigger_condition": {"type": "character_available", "character_id": "shamar_ref"},
 	"text": "一封用深紫色火漆封口的请柬被悄悄递到你的侍从手中。烫金的字迹优雅而暧昧，邀请你参加一场'只有最尊贵宾客'方能参与的私人宴会——地点在城南一处从未对外公开的庄园。\n\n传闻中，参与者的身份在宴会上将完全解除——不仅是名字，还有一切。无论贵族还是平民，无论结盟还是仇敌，在那间密室里都只剩下赤裸的真实。\n\n你的手指在请柬上停留了三秒。去，意味着将命运交给未知；不去，意味着拒绝一种你从未体验过的自由。",
 	"choices": [
-	  {"text": "欣然参加——消耗金欢愉卡", "outcome": {"consume_card": "LUST"}, "requires_card": "LUST", "requires_rank": "GOLD"},
+	  {"text": "欣然参加", "outcome": {"consume_card": "LUST"}, "requires_card": "LUST", "requires_rank": "GOLD"},
 	  {"text": "婉拒——这不是我的风格", "outcome": {"good": 1}}
 	],
 	"priority": 1,
@@ -144,8 +144,8 @@
 	"trigger_condition": {"type": "random", "chance": 0.12, "min_day": 2},
 	"text": "厨房方向的尖叫在凌晨五点划破了整栋宅邸的宁静。你披上外套冲过去时，厨师正站在桌子上，手里挥舞着一把沾满面粉的菜刀，脚下是翻倒的锅碗和一片狼藉。\n\n'大人！老鼠——比猫还大的老鼠！'他声音发颤，眼睛瞪得像铜铃,'它们啃光了仓库里所有的干粮，连酒桶的塞子都咬穿了！'\n\n一只肥硕的灰影从他脚边的洞口蹿过，确实大得离谱。仆人们挤在门口，没人敢上前。这畜生的眼神甚至带着某种令人不舒服的狡猾。",
 	"choices": [
-	  {"text": "把铜以下征伐卡拖入——剿灭鼠患", "outcome": {"consume_card": "CONQUEST", "food": 1}},
-	  {"text": "把铜以下清除卡拖入——屠鼠", "outcome": {"consume_card": "MURDER"}},
+	  {"text": "组织人手剿灭鼠患", "outcome": {"consume_card": "CONQUEST", "food": 1}},
+	  {"text": "用更激烈的办法处理", "outcome": {"consume_card": "MURDER"}},
 	  {"text": "让厨师自己想办法", "outcome": {}}
 	],
 	"priority": 4,
@@ -157,7 +157,7 @@
 	"trigger_condition": {"type": "rite", "rite_id": 4, "chance": 0.3},
 	"text": "浴场里湿热的蒸汽中，一个村庄猎户压低声音对身边的人说：北境的森林里出了一群狼——不是普通的狼，是已经连吃了三个村子的魔狼。它们的头狼浑身漆黑，据说站起来比人还高。\n\n猎户的手臂上留着三道深深的爪痕，尚未结痂，在蒸汽里渗出淡淡的血水。他环顾四周，确认没人偷听后补充了一句：\n\n'男爵悬赏了那只头狼的皮，五十个金币。但目前为止去了六个猎人，只回来了一个——还疯了。谁敢去，谁就是英雄。或者死人。'",
 	"choices": [
-	  {"text": "率队讨伐——消耗铜征伐卡", "outcome": {"consume_card": "CONQUEST", "hero": 2}, "check": {"com": {"required_successes": 3}}},
+	  {"text": "率队讨伐", "outcome": {"consume_card": "CONQUEST", "hero": 2}, "check": {"com": {"required_successes": 3}}},
 	  {"text": "派雷蒙德爵士去——让他单独处理", "outcome": {"hero": 1}, "requires_character": "tietou"},
 	  {"text": "这太危险了——放弃", "outcome": {}}
 	],
@@ -170,8 +170,8 @@
 	"trigger_condition": {"type": "random", "chance": 0.08, "min_day": 7},
 	"text": "来自南方边境的旅人在酒馆里讲了三天三夜。他说穿过雾林，翻过鹰巢峰，有一片从没有人到达过的峡谷。峡谷深处的湖泊边，住着一头白色的犀牛——它的角在月光下会散发出柔和的银光。\n\n人们说，活捉它能得到无尽荣耀；杀死它，能得到等重的财富。数百年来无数勇士踏上追寻之路，大多数未能归来，少数归来的只说'那东西不该存在于世上'。\n\n旅人放下酒杯，盯着你，一字一顿地说：'但我指给你路。因为我老了，而你的眼睛还没被岁月熄灭。'",
 	"choices": [
-	  {"text": "前去狩猎——消耗银征伐卡", "outcome": {"consume_card": "CONQUEST", "hero": 3, "gold": 5}, "check": {"com": {"required_successes": 4}}, "requires_rank": "SILVER"},
-	  {"text": "记录下来——卖情报", "outcome": {"gold": 2}},
+	  {"text": "前去狩猎", "outcome": {"consume_card": "CONQUEST", "hero": 3, "gold": 5}, "check": {"com": {"required_successes": 4}}, "requires_rank": "SILVER"},
+	  {"text": "记录下来", "outcome": {"gold": 2}},
 	  {"text": "不相信——白犀牛早就绝种了", "outcome": {}}
 	],
 	"priority": 1,
@@ -183,8 +183,8 @@
 	"trigger_condition": {"type": "random", "chance": 0.06, "min_day": 10},
 	"text": "这个商人看起来不像任何一个你见过的商贩。他的马车没有标记，他的仆从没有舌头，他的手指上戴着至少十二枚不同王朝的戒指。他从一个黑檀木箱子里取出一只金鸟——通体黄金，眼眶里嵌着两颗切割完美的石榴石。\n\n'它不是用锤子敲出来的。'商人的声音像光滑的丝绸，'它是从一种比黄金更古老的东西里长出来的。我需要的是等重的黄金——不是它的价值，而是它的重量。你所有值钱的东西放在天平上，平衡了，它就是你的。'\n\n他微微一笑，把金鸟推到桌中央。蜡烛的光在黄金表面流淌，像活的液体。",
 	"choices": [
-	  {"text": "用金奢靡卡换金鸟", "outcome": {"consume_card": "LUXURY", "special_item": "golden_bird"}, "requires_rank": "GOLD"},
-	  {"text": "用金币购买——花费20金", "outcome": {"gold": -20, "special_item": "golden_bird"}},
+	  {"text": "提出交换", "outcome": {"consume_card": "LUXURY", "special_item": "golden_bird"}, "requires_rank": "GOLD"},
+	  {"text": "支付代价", "outcome": {"gold": -20, "special_item": "golden_bird"}},
 	  {"text": "不买——太贵了", "outcome": {}}
 	],
 	"priority": 1,
@@ -209,7 +209,7 @@
 	"trigger_condition": {"type": "reputation", "reputation": "evil", "threshold": 5},
 	"text": "摄政王的书房比你想象中小。一张桌子，三把椅子，墙上一幅褪色的地图。他背对窗站着，面容半掩在阴影中，手指有节奏地敲着桌面。\n\n他听完了你的告密——咬字清楚，证据确凿，你还附上了一封截获的密信。沉默持续了整整十秒。然后他笑了，一种让你脊背发凉的微笑。\n\n'很好。我喜欢有观察力的人。但我希望你记住——'他慢慢转过身，蜡烛的火光在他瞳孔里跳动，'如果你哪天也犯了事，我听到的风声会比今天更快。'\n\n他丢给你一张空白的摄政王令。上面什么也没写，但你知道它的分量。",
 	"choices": [
-	  {"text": "销卡——趁机消耗任意摄政王令", "outcome": {"evil": 1, "consume_card": "ANY_SINGLE"}},
+	  {"text": "接受这张空白令", "outcome": {"evil": 1, "consume_card": "ANY_SINGLE"}},
 	  {"text": "拒绝——我不要这种权力", "outcome": {"good": 1, "power": -1}}
 	],
 	"priority": 1,
