@@ -255,6 +255,7 @@ func _on_rite_detail_committed(config: Dictionary) -> void:
 	_log("✅ 已配置「%s」" % rite.get("name", ""))
 	_update_rite_btn_label(rite.get("id", -1), char_data.get("name", ""))
 	_rite_popup = null
+	_clear_all_highlights()
 	_refresh()
 
 
@@ -269,6 +270,7 @@ func _on_rite_detail_cancelled(is_edit: bool, existing) -> void:
 		_update_rite_btn_label(rite.get("id", -1), "")
 		_log("🗑 已取消「%s」" % rite.get("name", ""))
 	_rite_popup = null
+	_clear_all_highlights()
 	_refresh()
 
 
