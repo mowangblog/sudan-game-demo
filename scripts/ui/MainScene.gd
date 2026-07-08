@@ -124,7 +124,6 @@ func _build() -> void:
 	_bg()
 	_status()
 	_map()
-	_build_sorceress_icon()  # 地图边缘放女术士图标入口
 	_bottom()
 
 func _bg() -> void:
@@ -132,7 +131,7 @@ func _bg() -> void:
 
 func _status() -> void:
 	status_bar.setup(self, {"C": C})
-	status_bar.build()
+	status_bar.build(_on_sorceress_icon_pressed)
 
 # 左侧地图 — 仪式节点直接散布，无地点分组
 func _map() -> void:
@@ -140,44 +139,7 @@ func _map() -> void:
 	_map_area = map_rite_panel.build()
 	call_deferred("_place_permanent_rites")
 
-# ---- 令匣图标入口（左上角固定，随时回女术士页换令/抽令/进度） ----
-func _build_sorceress_icon() -> void:
-	var sorceress_btn = Button.new()
-	sorceress_btn.name = "SorceressBtn"
-	sorceress_btn.text = "📜 令匣"
-	sorceress_btn.add_theme_font_size_override("font_size", 14)
-	sorceress_btn.add_theme_color_override("font_color", C.GOLD)
-	# 深底金边样式
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color("1a1208")
-	sb.set_corner_radius_all(8)
-	sb.border_width_bottom = 2; sb.border_width_top = 2
-	sb.border_width_left = 2; sb.border_width_right = 2
-	sb.border_color = C.GOLD
-	sb.content_margin_left = 8; sb.content_margin_right = 8
-	sb.content_margin_top = 4; sb.content_margin_bottom = 4
-	sorceress_btn.add_theme_stylebox_override("normal", sb)
-	var hsb = StyleBoxFlat.new()
-	hsb.bg_color = Color("2a1a08")
-	hsb.set_corner_radius_all(8)
-	hsb.border_width_bottom = 2; hsb.border_width_top = 2
-	hsb.border_width_left = 2; hsb.border_width_right = 2
-	hsb.border_color = Color("e8d48b")
-	hsb.content_margin_left = 8; hsb.content_margin_right = 8
-	hsb.content_margin_top = 4; hsb.content_margin_bottom = 4
-	sorceress_btn.add_theme_stylebox_override("hover", hsb)
-	# 明确 anchor 布局（全 0）+ offset 定位，避免 PRESET_TOP_RIGHT 导致尺寸塌缩不可见
-	sorceress_btn.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	sorceress_btn.offset_left = 12
-	sorceress_btn.offset_top = 44        # 状态栏下方，避免被全宽顶栏遮挡
-	sorceress_btn.offset_right = 12 + 90  # 宽 90
-	sorceress_btn.offset_bottom = 44 + 34 # 高 34
-	sorceress_btn.z_index = 50            # 高于状态栏与地图层，确保可点
-	sorceress_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	sorceress_btn.pressed.connect(_on_sorceress_icon_pressed)
-	add_child(sorceress_btn)
-
-
+# ---- 令匣图标入口（已内嵌到 StatusBar 左上角，见 StatusBar._sorceress_icon） ----
 func _place_permanent_rites():
 	map_rite_panel.place_permanent_rites(_load_rites())
 
@@ -660,10 +622,13 @@ func _on_sorceress_icon_pressed() -> void:
 					GameManager.swap_sultan_card()
 				),
 			func():
-				_log("存活 %d 天 | 折令进度 0/28 | 换令余 %d 次" % [TurnManager.current_day, GameManager.swap_tokens]),
+				_sorceress_scene.		func():
+			_log("存活 %d 天 | 折令进度 0/28 | 换令余 %d 次" % [TurnManager.current_day, GameManager.swap_tokens])
+		,
 			func():
 				pass
 		)
+
 
 
 # ---- 令牌落入手牌动画 ----

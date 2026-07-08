@@ -26,7 +26,7 @@ func setup(p_root: Control, constants: Dictionary) -> void:
 	C = constants.get("C", {})
 
 
-func build() -> PanelContainer:
+func build(icon_callback: Callable = Callable()) -> PanelContainer:
 	_bar = PanelContainer.new()
 	_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	_bar.offset_bottom = 38
@@ -42,6 +42,13 @@ func build() -> PanelContainer:
 	var outer = HBoxContainer.new()
 	outer.add_theme_constant_override("separation", 0)
 	_bar.add_child(outer)
+
+	# 令匣图标（接入女术士页，固定在状态栏左上角）
+	if icon_callback.is_valid():
+		outer.add_child(_sorceress_icon(icon_callback))
+		var _icon_sep = Control.new()
+		_icon_sep.custom_minimum_size = Vector2(8, 0)
+		outer.add_child(_icon_sep)
 
 	# 左侧：声望方块
 	var left = HBoxContainer.new(); left.add_theme_constant_override("separation", 4)
@@ -121,6 +128,33 @@ func _good(chip: PanelContainer, val: int) -> void:
 	var parts = lbl.text.split(" ")
 	if parts.size() >= 2:
 		lbl.text = "%s %d" % [parts[0], val]
+
+
+func _sorceress_icon(cb: Callable) -> Button:
+	var b = Button.new()
+	b.name = "SorceressBtn"
+	b.text = "📜 令匣"
+	b.add_theme_font_size_override("font_size", 12)
+	b.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
+	b.custom_minimum_size = Vector2(0, 24)
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color("1a1208")
+	sb.set_corner_radius_all(6)
+	sb.border_width_all = 2
+	sb.border_color = C.get("GOLD", Color("c8a84e"))
+	sb.content_margin_left = 8; sb.content_margin_right = 8
+	sb.content_margin_top = 1; sb.content_margin_bottom = 1
+	b.add_theme_stylebox_override("normal", sb)
+	var hsb = StyleBoxFlat.new()
+	hsb.bg_color = Color("2a1a08")
+	hsb.set_corner_radius_all(6)
+	hsb.border_width_all = 2
+	hsb.border_color = Color("e8d48b")
+	hsb.content_margin_left = 8; hsb.content_margin_right = 8
+	hsb.content_margin_top = 1; hsb.content_margin_bottom = 1
+	b.add_theme_stylebox_override("hover", hsb)
+	b.pressed.connect(cb)
+	return b
 
 
 func _rep_chip(name: String, color: Color, val: int) -> PanelContainer:
