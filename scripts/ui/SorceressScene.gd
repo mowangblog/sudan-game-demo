@@ -303,10 +303,9 @@ func _show_draw_prompt() -> void:
 
 
 func _on_box_clicked() -> void:
-	# 令匣被点击 → 抽令动画
 	_card_box.play_open_animation()
 
-	# 从DataManager抽令（如果还没抽的话）
+	# 从DataManager抽令
 	if _current_card_data.is_empty():
 		_current_card_data = DataManager.draw_sultan_card()
 	if _current_card_data.is_empty():
@@ -317,9 +316,6 @@ func _on_box_clicked() -> void:
 
 	# 通知GameManager记录令牌
 	GameManager.draw_sultan_card_via_sorceress(_current_card_data)
-
-	# 展示令牌大图
-	_card_box.show_card_display(_current_card_data, TN, RG, TC, SC, SC_BORDER)
 
 	# 品级讲解台词
 	_phase = "card_reveal"
@@ -357,12 +353,12 @@ func _show_rank_commentary(card_data: Dictionary) -> void:
 
 
 func _finish_draw() -> void:
-	_card_box.hide_card_display()
 	_card_box.visible = false
-	_is_first_draw = false  # 后续不再首次讲解
-	visible = false
+	_is_first_draw = false
+	var card_data = _current_card_data
 	_current_card_data = {}
-	_on_complete.call()
+	visible = false
+	_on_complete.call(card_data)
 
 
 const CHARS_PER_TICK = 4  # 每帧推进4字符（Timer每60ms→等效15ms/字）
@@ -465,4 +461,4 @@ func _on_leave() -> void:
 	_card_box.reset_box()
 	if _phase == "draw_box" or _phase == "card_reveal":
 		# 离开抽令流程但令已抽，需要通知主场景刷新
-		_on_complete.call()
+		_on_complete.call(_current_card_data)

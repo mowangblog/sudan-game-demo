@@ -624,36 +624,49 @@ func _on_sultan_card_needs_draw(is_first: bool) -> void:
 	if not is_instance_valid(_sorceress_scene):
 		return
 	var card_data: Dictionary = {}
-	_sorceress_scene.open_for_draw(card_data, is_first, func():
+	_sorceress_scene.open_for_draw(card_data, is_first, func(card: Dictionary):
 		_refresh()
+		_animate_card_into_hand()
 	)
 
 # ---- 主动点击女术士图标 ----
 func _on_sorceress_icon_pressed() -> void:
 	if not is_instance_valid(_sorceress_scene):
 		return
-	# 如果手上无令，可以主动进入抽令流程
 	if GameManager.active_sultan_card.is_empty():
-		_sorceress_scene.open_for_draw({}, GameManager.has_drawn_first_card, func():
+		_sorceress_scene.open_for_draw({}, GameManager.has_drawn_first_card, func(card: Dictionary):
 			_refresh()
+			_animate_card_into_hand()
 		)
 	else:
-		# 手上有令，进入女术士闲聊/换令/查看进度
 		_sorceress_scene.open_for_greeting(
-			func():  # 抽令
-				_sorceress_scene.open_for_draw({}, false, func():
+			func():
+				_sorceress_scene.open_for_draw({}, false, func(card: Dictionary):
 					_refresh()
+					_animate_card_into_hand()
 				),
-			func():  # 换令
+			func():
 				_sorceress_scene.open_for_swap(GameManager.swap_tokens, func():
-					# 换令确认后触发抽新令
 					GameManager.swap_sultan_card()
 				),
-			func():  # 进度（暂显示简单toast）
+			func():
 				_log("存活 %d 天 | 折令进度 0/28 | 换令余 %d 次" % [TurnManager.current_day, GameManager.swap_tokens]),
-			func():  # 闲聊
-				pass  # 闲聊已在女术士页面内置
+			func():
+				pass
 		)
+
+
+# ---- 令牌落入手牌动画 ----
+func _animate_card_into_hand() -> void:
+	if not is_instance_valid(cp) or not cp.visible:
+		return
+	# 从上方滑入
+	var target_y = cp.position.y
+	cp.position.y = -80
+	cp.modulate = Color(1, 1, 1, 0)
+	var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(cp, "position:y", target_y, 0.35)
+	t.parallel().tween_property(cp, "modulate", Color.WHITE, 0.15)
 
 func _refresh() -> void:
 	status_bar.refresh()
