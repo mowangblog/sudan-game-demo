@@ -11,11 +11,11 @@ var _bar: PanelContainer
 var day_lbl: Label
 var week_lbl: Label
 var gold_dice_lbl: Label
-var good_lbl: Label
-var evil_lbl: Label
-var power_lbl: Label
-var hero_lbl: Label
-var spirit_lbl: Label
+var good_lbl: PanelContainer
+var evil_lbl: PanelContainer
+var power_lbl: PanelContainer
+var hero_lbl: PanelContainer
+var spirit_lbl: PanelContainer
 
 func setup(p_root: Control, constants: Dictionary) -> void:
 	root = p_root
@@ -82,7 +82,9 @@ func refresh() -> void:
 	_good(spirit_lbl, ResourceManager.reputations.spirit)
 
 
-func _good(lbl: Label, val: int) -> void:
+func _good(chip: PanelContainer, val: int) -> void:
+	var lbl = chip.get_child(0) as Label
+	if not is_instance_valid(lbl): return
 	var parts = lbl.text.split(" ")
 	if parts.size() >= 2:
 		lbl.text = "%s %d" % [parts[0], val]
