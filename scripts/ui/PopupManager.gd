@@ -151,9 +151,46 @@ func show_game_over():
 	var rb = Button.new(); rb.text = "🔄 重开一局"; rb.custom_minimum_size = Vector2(160, 40)
 	rb.add_theme_font_size_override("font_size", 14); vb.add_child(rb)
 
-	rb.pressed.connect(func():
-		popup.queue_free()
-		_root.get_tree().change_scene_to_file("res://scenes/ui/MainScene.tscn")
-	)
+	_root.add_child(popup)
 
+func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
+	var popup = PanelContainer.new()
+	popup.name = "EventPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	var vs = _root.get_viewport().size
+	var pw = min(vs.x - 80, 600); var ph = min(vs.y - 80, 480)
+	popup.custom_minimum_size = Vector2(pw, 0)
+	popup.position = Vector2((vs.x - pw) / 2, (vs.y - ph) / 2)
+	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
+	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
+	ps.border_color = _C.get("GOLD", Color("c8a84e")); ps.shadow_size = 16; ps.shadow_color = Color("000000cc")
+	ps.content_margin_left = 20; ps.content_margin_right = 20; ps.content_margin_top = 14; ps.content_margin_bottom = 14
+	popup.add_theme_stylebox_override("panel", ps)
+	
+	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 10); popup.add_child(vb)
+	
+	var hb = HBoxContainer.new(); vb.add_child(hb)
+	var tl = Label.new(); tl.text = "📜 " + event.name
+	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
+	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(tl)
+	
+	var sc = ScrollContainer.new(); sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.custom_minimum_size = Vector2(0, ph * 0.55); vb.add_child(sc)
+	var text_lbl = Label.new(); text_lbl.text = event.text
+	text_lbl.add_theme_font_size_override("font_size", 13); text_lbl.add_theme_color_override("font_color", _C.get("TEXT", Color("f0e6c8")))
+	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; text_lbl.custom_minimum_size = Vector2(pw - 48, 0)
+	sc.add_child(text_lbl)
+	
+	var btns = VBoxContainer.new(); btns.add_theme_constant_override("separation", 6)
+	for i in range(event.choices.size()):
+		var choice = event.choices[i]
+		var btn = Button.new(); btn.text = "%d. %s" % [i + 1, choice.text]
+		btn.add_theme_font_size_override("font_size", 13); btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.custom_minimum_size = Vector2(0, 38)
+		btn.pressed.connect(func(idx=i):
+			popup.queue_free()
+			on_choice.call(event, idx)
+		)
+		btns.add_child(btn)
+	vb.add_child(btns)
+	
 	_root.add_child(popup)
