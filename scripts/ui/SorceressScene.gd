@@ -646,4 +646,4 @@ func _build_progress_text() -> String:
 		var tn = TN.get(cur.get("type", ""), "?")
 		var rg = RG.get(cur.get("rank", ""), "★")
 		lines.append("%s%s  （剩余 %d 天）" % [rg, tn, GameManager.sultan_card_days_left])
-	return lines.join("\n")
+	return "\n".join(lines)
