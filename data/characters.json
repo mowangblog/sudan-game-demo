@@ -2,8 +2,8 @@
   {
 	"id": "player",
 	"name": "主角",
-	"title": "苏丹的臣子",
-	"description": "被苏丹强迫参与疯狂游戏的可怜臣子。也是你。",
+	"title": "摄政王的臣子",
+	"description": "被摄政王强迫参与疯狂游戏的可怜臣子。也是你。",
 	"rarity": "UNIQUE",
 	"attributes": {
 	  "phy": 3, "com": 2, "sur": 3,
@@ -18,9 +18,9 @@
   },
   {
 	"id": "meji",
-	"name": "梅姬",
+	"name": "艾琳",
 	"title": "妻子",
-	"description": "你的妻子，智慧与魅力兼具。纵欲卡的核心处理者，也是情绪的晴雨表。",
+	"description": "你的妻子，智慧与魅力兼具。欢愉卡的核心处理者，也是情绪的晴雨表。",
 	"rarity": "UNIQUE",
 	"attributes": {
 	  "phy": 1, "com": 1, "sur": 1,
@@ -35,9 +35,9 @@
   },
   {
 	"id": "tietou",
-	"name": "铁头",
-	"title": "忠诚战士",
-	"description": "你最强的战士，体魄与战斗皆高。征服卡战斗检定的主力。",
+	"name": "雷蒙德爵士",
+	"title": "忠诚骑士",
+	"description": "你最强的骑士，体魄与战斗皆高。征伐卡战斗检定的主力。",
 	"rarity": "RARE",
 	"attributes": {
 	  "phy": 7, "com": 7, "sur": 3,
@@ -51,8 +51,8 @@
   },
   {
 	"id": "kuaijiao",
-	"name": "快脚",
-	"title": "敏捷探险者",
+	"name": "莉娜",
+	"title": "猎手",
 	"description": "生存与隐匿高手，探索任务的首选。体魄生存的隐匿手。",
 	"rarity": "RARE",
 	"attributes": {
@@ -67,9 +67,9 @@
   },
   {
 	"id": "zhaqiyi",
-	"name": "扎齐伊",
+	"name": "索菲亚",
 	"title": "妹妹",
-	"description": "你的妹妹，社交与魅力极高。纵欲铜卡的重要处理者。",
+	"description": "你的妹妹，社交与魅力极高。欢愉铜卡的重要处理者。",
 	"rarity": "UNIQUE",
 	"attributes": {
 	  "phy": 1, "com": 1, "sur": 2,

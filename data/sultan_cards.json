@@ -1,12 +1,12 @@
 [
   {
 	"id": "lust_stone",
-	"name": "石纵欲",
+	"name": "石欢愉",
 	"type": "LUST",
 	"rank": "STONE",
 	"rank_order": 1,
 	"description": "须寻床笫之欢——与某人共度",
-	"flavor": "苏丹的欲望如沙漠之风，无孔不入。",
+	"flavor": "摄政王的欲望如沙漠之风，无孔不入。",
 	"base_difficulty": 1,
 	"elimination_paths": [
 	  {"method": "character_interact", "target": "follower_stone", "cost": {}},
@@ -16,7 +16,7 @@
   },
   {
 	"id": "lust_bronze",
-	"name": "铜纵欲",
+	"name": "铜欢愉",
 	"type": "LUST",
 	"rank": "BRONZE",
 	"rank_order": 2,
@@ -31,7 +31,7 @@
   },
   {
 	"id": "lust_silver",
-	"name": "银纵欲",
+	"name": "银欢愉",
 	"type": "LUST",
 	"rank": "SILVER",
 	"rank_order": 3,
@@ -45,7 +45,7 @@
   },
   {
 	"id": "lust_gold",
-	"name": "金纵欲",
+	"name": "金欢愉",
 	"type": "LUST",
 	"rank": "GOLD",
 	"rank_order": 4,
@@ -64,7 +64,7 @@
 	"rank": "STONE",
 	"rank_order": 1,
 	"description": "须挥金如土——扩建消耗3金币",
-	"flavor": "苏丹要你证明财富不过是沙子。",
+	"flavor": "摄政王要你证明财富不过是沙子。",
 	"base_difficulty": 1,
 	"elimination_paths": [
 	  {"method": "insight_expand", "cost": {"gold": 3}},
@@ -78,7 +78,7 @@
 	"rank": "BRONZE",
 	"rank_order": 2,
 	"description": "须更挥霍——扩建消耗5金币",
-	"flavor": "金子如水流走，苏丹的笑容依旧冰冷。",
+	"flavor": "金子如水流走，摄政王的笑容依旧冰冷。",
 	"base_difficulty": 2,
 	"elimination_paths": [
 	  {"method": "insight_expand", "cost": {"gold": 5}},
@@ -93,7 +93,7 @@
 	"rank": "SILVER",
 	"rank_order": 3,
 	"description": "须大肆挥霍——扩建消耗10金币，或妻子茶会",
-	"flavor": "你开始怀疑，苏丹想要的根本不是金子。",
+	"flavor": "你开始怀疑，摄政王想要的根本不是金子。",
 	"base_difficulty": 3,
 	"elimination_paths": [
 	  {"method": "insight_expand", "cost": {"gold": 10}},
@@ -116,12 +116,12 @@
   },
   {
 	"id": "conquest_stone",
-	"name": "石征服",
+	"name": "石征伐",
 	"type": "CONQUEST",
 	"rank": "STONE",
 	"rank_order": 1,
-	"description": "须深入险境——诸地暴乱事件中征服",
-	"flavor": "苏丹要你的宝剑永远沾着血。",
+	"description": "须深入险境——诸地暴乱事件中征伐",
+	"flavor": "摄政王要你的宝剑永远沾着血。",
 	"base_difficulty": 1,
 	"elimination_paths": [
 	  {"method": "event", "trigger": "rebellion", "cost": {}}
@@ -129,7 +129,7 @@
   },
   {
 	"id": "conquest_bronze",
-	"name": "铜征服",
+	"name": "铜征伐",
 	"type": "CONQUEST",
 	"rank": "BRONZE",
 	"rank_order": 2,
@@ -145,11 +145,11 @@
   },
   {
 	"id": "conquest_silver",
-	"name": "银征服",
+	"name": "银征伐",
 	"type": "CONQUEST",
 	"rank": "SILVER",
 	"rank_order": 3,
-	"description": "须征服猛兽——白犀牛或哈马斯兄弟",
+	"description": "须征伐猛兽——白犀牛或哈马斯兄弟",
 	"flavor": "真正的敌人往往不在前方，而在身后。",
 	"base_difficulty": 3,
 	"elimination_paths": [
@@ -159,12 +159,12 @@
   },
   {
 	"id": "conquest_gold",
-	"name": "金征服",
+	"name": "金征伐",
 	"type": "CONQUEST",
 	"rank": "GOLD",
 	"rank_order": 4,
-	"description": "须征服至亲——夏玛杀父线，唯一路径",
-	"flavor": "最难的征服，是征服自己的心。",
+	"description": "须征伐至亲——夏玛杀父线，唯一路径",
+	"flavor": "最难的征伐，是征伐自己的心。",
 	"base_difficulty": 4,
 	"elimination_paths": [
 	  {"method": "event", "trigger": "kill_shamar_father", "cost": {}}
@@ -172,12 +172,12 @@
   },
   {
 	"id": "murder_stone",
-	"name": "石杀戮",
+	"name": "石清除",
 	"type": "MURDER",
 	"rank": "STONE",
 	"rank_order": 1,
 	"description": "须献祭一条人命——等死的奴隶或欠钱的朋友",
-	"flavor": "苏丹要一条命。谁的命？那就是你的问题了。",
+	"flavor": "摄政王要一条命。谁的命？那就是你的问题了。",
 	"base_difficulty": 1,
 	"elimination_paths": [
 	  {"method": "event", "trigger": "dying_slave", "cost": {}},
@@ -186,7 +186,7 @@
   },
   {
 	"id": "murder_bronze",
-	"name": "铜杀戮",
+	"name": "铜清除",
 	"type": "MURDER",
 	"rank": "BRONZE",
 	"rank_order": 2,
@@ -201,7 +201,7 @@
   },
   {
 	"id": "murder_silver",
-	"name": "银杀戮",
+	"name": "银清除",
 	"type": "MURDER",
 	"rank": "SILVER",
 	"rank_order": 3,
@@ -214,7 +214,7 @@
   },
   {
 	"id": "murder_gold",
-	"name": "金杀戮",
+	"name": "金清除",
 	"type": "MURDER",
 	"rank": "GOLD",
 	"rank_order": 4,
