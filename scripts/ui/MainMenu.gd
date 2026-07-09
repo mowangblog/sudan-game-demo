@@ -27,7 +27,6 @@ func _build():
 	bg.texture = preload("res://assets/images/ui/main_menu_bg.png")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	add_child(bg)
 	
 	var cv = VBoxContainer.new()
