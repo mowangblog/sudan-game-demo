@@ -22,15 +22,13 @@ func _center_on_resize():
 		cv.position = Vector2((vs.x - cv.size.x) / 2, (vs.y - cv.size.y) / 2)
 
 func _build():
-	# 背景满屏
-	var bg = ColorRect.new(); bg.color = C.BG
+	# 背景图满屏
+	var bg = TextureRect.new()
+	bg.texture = preload("res://assets/images/ui/main_menu_bg.png")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	add_child(bg)
-	
-	# 装饰线 满宽
-	var line = ColorRect.new(); line.color = C.GOLD
-	line.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE); line.offset_top = 100; line.offset_bottom = 102
-	add_child(line)
 	
 	var cv = VBoxContainer.new()
 	cv.name = "MenuVBox"
