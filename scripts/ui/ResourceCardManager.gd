@@ -71,6 +71,8 @@ func update_card_count(card: PanelContainer, count: int) -> void:
 	var lbl = card.get_node_or_null("VB/CountLbl")
 	if lbl == null:
 		lbl = card.get_node_or_null("CountLbl")
+	if lbl == null:
+		lbl = card.get_node_or_null("GoldTextOverlay/CountLbl")
 	if lbl:
 		lbl.text = ("x%d" % count) if count > 1 else ""
 	if card.get_meta("res_type", "") == "金币":

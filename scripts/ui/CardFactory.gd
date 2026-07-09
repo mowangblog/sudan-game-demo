@@ -179,6 +179,16 @@ func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
 
 
 func _add_gold_resource_text(card: PanelContainer, title: String, count: int) -> void:
+	var overlay = Control.new()
+	overlay.name = "GoldTextOverlay"
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.offset_left = 0
+	overlay.offset_top = 0
+	overlay.offset_right = 0
+	overlay.offset_bottom = 0
+	card.add_child(overlay)
+
 	var title_lbl = Label.new()
 	title_lbl.name = "GoldTitleLbl"
 	title_lbl.text = title
@@ -195,7 +205,7 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	title_lbl.offset_right = -6
 	title_lbl.offset_top = 5
 	title_lbl.offset_bottom = 29
-	card.add_child(title_lbl)
+	overlay.add_child(title_lbl)
 
 	var count_lbl = Label.new()
 	count_lbl.name = "CountLbl"
@@ -213,7 +223,7 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	count_lbl.offset_right = -12
 	count_lbl.offset_top = -22
 	count_lbl.offset_bottom = -3
-	card.add_child(count_lbl)
+	overlay.add_child(count_lbl)
 
 
 func make_book_card(book_data: Dictionary) -> PanelContainer:
