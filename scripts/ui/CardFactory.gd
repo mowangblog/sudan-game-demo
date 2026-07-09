@@ -193,8 +193,8 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	title_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	title_lbl.offset_left = 6
 	title_lbl.offset_right = -6
-	title_lbl.offset_top = 8
-	title_lbl.offset_bottom = 34
+	title_lbl.offset_top = 5
+	title_lbl.offset_bottom = 29
 	card.add_child(title_lbl)
 
 	var count_lbl = Label.new()
@@ -205,14 +205,14 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	count_lbl.add_theme_color_override("font_shadow_color", Color("d2a93a"))
 	count_lbl.add_theme_constant_override("shadow_offset_x", 1)
 	count_lbl.add_theme_constant_override("shadow_offset_y", 1)
-	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	count_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count_lbl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	count_lbl.offset_left = 8
-	count_lbl.offset_right = -9
-	count_lbl.offset_top = -28
-	count_lbl.offset_bottom = -8
+	count_lbl.offset_left = 12
+	count_lbl.offset_right = -12
+	count_lbl.offset_top = -22
+	count_lbl.offset_bottom = -3
 	card.add_child(count_lbl)
 
 
