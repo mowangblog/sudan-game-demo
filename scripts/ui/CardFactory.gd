@@ -117,6 +117,7 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 		var gold_panel = StyleBoxEmpty.new()
 		card.add_theme_stylebox_override("panel", gold_panel)
 		_add_texture_background(card, GOLD_CARD_BG)
+		_add_gold_resource_text(card, name_str, count)
 	else:
 		var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
 		sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
@@ -124,25 +125,21 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 		sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
 		card.add_theme_stylebox_override("panel", sb)
 
-	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
+	if quality != "GOLD":
+		var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
 
-	var primary_text = Color("2b1b08") if quality == "GOLD" else C.get("TEXT", Color("f0e6c8"))
-	var accent_text = Color("3a2508") if quality == "GOLD" else C.get("GOLD", Color("c8a84e"))
-	var count_text = Color("211305") if quality == "GOLD" else C.get("GOLD_HI", Color("e8d48b"))
-
-	var icon_lbl = Label.new(); icon_lbl.text = icon; icon_lbl.add_theme_font_size_override("font_size", 32)
-	icon_lbl.add_theme_color_override("font_color", accent_text)
-	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
-	var nl = Label.new(); nl.text = name_str; nl.add_theme_font_size_override("font_size", 13)
-	nl.add_theme_color_override("font_color", primary_text)
-	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-	var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
-	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", accent_text)
-	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-	var cnt_lbl = Label.new(); cnt_lbl.name = "CountLbl"; cnt_lbl.text = ("x%d" % count) if count > 1 else ""
-	cnt_lbl.add_theme_font_size_override("font_size", 12); cnt_lbl.add_theme_color_override("font_color", count_text)
-	cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt_lbl)
+		var icon_lbl = Label.new(); icon_lbl.text = icon; icon_lbl.add_theme_font_size_override("font_size", 32)
+		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
+		var nl = Label.new(); nl.text = name_str; nl.add_theme_font_size_override("font_size", 13)
+		nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
+		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
+		var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
+		ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
+		ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
+		var cnt_lbl = Label.new(); cnt_lbl.name = "CountLbl"; cnt_lbl.text = ("x%d" % count) if count > 1 else ""
+		cnt_lbl.add_theme_font_size_override("font_size", 12); cnt_lbl.add_theme_color_override("font_color", C.get("GOLD_HI", Color("e8d48b")))
+		cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt_lbl)
 
 	var resource_type = "gold" if name_str == "金币" else "intel"
 	var res_data = {"type": "resource", "resource_type": resource_type, "id": name_str, "name": name_str, "quality": quality, "count": count, "icon": icon}
@@ -179,6 +176,44 @@ func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
 	tex.offset_bottom = 0
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(tex)
+
+
+func _add_gold_resource_text(card: PanelContainer, title: String, count: int) -> void:
+	var title_lbl = Label.new()
+	title_lbl.name = "GoldTitleLbl"
+	title_lbl.text = title
+	title_lbl.add_theme_font_size_override("font_size", 17)
+	title_lbl.add_theme_color_override("font_color", Color("0b0702"))
+	title_lbl.add_theme_color_override("font_shadow_color", Color("e7c55a"))
+	title_lbl.add_theme_constant_override("shadow_offset_x", 1)
+	title_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	title_lbl.offset_left = 6
+	title_lbl.offset_right = -6
+	title_lbl.offset_top = 8
+	title_lbl.offset_bottom = 34
+	card.add_child(title_lbl)
+
+	var count_lbl = Label.new()
+	count_lbl.name = "CountLbl"
+	count_lbl.text = ("x%d" % count) if count > 1 else ""
+	count_lbl.add_theme_font_size_override("font_size", 11)
+	count_lbl.add_theme_color_override("font_color", Color("100a03"))
+	count_lbl.add_theme_color_override("font_shadow_color", Color("d2a93a"))
+	count_lbl.add_theme_constant_override("shadow_offset_x", 1)
+	count_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count_lbl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	count_lbl.offset_left = 8
+	count_lbl.offset_right = -9
+	count_lbl.offset_top = -28
+	count_lbl.offset_bottom = -8
+	card.add_child(count_lbl)
 
 
 func make_book_card(book_data: Dictionary) -> PanelContainer:
