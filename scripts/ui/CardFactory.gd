@@ -5,6 +5,8 @@
 class_name CardFactory
 extends RefCounted
 
+const GOLD_CARD_BG = preload("res://assets/images/cards/gold_card_bg.png")
+
 # 注入的常量和回调
 var C: Dictionary = {}
 var SC: Dictionary = {}; var SC_BORDER: Dictionary = {}; var SC_HOVER: Dictionary = {}; var SC_GLOW: Dictionary = {}
@@ -111,25 +113,35 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	card.name = "Res_" + name_str; card.custom_minimum_size = Vector2(70, 152); card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var bg = SC.get(quality, Color("2a2018"))
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
-	var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
-	sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
-	sb.border_color = q_border; sb.content_margin_left = 4; sb.content_margin_right = 4
-	sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
-	card.add_theme_stylebox_override("panel", sb)
+	if quality == "GOLD":
+		var gold_panel = StyleBoxEmpty.new()
+		card.add_theme_stylebox_override("panel", gold_panel)
+		_add_texture_background(card, GOLD_CARD_BG)
+	else:
+		var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
+		sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
+		sb.border_color = q_border; sb.content_margin_left = 4; sb.content_margin_right = 4
+		sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
+		card.add_theme_stylebox_override("panel", sb)
 
 	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
 
+	var primary_text = Color("2b1b08") if quality == "GOLD" else C.get("TEXT", Color("f0e6c8"))
+	var accent_text = Color("3a2508") if quality == "GOLD" else C.get("GOLD", Color("c8a84e"))
+	var count_text = Color("211305") if quality == "GOLD" else C.get("GOLD_HI", Color("e8d48b"))
+
 	var icon_lbl = Label.new(); icon_lbl.text = icon; icon_lbl.add_theme_font_size_override("font_size", 32)
+	icon_lbl.add_theme_color_override("font_color", accent_text)
 	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
 	var nl = Label.new(); nl.text = name_str; nl.add_theme_font_size_override("font_size", 13)
-	nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
+	nl.add_theme_color_override("font_color", primary_text)
 	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
 	var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
-	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
+	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", accent_text)
 	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
 	var cnt_lbl = Label.new(); cnt_lbl.name = "CountLbl"; cnt_lbl.text = ("x%d" % count) if count > 1 else ""
-	cnt_lbl.add_theme_font_size_override("font_size", 12); cnt_lbl.add_theme_color_override("font_color", C.get("GOLD_HI", Color("e8d48b")))
+	cnt_lbl.add_theme_font_size_override("font_size", 12); cnt_lbl.add_theme_color_override("font_color", count_text)
 	cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt_lbl)
 
 	var resource_type = "gold" if name_str == "金币" else "intel"
@@ -140,6 +152,8 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	card.set_meta("res_data", res_data)
 
 	card._on_hover_style = func(hovered: bool):
+		if quality == "GOLD":
+			return
 		var nsb = StyleBoxFlat.new(); nsb.bg_color = bg; nsb.set_corner_radius_all(10)
 		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
 		nsb.content_margin_left = 4; nsb.content_margin_right = 4; nsb.content_margin_top = 4; nsb.content_margin_bottom = 4
@@ -150,6 +164,21 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 		card.add_theme_stylebox_override("panel", nsb)
 
 	return card
+
+
+func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
+	var tex = TextureRect.new()
+	tex.name = "CardTextureBg"
+	tex.texture = texture
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_SCALE
+	tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tex.offset_left = 0
+	tex.offset_top = 0
+	tex.offset_right = 0
+	tex.offset_bottom = 0
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(tex)
 
 
 func make_book_card(book_data: Dictionary) -> PanelContainer:
