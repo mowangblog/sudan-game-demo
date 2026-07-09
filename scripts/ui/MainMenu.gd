@@ -15,17 +15,21 @@ func _ready():
 	_build()
 
 func _center_on_resize():
-	# 拿到 VBoxContainer 并重新居中
+	var vs = get_viewport().size
+	# 背景铺满
+	var bg = get_node_or_null("BG")
+	if bg: bg.size = vs
+	# MenuVBox 居中
 	var cv = get_node_or_null("MenuVBox")
-	if cv:
-		var vs = get_viewport().size
-		cv.position = Vector2((vs.x - cv.size.x) / 2, (vs.y - cv.size.y) / 2)
+	if cv: cv.position = Vector2((vs.x - cv.size.x) / 2, (vs.y - cv.size.y) / 2)
 
 func _build():
-	# 背景图满屏
+	# 背景图直接按窗口尺寸
+	var vs = get_viewport().size
 	var bg = TextureRect.new()
+	bg.name = "BG"
 	bg.texture = preload("res://assets/images/ui/main_menu_bg.png")
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.size = vs
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(bg)
 	
