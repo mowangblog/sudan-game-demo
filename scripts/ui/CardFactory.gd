@@ -192,10 +192,8 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	var title_lbl = Label.new()
 	title_lbl.name = "GoldTitleLbl"
 	title_lbl.text = title
-	title_lbl.add_theme_font_size_override("font_size", 15)
+	title_lbl.add_theme_font_size_override("font_size", 16)
 	title_lbl.add_theme_color_override("font_color", Color("0b0702"))
-	title_lbl.add_theme_color_override("font_outline_color", Color("f1d269"))
-	title_lbl.add_theme_color_override("font_shadow_color", Color("f1d269"))
 	title_lbl.add_theme_constant_override("outline_size", 1)
 	title_lbl.add_theme_constant_override("shadow_offset_x", 1)
 	title_lbl.add_theme_constant_override("shadow_offset_y", 1)
@@ -206,7 +204,7 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	title_lbl.offset_left = 6
 	title_lbl.offset_right = -6
 	title_lbl.offset_top = 5
-	title_lbl.offset_bottom = 29
+	title_lbl.offset_bottom = 34
 	overlay.add_child(title_lbl)
 
 	var count_lbl = Label.new()
