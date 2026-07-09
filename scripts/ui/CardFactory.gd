@@ -192,9 +192,11 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	var title_lbl = Label.new()
 	title_lbl.name = "GoldTitleLbl"
 	title_lbl.text = title
-	title_lbl.add_theme_font_size_override("font_size", 17)
+	title_lbl.add_theme_font_size_override("font_size", 15)
 	title_lbl.add_theme_color_override("font_color", Color("0b0702"))
-	title_lbl.add_theme_color_override("font_shadow_color", Color("e7c55a"))
+	title_lbl.add_theme_color_override("font_outline_color", Color("f1d269"))
+	title_lbl.add_theme_color_override("font_shadow_color", Color("f1d269"))
+	title_lbl.add_theme_constant_override("outline_size", 1)
 	title_lbl.add_theme_constant_override("shadow_offset_x", 1)
 	title_lbl.add_theme_constant_override("shadow_offset_y", 1)
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -210,19 +212,21 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	var count_lbl = Label.new()
 	count_lbl.name = "CountLbl"
 	count_lbl.text = ("x%d" % count) if count > 1 else ""
-	count_lbl.add_theme_font_size_override("font_size", 11)
-	count_lbl.add_theme_color_override("font_color", Color("100a03"))
-	count_lbl.add_theme_color_override("font_shadow_color", Color("d2a93a"))
-	count_lbl.add_theme_constant_override("shadow_offset_x", 1)
-	count_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	count_lbl.add_theme_font_size_override("font_size", 22)
+	count_lbl.add_theme_color_override("font_color", Color("fff3cf"))
+	count_lbl.add_theme_color_override("font_outline_color", Color("050300"))
+	count_lbl.add_theme_color_override("font_shadow_color", Color("050300"))
+	count_lbl.add_theme_constant_override("outline_size", 3)
+	count_lbl.add_theme_constant_override("shadow_offset_x", 2)
+	count_lbl.add_theme_constant_override("shadow_offset_y", 2)
 	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	count_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count_lbl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	count_lbl.offset_left = 12
 	count_lbl.offset_right = -12
-	count_lbl.offset_top = -22
-	count_lbl.offset_bottom = -3
+	count_lbl.offset_top = -38
+	count_lbl.offset_bottom = -4
 	overlay.add_child(count_lbl)
 
 
