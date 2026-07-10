@@ -119,6 +119,9 @@ func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
 	tex.offset_right = 0
 	tex.offset_bottom = 0
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m = ShaderMaterial.new()
+	m.shader = preload("res://shaders/round_corners.gdshader")
+	tex.material = m
 	card.move_child(tex, 0)
 
 
