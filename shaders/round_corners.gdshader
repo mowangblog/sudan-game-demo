@@ -1,5 +1,5 @@
 shader_type canvas_item;
-uniform float radius : hint_range(0.0, 50.0) = 20.0;
+uniform float radius : hint_range(0.0, 50.0) = 22.0;
 
 void fragment() {
 	vec2 s = 1.0 / TEXTURE_PIXEL_SIZE;
