@@ -28,44 +28,76 @@ func _sl(t:String, c:Color=Color.WHITE) -> Label:
 func show_char_popup(d: Dictionary):
 	var popup = PanelContainer.new()
 	popup.name = "CharPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	popup.custom_minimum_size = Vector2(340, 0)
+	popup.custom_minimum_size = Vector2(560, 0)
 	var vs = _root.get_viewport().size
-	popup.position = Vector2((vs.x - 340) / 2, (vs.y - 280) / 2 - 40)
+	popup.position = Vector2((vs.x - 560) / 2, (vs.y - 380) / 2 - 40)
 	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
 	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
 	ps.border_color = _C.get("GOLD", Color("c8a84e")); ps.shadow_size = 12; ps.shadow_color = Color("000000cc")
 	ps.content_margin_left = 16; ps.content_margin_right = 16; ps.content_margin_top = 12; ps.content_margin_bottom = 12
 	popup.add_theme_stylebox_override("panel", ps)
 
-	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 6); popup.add_child(vb)
-	var hb = HBoxContainer.new(); vb.add_child(hb)
+	var main_hb = HBoxContainer.new()
+	main_hb.add_theme_constant_override("separation", 16)
+	popup.add_child(main_hb)
+
+	var left = VBoxContainer.new()
+	left.add_theme_constant_override("separation", 8)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_hb.add_child(left)
+
+	var title_hb = HBoxContainer.new(); left.add_child(title_hb)
 	var name_lbl = Label.new(); name_lbl.text = d.get("name", "?")
 	name_lbl.add_theme_font_size_override("font_size", 18); name_lbl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
-	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(name_lbl)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_hb.add_child(name_lbl)
 	var cb = Button.new(); cb.text = "✕"; cb.custom_minimum_size = Vector2(32, 32)
-	cb.pressed.connect(func(): popup.queue_free()); hb.add_child(cb)
+	cb.pressed.connect(func(): popup.queue_free()); title_hb.add_child(cb)
 
-	var title_lbl = Label.new(); title_lbl.text = d.get("title", ""); title_lbl.add_theme_font_size_override("font_size", 13)
-	title_lbl.add_theme_color_override("font_color", _C.get("DIM", Color("a09070"))); vb.add_child(title_lbl)
+	var title_sub = Label.new(); title_sub.text = d.get("title", "")
+	title_sub.add_theme_font_size_override("font_size", 12)
+	title_sub.add_theme_color_override("font_color", _C.get("DIM", Color("a09070"))); left.add_child(title_sub)
 
-	vb.add_child(_sep())
-	var desc = Label.new(); desc.text = d.get("description", ""); desc.add_theme_font_size_override("font_size", 12)
+	left.add_child(_sep())
+	var desc = Label.new(); desc.text = d.get("description", "")
+	desc.add_theme_font_size_override("font_size", 12)
 	desc.add_theme_color_override("font_color", _C.get("TEXT", Color("f0e6c8")))
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; vb.add_child(desc)
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; left.add_child(desc)
 
-	vb.add_child(_sep())
+	left.add_child(_sep())
+	var attrs_lbl = Label.new(); attrs_lbl.text = "属性"
+	attrs_lbl.add_theme_font_size_override("font_size", 13)
+	attrs_lbl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e"))); left.add_child(attrs_lbl)
 	var grid = GridContainer.new(); grid.columns = 4; grid.add_theme_constant_override("h_separation", 12)
-	vb.add_child(grid)
+	left.add_child(grid)
 	var attrs = d.get("attributes", {})
 	for k in ["phy", "com", "sur", "soc", "cha", "ste", "wis", "mag"]:
 		var al = Label.new(); al.text = "%s %s %d" % [_AI.get(k, k), _AN.get(k, k), attrs.get(k, 0)]
 		al.add_theme_font_size_override("font_size", 11); al.add_theme_color_override("font_color", _C.get("TEXT", Color("f0e6c8")))
 		grid.add_child(al)
 
-	vb.add_child(_sep())
+	left.add_child(_sep())
 	var bonus = Label.new(); bonus.text = "📌 " + d.get("ritual_bonus", "")
 	bonus.add_theme_font_size_override("font_size", 11); bonus.add_theme_color_override("font_color", _C.get("GOLD_HI", Color("e8d48b")))
-	bonus.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; vb.add_child(bonus)
+	bonus.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; left.add_child(bonus)
+
+	var right = Control.new()
+	right.custom_minimum_size = Vector2(160, 220)
+	main_hb.add_child(right)
+	var pid = d.get("id", "")
+	var portrait_path: String = ""
+	match pid:
+		"player": portrait_path = "res://assets/images/characters/zhujue.png"
+		"meji": portrait_path = "res://assets/images/characters/meji_resized.png"
+		"tietou": portrait_path = "res://assets/images/characters/tietou_resized.png"
+		"kuaijiao": portrait_path = "res://assets/images/characters/kuaijiao_resized.png"
+		"zhaqiyi": portrait_path = "res://assets/images/characters/zhaqiyi_resized.png"
+	if portrait_path != "" and ResourceLoader.exists(portrait_path):
+		var pr = TextureRect.new()
+		pr.texture = load(portrait_path)
+		pr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		right.add_child(pr)
 
 	_root.add_child(popup)
 
