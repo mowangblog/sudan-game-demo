@@ -11,6 +11,12 @@ const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
 const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
 const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
 const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
+const CHAR_PORTRAITS = {
+	"meji": preload("res://assets/images/characters/meji_resized.png"),
+	"tietou": preload("res://assets/images/characters/tietou_resized.png"),
+	"kuaijiao": preload("res://assets/images/characters/kuaijiao_resized.png"),
+	"zhaqiyi": preload("res://assets/images/characters/zhaqiyi_resized.png"),
+}
 const CARD_TITLE_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
 const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
@@ -39,7 +45,8 @@ func make_char_card(d: Dictionary) -> PanelContainer:
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
 	_apply_image_card_base(card, quality, q_border, false)
 
-	var portrait: Texture2D = PLAYER_PORTRAIT if d.get("id", "") == "player" else null
+	var pid = d.get("id", "")
+	var portrait: Texture2D = CHAR_PORTRAITS.get(pid, PLAYER_PORTRAIT if pid == "player" else null)
 	if d.has("portrait") and str(d.get("portrait", "")) != "":
 		portrait = load(str(d.get("portrait", "")))
 	_add_card_face_content(card, d.get("name", "?"), "", "", portrait)

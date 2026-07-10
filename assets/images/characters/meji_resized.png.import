@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://vqwbeuwlp0h"
-path="res://.godot/imported/zhujue.png-f9804ce16d707ba634d758d62f19faec.ctex"
+uid="uid://ppwl8j4ir36k"
+path="res://.godot/imported/meji_resized.png-846d5edcaf01d89908bcb98a4b9d1668.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/characters/zhujue.png"
-dest_files=["res://.godot/imported/zhujue.png-f9804ce16d707ba634d758d62f19faec.ctex"]
+source_file="res://assets/images/characters/meji_resized.png"
+dest_files=["res://.godot/imported/meji_resized.png-846d5edcaf01d89908bcb98a4b9d1668.ctex"]
 
 [params]
 
