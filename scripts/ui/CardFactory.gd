@@ -17,9 +17,7 @@ const CHAR_PORTRAITS = {
 	"kuaijiao": preload("res://assets/images/characters/kuaijiao_resized.png"),
 	"zhaqiyi": preload("res://assets/images/characters/zhaqiyi_resized.png"),
 }
-const SC_PORTRAIT = {
-	"MURDER": preload("res://assets/images/characters/shalu.png"),
-}
+
 const SC_CARD_BG = {
 	"LUST": {
 		"STONE": preload("res://assets/images/sudanCards/shi_huanyu.png"),
@@ -103,7 +101,8 @@ func make_sultan_card() -> PanelContainer:
 	var q_border = C.get("GOLD_LO", Color("8a6820"))
 	card._on_hover_style = func(hovered: bool):
 		var q = card.get_meta("card_quality", "STONE")
-		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")))
+		var bg = card.get_meta("sc_bg", null) as Texture2D
+		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")), bg)
 
 	return card
 

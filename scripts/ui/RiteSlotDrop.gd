@@ -161,8 +161,11 @@ func _draw_card_preview():
 		"sultan_card":
 			_display_card = card_factory.make_sultan_card()
 			_display_card.visible = true
+			var sc_type = current_card.get("type","")
 			var sc_rank = current_card.get("rank", "STONE")
-			card_factory.call("_apply_image_card_base", _display_card, sc_rank, C.GOLD_LO, false)
+			var sc_bg = card_factory.sultan_card_bg(sc_type, sc_rank)
+			card_factory.call("_apply_image_card_base", _display_card, sc_rank, C.GOLD_LO, false, Color("c8a84e80"), sc_bg)
+			_display_card.set_meta("sc_bg", sc_bg)
 			var type_map = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"杀戮"}
 			var tl = _display_card.get_node_or_null("CardTextOverlay/TitleLbl")
 			if tl: tl.text = type_map.get(current_card.get("type",""), "？")
