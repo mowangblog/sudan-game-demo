@@ -130,11 +130,13 @@ func set_highlight(on: bool):
 		_highlight_pos_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		_highlight_pos_tween.tween_property(self, "position:y", _rest_position.y - 14, 0.15)
 		if mat:
+			var base = get_meta("base_tint", Color.WHITE)
+			var glow = Color(base.r * 1.5, base.g * 1.3, base.b * 0.7, base.a)
 			_highlight_tween = create_tween().set_loops(3)
-			_highlight_tween.tween_method(func(v): mat.set_shader_parameter("tint", v), Color.WHITE, Color(1.5, 1.3, 0.7, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
-			_highlight_tween.tween_method(func(v): mat.set_shader_parameter("tint", v), Color(1.5, 1.3, 0.7, 1.0), Color.WHITE, 0.35).set_trans(Tween.TRANS_SINE)
+			_highlight_tween.tween_method(func(v): mat.set_shader_parameter("tint", v), base, glow, 0.35).set_trans(Tween.TRANS_SINE)
+			_highlight_tween.tween_method(func(v): mat.set_shader_parameter("tint", v), glow, base, 0.35).set_trans(Tween.TRANS_SINE)
 	else:
-		if mat: mat.set_shader_parameter("tint", Color.WHITE)
+		if mat: mat.set_shader_parameter("tint", get_meta("base_tint", Color.WHITE))
 		modulate = Color.WHITE
 		_highlight_pos_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		_highlight_pos_tween.tween_property(self, "position:y", _rest_position.y, 0.15)
