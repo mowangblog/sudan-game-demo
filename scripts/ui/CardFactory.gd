@@ -69,6 +69,7 @@ func make_sultan_card() -> PanelContainer:
 	overlay.add_child(tl)
 
 	var dl = Label.new(); dl.name = "DaysLbl"; dl.text = "7天"
+	dl.add_theme_font_override("font", CARD_TITLE_FONT)
 	dl.add_theme_font_size_override("font_size", 18); dl.add_theme_color_override("font_color", Color("fff3cf"))
 	dl.add_theme_color_override("font_outline_color", Color("050300"))
 	dl.add_theme_constant_override("outline_size", 3)
