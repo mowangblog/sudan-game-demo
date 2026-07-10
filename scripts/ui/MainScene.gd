@@ -662,24 +662,10 @@ func _refresh() -> void:
 		if is_instance_valid(cd_lbl):
 			cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
 		var sc_type = card.get("type","")
-		var portrait = CardFactory.SC_PORTRAIT.get(sc_type, null)
-		var pr = cp.get_node_or_null("CardTextOverlay/Portrait") as TextureRect
-		if portrait:
-			if not pr:
-				pr = TextureRect.new(); pr.name = "Portrait"
-				pr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				pr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				pr.set_anchors_preset(Control.PRESET_FULL_RECT)
-				pr.offset_left = 8; pr.offset_right = -8
-				pr.offset_top = 36; pr.offset_bottom = -30
-				pr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				var ov = cp.get_node_or_null("CardTextOverlay")
-				if ov: ov.add_child(pr)
-			pr.texture = portrait; pr.visible = true
-		elif pr:
-			pr.visible = false
-		var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
-		card_factory.call("_apply_image_card_base", cp, card.get("rank","STONE"), rk_border, false)
+		var sc_rank = card.get("rank","STONE")
+		var rk_border = SC_BORDER.get(sc_rank, C.GOLD_LO)
+		var sc_bg = card_factory.sultan_card_bg(sc_type, sc_rank)
+		card_factory.call("_apply_image_card_base", cp, sc_rank, rk_border, false, Color("c8a84e80"), sc_bg)
 		cp.set_meta("drag_data", {"type":"sultan_card", "id":card.get("id",""), "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()

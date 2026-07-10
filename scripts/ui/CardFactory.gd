@@ -20,6 +20,32 @@ const CHAR_PORTRAITS = {
 const SC_PORTRAIT = {
 	"MURDER": preload("res://assets/images/characters/shalu.png"),
 }
+const SC_CARD_BG = {
+	"LUST": {
+		"STONE": preload("res://assets/images/sudanCards/shi_huanyu.png"),
+		"BRONZE": preload("res://assets/images/sudanCards/tong_huanyu.png"),
+		"SILVER": preload("res://assets/images/sudanCards/ying_huanyu.png"),
+		"GOLD": preload("res://assets/images/sudanCards/jin_huanyu.png"),
+	},
+	"LUXURY": {
+		"STONE": preload("res://assets/images/sudanCards/shi_shemi.png"),
+		"BRONZE": preload("res://assets/images/sudanCards/tong_shemi.png"),
+		"SILVER": preload("res://assets/images/sudanCards/ying_shemi.png"),
+		"GOLD": preload("res://assets/images/sudanCards/jin_shemi.png"),
+	},
+	"CONQUEST": {
+		"STONE": preload("res://assets/images/sudanCards/shi_zhengfu.png"),
+		"BRONZE": preload("res://assets/images/sudanCards/tong_zhengfu.png"),
+		"SILVER": preload("res://assets/images/sudanCards/ying_zhengfu.png"),
+		"GOLD": preload("res://assets/images/sudanCards/jin_zhengfu.png"),
+	},
+	"MURDER": {
+		"STONE": preload("res://assets/images/sudanCards/shi_shalu.png"),
+		"BRONZE": preload("res://assets/images/sudanCards/tong_shalu.png"),
+		"SILVER": preload("res://assets/images/sudanCards/ying_shalu.png"),
+		"GOLD": preload("res://assets/images/sudanCards/jin_shalu.png"),
+	},
+}
 const CARD_TITLE_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
 const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
@@ -214,6 +240,11 @@ func _card_background_for_quality(quality: String) -> Texture2D:
 			return GOLD_RARITY_CARD_BG
 		_:
 			return STONE_CARD_BG
+
+
+func sultan_card_bg(type: String, rank: String) -> Texture2D:
+	var rank_map = SC_CARD_BG.get(type, {})
+	return rank_map.get(rank, _card_background_for_quality(rank))
 
 
 func _apply_image_card_base(card: PanelContainer, quality: String, border_color: Color, hovered: bool = false, glow_color: Color = Color("c8a84e80"), texture_override: Texture2D = null) -> void:
