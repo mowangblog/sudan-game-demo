@@ -6,6 +6,13 @@ class_name CardFactory
 extends RefCounted
 
 const GOLD_CARD_BG = preload("res://assets/images/cards/gold_card_bg.png")
+const STONE_CARD_BG = preload("res://assets/images/cards/shi_resized.png")
+const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
+const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
+const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
+const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
+const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
+const CARD_SIZE := Vector2(100, 180)
 
 # 注入的常量和回调
 var C: Dictionary = {}
@@ -26,53 +33,22 @@ func setup(constants: Dictionary, on_click_char: Callable) -> void:
 
 func make_char_card(d: Dictionary) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.custom_minimum_size = Vector2(70, 152); card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var quality = CHAR_QUALITY.get(d.get("id", ""), "STONE")
-	var bg = SC.get(quality, Color("2a2018"))
-	var q_stars = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
-	
-	var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
-	sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
-	sb.border_color = q_border; sb.content_margin_left = 4; sb.content_margin_right = 4
-	sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
-	card.add_theme_stylebox_override("panel", sb)
+	_apply_image_card_base(card, quality, q_border, false)
 
-	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
-
-	var nl = Label.new(); nl.text = d.get("name", "?"); nl.add_theme_font_size_override("font_size", 13)
-	nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
-	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-
-	var ql = Label.new(); ql.text = q_stars.get(quality, "★")
-	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
-	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-
-	var attrs = d.get("attributes", {})
-	var best = ""; var best_v = 0
-	for k in attrs:
-		if attrs[k] > best_v: best_v = attrs[k]; best = k
-	var bl = Label.new()
-	bl.text = "%s %d" % [AI.get(best, best), best_v]
-	bl.add_theme_font_size_override("font_size", 10)
-	bl.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
-	bl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(bl)
+	var portrait: Texture2D = PLAYER_PORTRAIT if d.get("id", "") == "player" else null
+	if d.has("portrait") and str(d.get("portrait", "")) != "":
+		portrait = load(str(d.get("portrait", "")))
+	_add_card_face_content(card, d.get("name", "?"), "", "", portrait)
 
 	card.set_meta("drag_data", {"type": "character", "id": d.get("id", ""), "name": d.get("name", ""), "data": d})
 
 	card._on_hover_style = func(hovered: bool):
-		var nsb = StyleBoxFlat.new(); nsb.bg_color = bg
 		var q_glow = SC_GLOW.get(quality, Color("c8a84e80"))
 		var q_hover = SC_HOVER.get(quality, q_border)
-		nsb.set_corner_radius_all(10)
-		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
-		nsb.content_margin_left = 4; nsb.content_margin_right = 4; nsb.content_margin_top = 4; nsb.content_margin_bottom = 4
-		if hovered:
-			nsb.border_color = q_hover; nsb.shadow_size = 12; nsb.shadow_color = q_glow
-		else:
-			nsb.border_color = q_border; nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
-		card.add_theme_stylebox_override("panel", nsb)
+		_apply_image_card_base(card, quality, q_hover if hovered else q_border, hovered, q_glow)
 
 	card._on_click = func():
 		_on_click_char.call(d)
@@ -81,65 +57,36 @@ func make_char_card(d: Dictionary) -> PanelContainer:
 
 func make_sultan_card() -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name = "SC"; card.custom_minimum_size = Vector2(70, 152); card.mouse_filter = Control.MOUSE_FILTER_STOP
-	var sb = StyleBoxFlat.new(); sb.bg_color = Color("2a2018"); sb.set_corner_radius_all(10)
-	sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
-	sb.border_color = C.get("GOLD_LO", Color("8a6820"))
-	sb.content_margin_left = 4; sb.content_margin_right = 4; sb.content_margin_top = 4; sb.content_margin_bottom = 4
-	sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
-	card.add_theme_stylebox_override("panel", sb)
-
-	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
+	card.name = "SC"; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
+	_apply_image_card_base(card, "STONE", C.get("GOLD_LO", Color("8a6820")), false)
+	var overlay = _make_card_overlay(card)
 
 	var tl = Label.new(); tl.name = "TypeLbl"; tl.text = "欢愉"
-	tl.add_theme_font_size_override("font_size", 20); tl.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
+	_apply_card_title_style(tl, 18)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.add_child(tl)
-
-	var rl = Label.new(); rl.name = "RankLbl"; rl.text = "★"
-	rl.add_theme_font_size_override("font_size", 13); rl.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
-	rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(rl)
+	tl.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	tl.offset_left = 8; tl.offset_right = -8; tl.offset_top = 12; tl.offset_bottom = 38
+	overlay.add_child(tl)
 
 	var dl = Label.new(); dl.name = "DaysLbl"; dl.text = "7天"
-	dl.add_theme_font_size_override("font_size", 12); dl.add_theme_color_override("font_color", C.get("DIM", Color("a09070")))
-	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(dl)
+	dl.add_theme_font_size_override("font_size", 18); dl.add_theme_color_override("font_color", Color("fff3cf"))
+	dl.add_theme_color_override("font_outline_color", Color("050300"))
+	dl.add_theme_constant_override("outline_size", 3)
+	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	dl.offset_left = 10; dl.offset_right = -10; dl.offset_top = -38; dl.offset_bottom = -6
+	overlay.add_child(dl)
 
 	card.visible = false
 	return card
 
 func make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name = "Res_" + name_str; card.custom_minimum_size = Vector2(70, 152); card.mouse_filter = Control.MOUSE_FILTER_STOP
-	var bg = SC.get(quality, Color("2a2018"))
+	card.name = "Res_" + name_str; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
-	if quality == "GOLD":
-		var gold_panel = StyleBoxEmpty.new()
-		card.add_theme_stylebox_override("panel", gold_panel)
-		_add_texture_background(card, GOLD_CARD_BG)
-		_add_gold_resource_text(card, name_str, count)
-	else:
-		var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
-		sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
-		sb.border_color = q_border; sb.content_margin_left = 4; sb.content_margin_right = 4
-		sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
-		card.add_theme_stylebox_override("panel", sb)
-
-	if quality != "GOLD":
-		var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
-
-		var icon_lbl = Label.new(); icon_lbl.text = icon; icon_lbl.add_theme_font_size_override("font_size", 32)
-		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
-		var nl = Label.new(); nl.text = name_str; nl.add_theme_font_size_override("font_size", 13)
-		nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
-		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-		var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
-		ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
-		ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-		var cnt_lbl = Label.new(); cnt_lbl.name = "CountLbl"; cnt_lbl.text = ("x%d" % count) if count > 1 else ""
-		cnt_lbl.add_theme_font_size_override("font_size", 12); cnt_lbl.add_theme_color_override("font_color", C.get("GOLD_HI", Color("e8d48b")))
-		cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt_lbl)
+	var bg_override: Texture2D = GOLD_CARD_BG if name_str == "金币" else null
+	_apply_image_card_base(card, quality, q_border, false, Color("c8a84e80"), bg_override)
+	_add_card_face_content(card, name_str, ("x%d" % count) if count > 1 else "", "", null)
 
 	var resource_type = "gold" if name_str == "金币" else "intel"
 	var res_data = {"type": "resource", "resource_type": resource_type, "id": name_str, "name": name_str, "quality": quality, "count": count, "icon": icon}
@@ -149,22 +96,17 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	card.set_meta("res_data", res_data)
 
 	card._on_hover_style = func(hovered: bool):
-		if quality == "GOLD":
-			return
-		var nsb = StyleBoxFlat.new(); nsb.bg_color = bg; nsb.set_corner_radius_all(10)
-		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
-		nsb.content_margin_left = 4; nsb.content_margin_right = 4; nsb.content_margin_top = 4; nsb.content_margin_bottom = 4
-		if hovered:
-			nsb.border_color = q_border; nsb.shadow_size = 12; nsb.shadow_color = SC_GLOW.get(quality, Color("c8a84e80"))
-		else:
-			nsb.border_color = q_border.darkened(0.3); nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
-		card.add_theme_stylebox_override("panel", nsb)
+		_apply_image_card_base(card, quality, q_border, hovered, SC_GLOW.get(quality, Color("c8a84e80")), bg_override)
 
 	return card
 
 
 func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
-	var tex = TextureRect.new()
+	var tex = card.get_node_or_null("CardTextureBg") as TextureRect
+	if tex == null:
+		tex = TextureRect.new()
+		tex.name = "CardTextureBg"
+		card.add_child(tex)
 	tex.name = "CardTextureBg"
 	tex.texture = texture
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -175,12 +117,12 @@ func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
 	tex.offset_right = 0
 	tex.offset_bottom = 0
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(tex)
+	card.move_child(tex, 0)
 
 
-func _add_gold_resource_text(card: PanelContainer, title: String, count: int) -> void:
+func _make_card_overlay(card: PanelContainer) -> Control:
 	var overlay = Control.new()
-	overlay.name = "GoldTextOverlay"
+	overlay.name = "CardTextOverlay"
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.offset_left = 0
@@ -188,28 +130,44 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	overlay.offset_right = 0
 	overlay.offset_bottom = 0
 	card.add_child(overlay)
+	return overlay
+
+
+func _add_card_face_content(card: PanelContainer, title: String, number_text: String = "", icon: String = "", portrait: Texture2D = null) -> void:
+	var overlay = _make_card_overlay(card)
 
 	var title_lbl = Label.new()
-	title_lbl.name = "GoldTitleLbl"
+	title_lbl.name = "TitleLbl"
 	title_lbl.text = title
-	title_lbl.add_theme_font_size_override("font_size", 16)
-	title_lbl.add_theme_color_override("font_color", Color("0b0702"))
-	title_lbl.add_theme_constant_override("outline_size", 1)
-	title_lbl.add_theme_constant_override("shadow_offset_x", 1)
-	title_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	_apply_card_title_style(title_lbl, 17)
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	title_lbl.offset_left = 6
 	title_lbl.offset_right = -6
-	title_lbl.offset_top = 5
+	title_lbl.offset_top = 11
 	title_lbl.offset_bottom = 34
 	overlay.add_child(title_lbl)
 
+	if portrait != null:
+		var portrait_rect = TextureRect.new()
+		portrait_rect.name = "Portrait"
+		portrait_rect.texture = portrait
+		portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		portrait_rect.offset_left = 8
+		portrait_rect.offset_right = -8
+		portrait_rect.offset_top = 36
+		portrait_rect.offset_bottom = -30
+		portrait_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		overlay.add_child(portrait_rect)
+
 	var count_lbl = Label.new()
 	count_lbl.name = "CountLbl"
-	count_lbl.text = ("x%d" % count) if count > 1 else ""
+	count_lbl.text = number_text
+	count_lbl.add_theme_font_override("font", CARD_TITLE_FONT)
 	count_lbl.add_theme_font_size_override("font_size", 22)
 	count_lbl.add_theme_color_override("font_color", Color("fff3cf"))
 	count_lbl.add_theme_color_override("font_outline_color", Color("050300"))
@@ -228,42 +186,62 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	overlay.add_child(count_lbl)
 
 
+func _add_gold_resource_text(card: PanelContainer, title: String, count: int) -> void:
+	_add_card_face_content(card, title, ("x%d" % count) if count > 1 else "", "", null)
+
+
+func _apply_card_title_style(label: Label, font_size: int = 17) -> void:
+	label.add_theme_font_override("font", CARD_TITLE_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color("050403"))
+	label.add_theme_color_override("font_shadow_color", Color.WHITE)
+	label.add_theme_constant_override("outline_size", 0)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+
+
+func _card_background_for_quality(quality: String) -> Texture2D:
+	match quality:
+		"BRONZE", "COPPER":
+			return BRONZE_CARD_BG
+		"SILVER":
+			return SILVER_CARD_BG
+		"GOLD":
+			return GOLD_RARITY_CARD_BG
+		_:
+			return STONE_CARD_BG
+
+
+func _apply_image_card_base(card: PanelContainer, quality: String, border_color: Color, hovered: bool = false, glow_color: Color = Color("c8a84e80"), texture_override: Texture2D = null) -> void:
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.set_corner_radius_all(10)
+	sb.border_width_bottom = 0
+	sb.border_width_top = 0
+	sb.border_width_left = 0
+	sb.border_width_right = 0
+	sb.border_color = border_color
+	sb.content_margin_left = 0
+	sb.content_margin_right = 0
+	sb.content_margin_top = 0
+	sb.content_margin_bottom = 0
+	sb.shadow_size = 12 if hovered else 4
+	sb.shadow_color = glow_color if hovered else C.get("SHADOW", Color("00000099"))
+	card.add_theme_stylebox_override("panel", sb)
+	_add_texture_background(card, texture_override if texture_override != null else _card_background_for_quality(quality))
+
+
 func make_book_card(book_data: Dictionary) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
-	card.name = "Book_" + book_data.get("id", "?"); card.custom_minimum_size = Vector2(70, 152); card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.name = "Book_" + book_data.get("id", "?"); card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var quality = book_data.get("rank", "STONE")
-	var bg = SC.get(quality, Color("2a2018"))
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
-	var sb = StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(10)
-	sb.border_width_bottom = 2; sb.border_width_top = 2; sb.border_width_left = 2; sb.border_width_right = 2
-	sb.border_color = q_border; sb.content_margin_left = 4; sb.content_margin_right = 4
-	sb.content_margin_top = 4; sb.content_margin_bottom = 4; sb.shadow_size = 4; sb.shadow_color = C.get("SHADOW", Color("00000099"))
-	card.add_theme_stylebox_override("panel", sb)
-
-	var vb = VBoxContainer.new(); vb.name = "VB"; vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.alignment = BoxContainer.ALIGNMENT_CENTER; card.add_child(vb)
-
-	var icon_lbl = Label.new(); icon_lbl.text = "📖"; icon_lbl.add_theme_font_size_override("font_size", 32)
-	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon_lbl)
-	var nl = Label.new(); nl.text = book_data.get("name", "?"); nl.add_theme_font_size_override("font_size", 11)
-	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	nl.custom_minimum_size = Vector2(62, 0)
-	nl.add_theme_color_override("font_color", C.get("TEXT", Color("f0e6c8")))
-	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
-	var ql = Label.new(); ql.text = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}.get(quality, "★")
-	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
-	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
+	_apply_image_card_base(card, quality, q_border, false)
+	_add_card_face_content(card, book_data.get("name", "?"), "", "", null)
 
 	card.set_meta("drag_data", {"type": "book", "id": book_data.get("id", ""), "name": book_data.get("name", ""), "data": book_data, "rank": quality})
 
 	card._on_hover_style = func(hovered: bool):
-		var nsb = StyleBoxFlat.new(); nsb.bg_color = bg; nsb.set_corner_radius_all(10)
-		nsb.border_width_bottom = 2; nsb.border_width_top = 2; nsb.border_width_left = 2; nsb.border_width_right = 2
-		nsb.content_margin_left = 4; nsb.content_margin_right = 4; nsb.content_margin_top = 4; nsb.content_margin_bottom = 4
-		if hovered:
-			nsb.border_color = q_border; nsb.shadow_size = 12; nsb.shadow_color = SC_GLOW.get(quality, Color("c8a84e80"))
-		else:
-			nsb.border_color = q_border.darkened(0.3); nsb.shadow_size = 4; nsb.shadow_color = C.get("SHADOW", Color("00000099"))
-		card.add_theme_stylebox_override("panel", nsb)
+		_apply_image_card_base(card, quality, q_border, hovered, SC_GLOW.get(quality, Color("c8a84e80")))
 
 	return card
