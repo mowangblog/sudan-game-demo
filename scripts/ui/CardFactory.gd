@@ -17,6 +17,9 @@ const CHAR_PORTRAITS = {
 	"kuaijiao": preload("res://assets/images/characters/kuaijiao_resized.png"),
 	"zhaqiyi": preload("res://assets/images/characters/zhaqiyi_resized.png"),
 }
+const SC_PORTRAIT = {
+	"MURDER": preload("res://assets/images/characters/shalu.png"),
+}
 const CARD_TITLE_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
 const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
