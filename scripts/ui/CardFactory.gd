@@ -11,7 +11,8 @@ const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
 const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
 const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
 const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
-const CARD_TITLE_FONT = preload("res://assets/fonts/青柳隶书.ttf")
+const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
+const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
 
 # 注入的常量和回调
@@ -69,7 +70,7 @@ func make_sultan_card() -> PanelContainer:
 	overlay.add_child(tl)
 
 	var dl = Label.new(); dl.name = "DaysLbl"; dl.text = "7天"
-	dl.add_theme_font_override("font", CARD_TITLE_FONT)
+	dl.add_theme_font_override("font", CARD_NUMBER_FONT)
 	dl.add_theme_font_size_override("font_size", 18); dl.add_theme_color_override("font_color", Color("fff3cf"))
 	dl.add_theme_color_override("font_outline_color", Color("050300"))
 	dl.add_theme_constant_override("outline_size", 3)
@@ -168,7 +169,7 @@ func _add_card_face_content(card: PanelContainer, title: String, number_text: St
 	var count_lbl = Label.new()
 	count_lbl.name = "CountLbl"
 	count_lbl.text = number_text
-	count_lbl.add_theme_font_override("font", CARD_TITLE_FONT)
+	count_lbl.add_theme_font_override("font", CARD_NUMBER_FONT)
 	count_lbl.add_theme_font_size_override("font_size", 22)
 	count_lbl.add_theme_color_override("font_color", Color("fff3cf"))
 	count_lbl.add_theme_color_override("font_outline_color", Color("050300"))
@@ -191,14 +192,14 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	_add_card_face_content(card, title, ("x%d" % count) if count > 1 else "", "", null)
 
 
-func _apply_card_title_style(label: Label, font_size: int = 17) -> void:
+func _apply_card_title_style(label: Label, font_size: int = 18) -> void:
 	label.add_theme_font_override("font", CARD_TITLE_FONT)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", Color("050403"))
 	label.add_theme_color_override("font_shadow_color", Color.WHITE)
 	label.add_theme_constant_override("outline_size", 0)
 	label.add_theme_constant_override("shadow_offset_x", 0)
-	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.add_theme_constant_override("shadow_offset_y", 1)
 
 
 func _card_background_for_quality(quality: String) -> Texture2D:
