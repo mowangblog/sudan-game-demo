@@ -422,9 +422,9 @@ func _bottom() -> void:
 	
 	# 摄政王令
 	cp = card_factory.make_sultan_card()
-	ct_lbl = cp.get_node_or_null("CardTextOverlay/TypeLbl") as Label
+	ct_lbl = cp.get_node_or_null("CardTextOverlay/TitleLbl") as Label
 	cr_lbl = null
-	cd_lbl = cp.get_node_or_null("CardTextOverlay/DaysLbl") as Label
+	cd_lbl = cp.get_node_or_null("CardTextOverlay/CountLbl") as Label
 	cp.drag_ended.connect(_on_hand_card_dropped)
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
@@ -653,9 +653,9 @@ func _refresh() -> void:
 	cp.visible = not card.is_empty()
 	if not card.is_empty():
 		if not is_instance_valid(ct_lbl):
-			ct_lbl = cp.get_node_or_null("CardTextOverlay/TypeLbl") as Label
+			ct_lbl = cp.get_node_or_null("CardTextOverlay/TitleLbl") as Label
 		if not is_instance_valid(cd_lbl):
-			cd_lbl = cp.get_node_or_null("CardTextOverlay/DaysLbl") as Label
+			cd_lbl = cp.get_node_or_null("CardTextOverlay/CountLbl") as Label
 		if is_instance_valid(ct_lbl):
 			ct_lbl.text = TN.get(card.get("type",""),"？")
 		if is_instance_valid(cd_lbl):

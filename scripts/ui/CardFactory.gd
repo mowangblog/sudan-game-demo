@@ -60,24 +60,7 @@ func make_sultan_card() -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
 	card.name = "SC"; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
 	_apply_image_card_base(card, "STONE", C.get("GOLD_LO", Color("8a6820")), false)
-	var overlay = _make_card_overlay(card)
-
-	var tl = Label.new(); tl.name = "TypeLbl"; tl.text = "欢愉"
-	_apply_card_title_style(tl, 18)
-	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tl.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	tl.offset_left = 6; tl.offset_right = -6; tl.offset_top = 11; tl.offset_bottom = 34
-	overlay.add_child(tl)
-
-	var dl = Label.new(); dl.name = "DaysLbl"; dl.text = "7天"
-	dl.add_theme_font_override("font", CARD_NUMBER_FONT)
-	dl.add_theme_font_size_override("font_size", 18); dl.add_theme_color_override("font_color", Color("fff3cf"))
-	dl.add_theme_color_override("font_outline_color", Color("050300"))
-	dl.add_theme_constant_override("outline_size", 3)
-	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	dl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	dl.offset_left = 12; dl.offset_right = -12; dl.offset_top = -38; dl.offset_bottom = -4
-	overlay.add_child(dl)
+	_add_card_face_content(card, "欢愉", "7天", "", null)
 
 	card.visible = false
 
