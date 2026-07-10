@@ -22,6 +22,7 @@ var existing_entry = null
 var is_edit: bool = false
 var slot_nodes: Array = []
 var assigned_cards: Array = []
+var card_factory  # 由 MainScene 注入
 
 func setup(p_rite: Dictionary, p_existing_entry, constants: Dictionary, viewport_size: Vector2) -> void:
 	rite = p_rite
@@ -187,6 +188,7 @@ func _create_slot(index: int, slot_cfg: Dictionary):
 	slot.accept = slot_cfg.get("accept", "")
 	slot.accepts = slot_cfg.get("accepts", [])
 	slot.max_cards = slot_cfg.get("max", 1)
+	slot.card_factory = card_factory
 	slot.card_removed.connect(func(_idx, card_data): card_return_requested.emit(_slot_type_to_card_type(slot.slot_type), card_data))
 	slot.resource_trimmed.connect(func(_idx, excess_data): resource_trimmed.emit(slot_cfg, excess_data))
 	slot.card_clicked.connect(func(card_data): card_clicked.emit(slot.slot_type, card_data))

@@ -175,6 +175,7 @@ func _open_rite_detail(rite: Dictionary) -> void:
 	current_rite_detail = rite
 	var current_existing = _find_configured_rite(rite)
 	var rite_popup = RiteDetailPopupScript.new()
+	rite_popup.card_factory = card_factory
 	rite_popup.setup(rite, current_existing, {"C": C, "AN": AN}, get_viewport().size)
 	rite_popup.committed.connect(_on_rite_detail_committed)
 	rite_popup.cancelled.connect(_on_rite_detail_cancelled)
