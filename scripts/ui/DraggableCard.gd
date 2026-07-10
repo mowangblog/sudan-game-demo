@@ -123,16 +123,18 @@ func set_highlight(on: bool):
 		_highlight_pos_tween.kill()
 		_highlight_pos_tween = null
 
+	var bg = get_node_or_null("CardTextureBg") as TextureRect
+	var mat: ShaderMaterial = bg.material if bg else null
+
 	if on:
-		# 抬升悬浮
 		_highlight_pos_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		_highlight_pos_tween.tween_property(self, "position:y", _rest_position.y - 14, 0.15)
-		# 浓金色脉冲：0.7(暗金) ↔ 1.5(亮金)，循环3次约2.1s后自动停止
-		_highlight_tween = create_tween().set_loops(3)
-		_highlight_tween.tween_property(self, "modulate", Color(1.5, 1.3, 0.7, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
-		_highlight_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
+		if mat:
+			_highlight_tween = create_tween().set_loops(3)
+			_highlight_tween.tween_method(func(v): mat.set_shader_parameter("tint", v), Color.WHITE, Color(1.5, 1.3, 0.7, 1.0), 0.35).set_trans(Tween.TRANS_SINE)
+			_highlight_tween.tween_method(func(v): mat.set_shader_parameter("tint", v), Color(1.5, 1.3, 0.7, 1.0), Color.WHITE, 0.35).set_trans(Tween.TRANS_SINE)
 	else:
+		if mat: mat.set_shader_parameter("tint", Color.WHITE)
 		modulate = Color.WHITE
-		# 回到原位
 		_highlight_pos_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		_highlight_pos_tween.tween_property(self, "position:y", _rest_position.y, 0.15)
