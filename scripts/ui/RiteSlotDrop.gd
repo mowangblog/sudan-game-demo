@@ -161,9 +161,11 @@ func _draw_card_preview():
 		"sultan_card":
 			_display_card = card_factory.make_sultan_card()
 			_display_card.visible = true
-			# 应用正确品质背景
 			var sc_rank = current_card.get("rank", "STONE")
 			card_factory.call("_apply_image_card_base", _display_card, sc_rank, C.GOLD_LO, false)
+			var type_map = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"杀戮"}
+			var tl = _display_card.get_node_or_null("CardTextOverlay/TitleLbl")
+			if tl: tl.text = type_map.get(current_card.get("type",""), "？")
 		"gold":
 			_display_card = card_factory.make_resource_card("金币", "", "GOLD", current_card.get("count", 1))
 		"resource", "item":
