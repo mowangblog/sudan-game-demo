@@ -73,7 +73,8 @@ func make_sultan_card() -> PanelContainer:
 
 	var q_border = C.get("GOLD_LO", Color("8a6820"))
 	card._on_hover_style = func(hovered: bool):
-		_apply_image_card_base(card, "STONE", q_border, hovered, SC_GLOW.get("STONE", Color("c8a84e80")))
+		var q = card.get_meta("card_quality", "STONE")
+		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")))
 
 	return card
 
@@ -229,6 +230,7 @@ func _apply_image_card_base(card: PanelContainer, quality: String, border_color:
 	sb.shadow_color = glow_color if hovered else C.get("SHADOW", Color("00000099"))
 	card.add_theme_stylebox_override("panel", sb)
 	_add_texture_background(card, texture_override if texture_override != null else _card_background_for_quality(quality))
+	card.set_meta("card_quality", quality)
 
 
 func make_book_card(book_data: Dictionary) -> PanelContainer:
