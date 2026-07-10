@@ -93,7 +93,7 @@ func make_char_card(d: Dictionary) -> PanelContainer:
 func make_sultan_card() -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
 	card.name = "SC"; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
-	_apply_image_card_base(card, "STONE", C.get("GOLD_LO", Color("8a6820")), false, Color("c8a84e80"), null, 22.0)
+	_apply_image_card_base(card, "STONE", C.get("GOLD_LO", Color("8a6820")), false, Color("c8a84e80"), null, 20.0)
 	_add_card_face_content(card, "欢愉", "7天", "", null)
 
 	card.visible = false
@@ -102,7 +102,7 @@ func make_sultan_card() -> PanelContainer:
 	card._on_hover_style = func(hovered: bool):
 		var q = card.get_meta("card_quality", "STONE")
 		var bg = card.get_meta("sc_bg", null) as Texture2D
-		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")), bg, 22.0)
+		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")), bg, 20.0)
 
 	return card
 
@@ -111,7 +111,7 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	card.name = "Res_" + name_str; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
 	var bg_override: Texture2D = GOLD_CARD_BG if name_str == "金币" else null
-	var radius = 22.0 if name_str == "金币" else 25.0
+	var radius = 20.0 if name_str == "金币" else 25.0
 	_apply_image_card_base(card, quality, q_border, false, Color("c8a84e80"), bg_override, radius)
 	_add_card_face_content(card, name_str, ("x%d" % count) if count > 1 else "", "", null)
 
