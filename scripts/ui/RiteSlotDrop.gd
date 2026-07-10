@@ -170,9 +170,8 @@ func _draw_card_preview():
 	
 	if _display_card:
 		_display_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_display_card.set_anchors_preset(Control.PRESET_FULL_RECT)
-		_display_card.offset_left = 0; _display_card.offset_top = 0
-		_display_card.offset_right = 0; _display_card.offset_bottom = 0
+		_display_card.size = CARD_SIZE
+		_display_card.position = Vector2.ZERO
 		add_child(_display_card)
 
 
