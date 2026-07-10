@@ -28,11 +28,18 @@ const ATTR_ICONS = {"phy":"💪","com":"⚔","sur":"🏕","soc":"💬","cha":"�
 const RANK_BG = {"STONE":Color(0.15,0.13,0.11), "BRONZE":Color(0.13,0.16,0.10), "SILVER":Color(0.12,0.13,0.15), "GOLD":Color(0.16,0.14,0.08)}
 const RANK_BORDER = {"STONE":Color(0.50,0.42,0.33), "BRONZE":Color(0.60,0.68,0.35), "SILVER":Color(0.62,0.66,0.70), "GOLD":Color(0.88,0.73,0.33)}
 const CHAR_QUALITY = {"player":"SILVER","meji":"BRONZE","zhaqiyi":"BRONZE","tietou":"STONE","kuaijiao":"STONE"}
+const CARD_SIZE := Vector2(100, 180)
+const STONE_CARD_BG = preload("res://assets/images/cards/shi_resized.png")
+const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
+const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
+const GOLD_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
+const GOLD_RESOURCE_BG = preload("res://assets/images/cards/gold_card_bg.png")
+const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	custom_minimum_size = Vector2(70, 152)
-	size = Vector2(70, 152)
+	custom_minimum_size = CARD_SIZE
+	size = CARD_SIZE
 	_draw_empty()
 
 var _press_pos: Vector2
@@ -69,7 +76,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 	
 	# 创建跟卡牌一样的拖拽预览（原卡牌大小）
 	var prev = PanelContainer.new()
-	prev.custom_minimum_size = Vector2(70, 152)
+	prev.custom_minimum_size = CARD_SIZE
 	prev.modulate = Color(1,1,1,0.85)
 	var sb = StyleBoxFlat.new()
 	sb.set_corner_radius_all(10)
@@ -85,20 +92,15 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		sb.border_color = C.GOLD
 		prev.add_theme_stylebox_override("panel", sb)
 		var l1 = Label.new(); l1.text={"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"杀戮"}.get(current_card.get("type",""),"?")
-		l1.add_theme_font_size_override("font_size",20); l1.add_theme_color_override("font_color",C.GOLD)
+		_apply_card_title_style(l1, 20)
 		l1.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l1)
-		var l2 = Label.new(); l2.text=RANK_STARS.get(current_card.get("rank",""),"★")
-		l2.add_theme_font_size_override("font_size",13); l2.add_theme_color_override("font_color",C.GOLD)
-		l2.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l2)
 	elif slot_type == "gold" or slot_type == "resource" or slot_type == "item":
 		var q = current_card.get("quality","STONE")
 		sb.bg_color = RANK_BG.get(q, Color("2a2018"))
 		sb.border_color = RANK_BORDER.get(q, C.GOLD_LO)
 		prev.add_theme_stylebox_override("panel", sb)
-		var l1 = Label.new(); l1.text=current_card.get("icon","💰")
-		l1.add_theme_font_size_override("font_size",32); l1.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l1)
 		var l2 = Label.new(); l2.text=current_card.get("name","?")
-		l2.add_theme_font_size_override("font_size",13); l2.add_theme_color_override("font_color",C.TEXT)
+		_apply_card_title_style(l2, 16)
 		l2.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l2)
 	else:
 		var q = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
@@ -106,7 +108,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		sb.border_color = RANK_BORDER.get(q, C.GOLD_LO)
 		prev.add_theme_stylebox_override("panel", sb)
 		var l1 = Label.new(); l1.text=current_card.get("name","?")
-		l1.add_theme_font_size_override("font_size",13); l1.add_theme_color_override("font_color",C.TEXT)
+		_apply_card_title_style(l1, 16)
 		l1.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(l1)
 		var l2 = Label.new(); l2.text=RANK_STARS.get(q,"★")
 		l2.add_theme_font_size_override("font_size",13); l2.add_theme_color_override("font_color",C.GOLD)
@@ -158,75 +160,98 @@ func _draw_card_preview():
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER; add_child(vb)
 	
 	if slot_type == "sultan_card":
+		_add_texture_background(self, _card_background_for_quality(current_card.get("rank", "STONE")))
 		var label = Label.new()
 		label.text = {"LUST":"欢愉","LUXURY":"奢靡","CONQUEST":"征伐","MURDER":"杀戮"}.get(current_card.get("type",""), "?")
-		label.add_theme_font_size_override("font_size", 20)
-		label.add_theme_color_override("font_color", C.GOLD)
+		_apply_card_title_style(label, 20)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vb.add_child(label)
-		var star = Label.new()
-		star.text = RANK_STARS.get(current_card.get("rank",""),"★")
-		star.add_theme_font_size_override("font_size", 13); star.add_theme_color_override("font_color", C.GOLD)
-		star.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(star)
 		var nl = Label.new(); nl.text = current_card.get("name", "?")
-		nl.add_theme_font_size_override("font_size", 12); nl.add_theme_color_override("font_color", C.TEXT)
+		_apply_card_title_style(nl, 13)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
 		var days = Label.new(); days.text = "右键拖出"
 		days.add_theme_font_size_override("font_size", 9); days.add_theme_color_override("font_color", C.DIM)
 		days.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(days)
 		var tc = {"LUST":Color("8b3a5c"),"LUXURY":Color("3a5c8b"),"CONQUEST":Color("3a5b3a"),"MURDER":Color("6b2a2a")}.get(current_card.get("type",""), Color("6b2a2a"))
-		var s_bg = RANK_BG.get(current_card.get("rank",""), Color("2a2018"))
-		var sb = StyleBoxFlat.new(); sb.bg_color = s_bg; sb.set_corner_radius_all(10)
+		var sb = StyleBoxFlat.new(); sb.bg_color = Color(0, 0, 0, 0); sb.set_corner_radius_all(10)
 		sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
 		sb.border_color = tc.darkened(0.3); sb.content_margin_left=4; sb.content_margin_right=4
 		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=6; sb.shadow_color=Color("00000066")
 		add_theme_stylebox_override("panel", sb)
 	else:
 		var quality = CHAR_QUALITY.get(current_card.get("id",""), "STONE")
+		if slot_type == "gold":
+			quality = "GOLD"
+		elif slot_type == "resource" or slot_type == "item":
+			quality = current_card.get("quality", "STONE")
+		_add_texture_background(self, GOLD_RESOURCE_BG if slot_type == "gold" else _card_background_for_quality(quality))
 		var nl = Label.new(); nl.text = current_card.get("name", "?")
-		nl.add_theme_font_size_override("font_size", 13); nl.add_theme_color_override("font_color", C.TEXT)
+		_apply_card_title_style(nl, 16)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(nl)
 		if slot_type == "gold" or slot_type == "resource" or slot_type == "item":
-			var icon_lbl = Label.new(); icon_lbl.text = current_card.get("icon", "💰")
-			icon_lbl.add_theme_font_size_override("font_size", 32); icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			vb.add_child(icon_lbl)
 			var cnt = Label.new(); cnt.text = "x%d" % current_card.get("count", 1)
 			cnt.add_theme_font_size_override("font_size", 12); cnt.add_theme_color_override("font_color", C.GOLD)
 			cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(cnt)
 		else:
-			var qs = RANK_STARS.get(quality, "★")
-			var ql = Label.new(); ql.text = qs
-			ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", C.GOLD)
-			ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(ql)
-			var attrs = current_card.get("attributes", {})
-			var best=""; var best_v=0
-			for k in attrs:
-				if attrs[k]>best_v: best_v=attrs[k]; best=k
-			var tl = Label.new(); tl.text = "%s %d" % [ATTR_ICONS.get(best, best), best_v]
-			tl.add_theme_font_size_override("font_size", 10); tl.add_theme_color_override("font_color", C.GOLD)
-			tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(tl)
+			pass
 		var hint = Label.new(); hint.text = "右键拖出"
 		hint.add_theme_font_size_override("font_size", 9); hint.add_theme_color_override("font_color", C.DIM)
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(hint)
 		var sb3: StyleBoxFlat
 		if slot_type == "gold":
-			var gbg = RANK_BG.get("GOLD", Color("2a2018"))
-			sb3 = StyleBoxFlat.new(); sb3.bg_color = gbg; sb3.set_corner_radius_all(10)
+			sb3 = StyleBoxFlat.new(); sb3.bg_color = Color(0, 0, 0, 0); sb3.set_corner_radius_all(10)
 			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
 			sb3.border_color = C.GOLD; sb3.content_margin_left=4; sb3.content_margin_right=4
 			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
 		elif slot_type == "resource" or slot_type == "item":
-			sb3 = StyleBoxFlat.new(); sb3.bg_color = Color("1a1a2e"); sb3.set_corner_radius_all(10)
+			sb3 = StyleBoxFlat.new(); sb3.bg_color = Color(0, 0, 0, 0); sb3.set_corner_radius_all(10)
 			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
 			sb3.border_color = C.GOLD_LO; sb3.content_margin_left=4; sb3.content_margin_right=4
 			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
 		else:
-			var c_bg = RANK_BG.get(quality, Color("2a2018"))
-			sb3 = StyleBoxFlat.new(); sb3.bg_color = c_bg; sb3.set_corner_radius_all(10)
+			sb3 = StyleBoxFlat.new(); sb3.bg_color = Color(0, 0, 0, 0); sb3.set_corner_radius_all(10)
 			sb3.border_width_bottom=2; sb3.border_width_top=2; sb3.border_width_left=2; sb3.border_width_right=2
 			sb3.border_color = C.GOLD_HI; sb3.content_margin_left=4; sb3.content_margin_right=4
 			sb3.content_margin_top=4; sb3.content_margin_bottom=4; sb3.shadow_size=6; sb3.shadow_color=Color("00000066")
 		add_theme_stylebox_override("panel", sb3)
+
+
+func _card_background_for_quality(quality: String) -> Texture2D:
+	match quality:
+		"BRONZE", "COPPER":
+			return BRONZE_CARD_BG
+		"SILVER":
+			return SILVER_CARD_BG
+		"GOLD":
+			return GOLD_CARD_BG
+		_:
+			return STONE_CARD_BG
+
+
+func _add_texture_background(target: PanelContainer, texture: Texture2D) -> void:
+	var tex = TextureRect.new()
+	tex.name = "CardTextureBg"
+	tex.texture = texture
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_SCALE
+	tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tex.offset_left = 0
+	tex.offset_top = 0
+	tex.offset_right = 0
+	tex.offset_bottom = 0
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	target.add_child(tex)
+	target.move_child(tex, 0)
+
+
+func _apply_card_title_style(label: Label, font_size: int = 17) -> void:
+	label.add_theme_font_override("font", CARD_TITLE_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color("050403"))
+	label.add_theme_color_override("font_shadow_color", Color.WHITE)
+	label.add_theme_constant_override("outline_size", 0)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 2)
 
 func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	if not data is Dictionary: return false

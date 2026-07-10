@@ -5,6 +5,9 @@
 class_name SorceressScene
 extends Control
 
+const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
+const CARD_SIZE := Vector2(100, 180)
+
 # ---- 常量 ----
 const C = {
 	"GOLD": Color("c8a84e"), "GOLD_HI": Color("e8d48b"), "GOLD_LO": Color("8a6820"),
@@ -273,7 +276,7 @@ func _show_swap_card(card_data: Dictionary) -> void:
 	_clear_swap_card()
 	var card = PanelContainer.new()
 	card.name = "SwapCardPreview"
-	card.custom_minimum_size = Vector2(90, 130)
+	card.custom_minimum_size = CARD_SIZE
 	var rank = card_data.get("rank", "STONE")
 	var card_type = card_data.get("type", "LUST")
 	var bg_color = SC.get(rank, Color("2a2018"))
@@ -292,22 +295,13 @@ func _show_swap_card(card_data: Dictionary) -> void:
 
 	var tl = Label.new()
 	tl.text = TN.get(card_type, "?")
-	tl.add_theme_font_size_override("font_size", 16)
-	tl.add_theme_color_override("font_color", border_color)
+	_apply_card_title_style(tl, 18)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(tl)
 
-	var rl = Label.new()
-	rl.text = RG.get(rank, "★")
-	rl.add_theme_font_size_override("font_size", 12)
-	rl.add_theme_color_override("font_color", C.GOLD)
-	rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(rl)
-
 	var nl = Label.new()
 	nl.text = card_data.get("name", "?")
-	nl.add_theme_font_size_override("font_size", 11)
-	nl.add_theme_color_override("font_color", C.GOLD_HI)
+	_apply_card_title_style(nl, 13)
 	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(nl)
@@ -320,6 +314,16 @@ func _show_swap_card(card_data: Dictionary) -> void:
 	)
 	_dialogue_area.add_child(card)
 	_swap_card = card
+
+
+func _apply_card_title_style(label: Label, font_size: int = 17) -> void:
+	label.add_theme_font_override("font", CARD_TITLE_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color("050403"))
+	label.add_theme_color_override("font_shadow_color", Color.WHITE)
+	label.add_theme_constant_override("outline_size", 0)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 2)
 
 
 func _clear_swap_card() -> void:

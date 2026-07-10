@@ -12,6 +12,8 @@ var sort_mode: int = 0
 var _update_count_cb: Callable
 var _CHAR_QUALITY: Dictionary = {}
 
+const CARD_SIZE := Vector2(100, 180)
+
 func setup(p_hand_cards: Array, p_hand_container: Control, p_sort_btn: Button, update_count_cb: Callable, char_quality: Dictionary) -> void:
 	hand_cards = p_hand_cards
 	hand_container = p_hand_container
@@ -34,8 +36,8 @@ func arrange():
 	var insight = hand_container.get_node_or_null("InsightBtn")
 	var left = insight.position.x + insight.size.x + 8 if insight and is_instance_valid(insight) else 106
 	var right = sort_btn.position.x - 8 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
-	var card_y = hand_container.size.y / 2 - 76
-	var card_w = 70; var gap = 8; var n = visible_cards.size()
+	var card_y = hand_container.size.y / 2 - CARD_SIZE.y / 2.0
+	var card_w = CARD_SIZE.x; var gap = 8; var n = visible_cards.size()
 	var avail = right - left
 	var stack_reveal = 28
 	

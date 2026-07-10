@@ -3,6 +3,8 @@
 
 extends Control
 
+const CARD_SIZE := Vector2(100, 180)
+
 # ============ 调色板 ============
 const C = {
 	BG_DEEP=Color("1a0f0a"),BG_MID=Color("241712"),BG_PANEL=Color("2d1c12"),
@@ -420,9 +422,9 @@ func _bottom() -> void:
 	
 	# 摄政王令
 	cp = card_factory.make_sultan_card()
-	ct_lbl = cp.get_node("VB/TypeLbl") as Label
-	cr_lbl = cp.get_node("VB/RankLbl") as Label
-	cd_lbl = cp.get_node("VB/DaysLbl") as Label
+	ct_lbl = cp.get_node_or_null("CardTextOverlay/TypeLbl") as Label
+	cr_lbl = null
+	cd_lbl = cp.get_node_or_null("CardTextOverlay/DaysLbl") as Label
 	cp.drag_ended.connect(_on_hand_card_dropped)
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
@@ -506,7 +508,7 @@ func _update_card_zone_border():
 
 func _make_insight_button() -> PanelContainer:
 	var insight = PanelContainer.new(); insight.name="InsightBtn"
-	insight.custom_minimum_size=Vector2(70, 152); insight.mouse_filter=Control.MOUSE_FILTER_STOP
+	insight.custom_minimum_size=CARD_SIZE; insight.mouse_filter=Control.MOUSE_FILTER_STOP
 	var iss = StyleBoxFlat.new(); iss.bg_color=Color("1a1018"); iss.set_corner_radius_all(10)
 	iss.border_width_bottom=2; iss.border_width_top=2; iss.border_width_left=2; iss.border_width_right=2
 	iss.border_color=C.GOLD_LO.darkened(0.5); iss.shadow_size=6; iss.shadow_color=C.SHADOW
@@ -650,17 +652,16 @@ func _refresh() -> void:
 		return
 	cp.visible = not card.is_empty()
 	if not card.is_empty():
-		ct_lbl.text = TN.get(card.get("type",""),"？")
-		cr_lbl.text = RG.get(card.get("rank",""),"？")
-		cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
-		var tc = TC.get(card.get("type",""),C.LUST)
-		var rk_bg = SC.get(card.get("rank",""), Color("2a2018"))
+		if not is_instance_valid(ct_lbl):
+			ct_lbl = cp.get_node_or_null("CardTextOverlay/TypeLbl") as Label
+		if not is_instance_valid(cd_lbl):
+			cd_lbl = cp.get_node_or_null("CardTextOverlay/DaysLbl") as Label
+		if is_instance_valid(ct_lbl):
+			ct_lbl.text = TN.get(card.get("type",""),"？")
+		if is_instance_valid(cd_lbl):
+			cd_lbl.text = "%d天" % GameManager.sultan_card_days_left
 		var rk_border = SC_BORDER.get(card.get("rank",""), C.GOLD_LO)
-		var sb = StyleBoxFlat.new(); sb.bg_color=rk_bg; sb.set_corner_radius_all(10)
-		sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-		sb.border_color=rk_border; sb.content_margin_left=4; sb.content_margin_right=4
-		sb.content_margin_top=4; sb.content_margin_bottom=4; sb.shadow_size=4; sb.shadow_color=C.SHADOW
-		cp.add_theme_stylebox_override("panel",sb)
+		card_factory.call("_apply_image_card_base", cp, card.get("rank","STONE"), rk_border, false)
 		cp.set_meta("drag_data", {"type":"sultan_card", "id":card.get("id",""), "name":card.get("name",""), "data":card})
 	hand_layout.arrange()
 	_refresh_intel_cards()

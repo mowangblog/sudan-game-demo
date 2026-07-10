@@ -13,6 +13,7 @@ signal highlight_requested(slot)
 signal validation_failed(message: String)
 
 const RiteSlotDropScript = preload("res://scripts/ui/RiteSlotDrop.gd")
+const CARD_SIZE := Vector2(100, 180)
 
 var C: Dictionary = {}
 var AN: Dictionary = {}
@@ -170,7 +171,7 @@ func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -
 	slot_box.add_child(label)
 
 	var slot = _create_slot(index, slot_cfg)
-	slot.custom_minimum_size = Vector2(70, 152)
+	slot.custom_minimum_size = CARD_SIZE
 	slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	slot_box.add_child(slot)
 	_prefill_slot(slot, slot_cfg)
