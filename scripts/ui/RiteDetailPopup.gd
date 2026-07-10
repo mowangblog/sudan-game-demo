@@ -340,8 +340,8 @@ func _on_confirm_pressed() -> void:
 
 
 func _on_cancel_pressed() -> void:
-	cancelled.emit(is_edit, existing_entry)
 	restore_assigned_cards()
+	cancelled.emit(is_edit, existing_entry)
 	queue_free()
 
 
