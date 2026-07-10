@@ -234,6 +234,9 @@ func _apply_image_card_base(card: PanelContainer, quality: String, border_color:
 	card.add_theme_stylebox_override("panel", sb)
 	_add_texture_background(card, texture_override if texture_override != null else _card_background_for_quality(quality))
 	card.set_meta("card_quality", quality)
+	var tex = card.get_node_or_null("CardTextureBg") as TextureRect
+	if tex:
+		tex.modulate = Color(1.12, 1.12, 1.08) if quality in ["BRONZE", "COPPER"] else Color.WHITE
 
 
 func make_book_card(book_data: Dictionary) -> PanelContainer:
