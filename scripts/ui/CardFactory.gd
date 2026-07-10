@@ -11,7 +11,7 @@ const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
 const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
 const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
 const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
-const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
+const CARD_TITLE_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
 
 # 注入的常量和回调
