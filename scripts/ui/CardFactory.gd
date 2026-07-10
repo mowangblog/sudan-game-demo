@@ -80,6 +80,11 @@ func make_sultan_card() -> PanelContainer:
 	overlay.add_child(dl)
 
 	card.visible = false
+
+	var q_border = C.get("GOLD_LO", Color("8a6820"))
+	card._on_hover_style = func(hovered: bool):
+		_apply_image_card_base(card, "STONE", q_border, hovered, SC_GLOW.get("STONE", Color("c8a84e80")))
+
 	return card
 
 func make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
