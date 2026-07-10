@@ -665,7 +665,7 @@ func _refresh() -> void:
 		var sc_rank = card.get("rank","STONE")
 		var rk_border = SC_BORDER.get(sc_rank, C.GOLD_LO)
 		var sc_bg = card_factory.sultan_card_bg(sc_type, sc_rank)
-		card_factory.call("_apply_image_card_base", cp, sc_rank, rk_border, false, Color("c8a84e80"), sc_bg)
+		card_factory.call("_apply_image_card_base", cp, sc_rank, rk_border, false, Color("c8a84e80"), sc_bg, 22.0)
 		cp.set_meta("sc_bg", sc_bg)
 		cp.set_meta("drag_data", {"type":"sultan_card", "id":card.get("id",""), "name":card.get("name",""), "data":card})
 	hand_layout.arrange()

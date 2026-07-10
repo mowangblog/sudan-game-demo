@@ -93,7 +93,7 @@ func make_char_card(d: Dictionary) -> PanelContainer:
 func make_sultan_card() -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
 	card.name = "SC"; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
-	_apply_image_card_base(card, "STONE", C.get("GOLD_LO", Color("8a6820")), false)
+	_apply_image_card_base(card, "STONE", C.get("GOLD_LO", Color("8a6820")), false, Color("c8a84e80"), null, 22.0)
 	_add_card_face_content(card, "欢愉", "7天", "", null)
 
 	card.visible = false
@@ -102,7 +102,7 @@ func make_sultan_card() -> PanelContainer:
 	card._on_hover_style = func(hovered: bool):
 		var q = card.get_meta("card_quality", "STONE")
 		var bg = card.get_meta("sc_bg", null) as Texture2D
-		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")), bg)
+		_apply_image_card_base(card, q, q_border, hovered, SC_GLOW.get(q, Color("c8a84e80")), bg, 22.0)
 
 	return card
 
@@ -111,7 +111,8 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	card.name = "Res_" + name_str; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
 	var bg_override: Texture2D = GOLD_CARD_BG if name_str == "金币" else null
-	_apply_image_card_base(card, quality, q_border, false, Color("c8a84e80"), bg_override)
+	var radius = 22.0 if name_str == "金币" else 25.0
+	_apply_image_card_base(card, quality, q_border, false, Color("c8a84e80"), bg_override, radius)
 	_add_card_face_content(card, name_str, ("x%d" % count) if count > 1 else "", "", null)
 
 	var resource_type = "gold" if name_str == "金币" else "intel"
@@ -122,12 +123,12 @@ func make_resource_card(name_str: String, icon: String, quality: String, count: 
 	card.set_meta("res_data", res_data)
 
 	card._on_hover_style = func(hovered: bool):
-		_apply_image_card_base(card, quality, q_border, hovered, SC_GLOW.get(quality, Color("c8a84e80")), bg_override)
+		_apply_image_card_base(card, quality, q_border, hovered, SC_GLOW.get(quality, Color("c8a84e80")), bg_override, radius)
 
 	return card
 
 
-func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
+func _add_texture_background(card: PanelContainer, texture: Texture2D, radius: float = 25.0) -> void:
 	var tex = card.get_node_or_null("CardTextureBg") as TextureRect
 	if tex == null:
 		tex = TextureRect.new()
@@ -145,6 +146,7 @@ func _add_texture_background(card: PanelContainer, texture: Texture2D) -> void:
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var m = ShaderMaterial.new()
 	m.shader = preload("res://shaders/round_corners.gdshader")
+	m.set_shader_parameter("radius", radius)
 	tex.material = m
 	card.move_child(tex, 0)
 
@@ -246,7 +248,7 @@ func sultan_card_bg(type: String, rank: String) -> Texture2D:
 	return rank_map.get(rank, _card_background_for_quality(rank))
 
 
-func _apply_image_card_base(card: PanelContainer, quality: String, border_color: Color, hovered: bool = false, glow_color: Color = Color("c8a84e80"), texture_override: Texture2D = null) -> void:
+func _apply_image_card_base(card: PanelContainer, quality: String, border_color: Color, hovered: bool = false, glow_color: Color = Color("c8a84e80"), texture_override: Texture2D = null, radius_override: float = 25.0) -> void:
 	var sb = StyleBoxFlat.new()
 	sb.bg_color = Color(0, 0, 0, 0)
 	sb.set_corner_radius_all(10)
@@ -262,7 +264,7 @@ func _apply_image_card_base(card: PanelContainer, quality: String, border_color:
 	sb.shadow_size = 12 if hovered else 4
 	sb.shadow_color = glow_color if hovered else C.get("SHADOW", Color("00000099"))
 	card.add_theme_stylebox_override("panel", sb)
-	_add_texture_background(card, texture_override if texture_override != null else _card_background_for_quality(quality))
+	_add_texture_background(card, texture_override if texture_override != null else _card_background_for_quality(quality), radius_override)
 	card.set_meta("card_quality", quality)
 	var q_tint = Color(1.30, 1.30, 1.30) if quality in ["BRONZE", "COPPER"] else Color.WHITE
 	card.set_meta("base_tint", q_tint)
