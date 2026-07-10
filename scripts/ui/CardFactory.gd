@@ -11,8 +11,8 @@ const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
 const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
 const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
 const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
-const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
-const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
+const CARD_TITLE_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
+const CARD_NUMBER_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
 const CARD_SIZE := Vector2(100, 180)
 
 # 注入的常量和回调
@@ -167,8 +167,8 @@ func _add_card_face_content(card: PanelContainer, title: String, number_text: St
 		portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		portrait_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-		portrait_rect.offset_left = 8
-		portrait_rect.offset_right = -8
+		portrait_rect.offset_left = 0
+		portrait_rect.offset_right = 0
 		portrait_rect.offset_top = 36
 		portrait_rect.offset_bottom = -30
 		portrait_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -203,10 +203,10 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 func _apply_card_title_style(label: Label, font_size: int = 18) -> void:
 	label.add_theme_font_override("font", CARD_TITLE_FONT)
 	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", Color("050403"))
+	label.add_theme_color_override("font_color", Color("000000"))
 	label.add_theme_color_override("font_shadow_color", Color.WHITE)
 	label.add_theme_constant_override("outline_size", 0)
-	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 
 
