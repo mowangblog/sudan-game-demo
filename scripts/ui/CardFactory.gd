@@ -12,7 +12,7 @@ const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
 const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
 const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
 const CARD_TITLE_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
-const CARD_NUMBER_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
+const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
 
 # 注入的常量和回调
@@ -66,7 +66,7 @@ func make_sultan_card() -> PanelContainer:
 	_apply_card_title_style(tl, 18)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tl.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	tl.offset_left = 8; tl.offset_right = -8; tl.offset_top = 12; tl.offset_bottom = 38
+	tl.offset_left = 6; tl.offset_right = -6; tl.offset_top = 11; tl.offset_bottom = 34
 	overlay.add_child(tl)
 
 	var dl = Label.new(); dl.name = "DaysLbl"; dl.text = "7天"
@@ -76,7 +76,7 @@ func make_sultan_card() -> PanelContainer:
 	dl.add_theme_constant_override("outline_size", 3)
 	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dl.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	dl.offset_left = 10; dl.offset_right = -10; dl.offset_top = -38; dl.offset_bottom = -6
+	dl.offset_left = 12; dl.offset_right = -12; dl.offset_top = -38; dl.offset_bottom = -4
 	overlay.add_child(dl)
 
 	card.visible = false
@@ -156,7 +156,7 @@ func _add_card_face_content(card: PanelContainer, title: String, number_text: St
 	title_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	title_lbl.offset_left = 6
 	title_lbl.offset_right = -6
-	title_lbl.offset_top = 11
+	title_lbl.offset_top = 5
 	title_lbl.offset_bottom = 34
 	overlay.add_child(title_lbl)
 
@@ -202,7 +202,7 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 
 func _apply_card_title_style(label: Label, font_size: int = 18) -> void:
 	label.add_theme_font_override("font", CARD_TITLE_FONT)
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", 25)
 	label.add_theme_color_override("font_color", Color("000000"))
 	label.add_theme_color_override("font_shadow_color", Color.WHITE)
 	label.add_theme_constant_override("outline_size", 0)
