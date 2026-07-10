@@ -11,5 +11,5 @@ void fragment() {
 	if (rc.x < r && c.y < r && distance(vec2(rc.x, c.y), vec2(r)) > r) discard;
 	if (c.x < r && rc.y < r && distance(vec2(c.x, rc.y), vec2(r)) > r) discard;
 	if (rc.x < r && rc.y < r && distance(vec2(rc.x, rc.y), vec2(r)) > r) discard;
-	COLOR = texture(TEXTURE, UV);
+	COLOR = texture(TEXTURE, UV) * COLOR;
 }
