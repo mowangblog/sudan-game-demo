@@ -46,7 +46,7 @@ const SC_CARD_BG = {
 		"GOLD": preload("res://assets/images/sudanCards/jin_shalu.png"),
 	},
 }
-const CARD_TITLE_FONT = preload("res://assets/fonts/庞门正道粗书体.ttf")
+const CARD_TITLE_FONT = preload("res://assets/fonts/优设字由棒棒体.otf")
 const CARD_NUMBER_FONT = preload("res://assets/fonts/青柳隶书.ttf")
 const CARD_SIZE := Vector2(100, 180)
 
@@ -182,7 +182,7 @@ func _add_card_face_content(card: PanelContainer, title: String, number_text: St
 	title_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	title_lbl.offset_left = 5
 	title_lbl.offset_right = -5
-	title_lbl.offset_top = 8
+	title_lbl.offset_top = 5
 	title_lbl.offset_bottom = 40
 	overlay.add_child(title_lbl)
 
@@ -232,7 +232,7 @@ func _apply_card_title_style(label: Label, font_size: int = 16) -> void:
 	label.add_theme_color_override("font_color", Color("000000"))
 	label.add_theme_color_override("font_shadow_color", Color.WHITE)
 	label.add_theme_constant_override("outline_size", 0)
-	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_x", 0)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 
 

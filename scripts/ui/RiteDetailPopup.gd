@@ -168,7 +168,7 @@ func _build_left(split: HSplitContainer) -> void:
 
 func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -> void:
 	var slot_box = VBoxContainer.new()
-	slot_box.add_theme_constant_override("separation", 4)
+	slot_box.add_theme_constant_override("separation", 9)
 	slot_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	slot_flow.add_child(slot_box)
 

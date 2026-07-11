@@ -20,6 +20,7 @@ signal resource_trimmed(slot_index: int, excess_data: Dictionary)  # 资源溢�
 var current_card: Dictionary = {}
 var card_factory  # 由 RiteDetailPopup 注入
 var _display_card: PanelContainer = null
+@export var kacao_bg_size := Vector2(110, 185)   # 背景图宽高：可自由改、允许变形（在编辑器检查器或此处直接调）
 
 const C = {
 	GOLD=Color("c8a84e"), GOLD_HI=Color("e8d48b"), GOLD_LO=Color("8a6820"),
@@ -31,7 +32,8 @@ const RANK_BG = {"STONE":Color(0.15,0.13,0.11), "BRONZE":Color(0.13,0.16,0.10), 
 const RANK_BORDER = {"STONE":Color(0.50,0.42,0.33), "BRONZE":Color(0.60,0.68,0.35), "SILVER":Color(0.62,0.66,0.70), "GOLD":Color(0.88,0.73,0.33)}
 const CHAR_QUALITY = {"player":"SILVER","meji":"SILVER","zhaqiyi":"BRONZE","tietou":"GOLD","kuaijiao":"STONE"}
 const CARD_SIZE := Vector2(100, 180)
-const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
+const CARD_TITLE_FONT = preload("res://assets/fonts/优设字由棒棒体.otf")
+const KACAO_BG = preload("res://assets/images/ui/kacao_bg.png")  # 卡槽背景图
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -126,26 +128,14 @@ func _draw_empty():
 	for c in get_children():
 		c.queue_free()
 	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color("2a2018"); sb.set_corner_radius_all(10)
-	sb.border_width_bottom=2; sb.border_width_top=2; sb.border_width_left=2; sb.border_width_right=2
-	sb.border_color = C.GOLD_LO
-	sb.content_margin_left=4; sb.content_margin_right=4; sb.content_margin_top=4; sb.content_margin_bottom=4
+	sb.bg_color = Color(0, 0, 0, 0)  # 透明，露出 kacao_bg 图
+	sb.set_corner_radius_all(0)
+	sb.border_width_bottom=0; sb.border_width_top=0; sb.border_width_left=0; sb.border_width_right=0
+	sb.content_margin_left=0; sb.content_margin_right=0; sb.content_margin_top=0; sb.content_margin_bottom=0
 	add_theme_stylebox_override("panel", sb)
-	
-	var vb = VBoxContainer.new(); vb.alignment = BoxContainer.ALIGNMENT_CENTER; add_child(vb)
-	var icon = Label.new()
-	if slot_type == "gold": icon.text = "💰"
-	elif slot_type == "resource": icon.text = "📦"
-	elif slot_type == "item": icon.text = "🔎"
-	elif slot_type == "sultan_card": icon.text = "🃏"
-	else: icon.text = "👤"
-	icon.add_theme_font_size_override("font_size", 30)
-	icon.add_theme_color_override("font_color", Color("605040"))
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(icon)
-	var hint = Label.new(); hint.text = "拖入\n卡牌"
-	hint.add_theme_font_size_override("font_size", 11)
-	hint.add_theme_color_override("font_color", Color("504030"))
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; vb.add_child(hint)
+
+	# 卡槽背景图改为 _draw() 溢出绘制（完整显示、放大、不裁切，且不影响卡槽/卡牌尺寸）
+	queue_redraw()
 
 func _draw_card_preview():
 	for c in get_children():
@@ -176,12 +166,21 @@ func _draw_card_preview():
 		_:
 			pass
 	
+	queue_redraw()
 	if _display_card:
 		_display_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_display_card.size = CARD_SIZE
 		_display_card.position = Vector2.ZERO
 		add_child(_display_card)
 
+
+func _draw():
+	if not KACAO_BG:
+		return
+	# 背景图按 kacao_bg_size 自由绘制（允许变形），居中于槽并溢出四周
+	var target = kacao_bg_size
+	var pos = (size - target) / 2.0   # 负偏移 → 背景图溢出槽外
+	draw_texture_rect(KACAO_BG, Rect2(pos, target), false)
 
 func _apply_card_title_style(label: Label, font_size: int = 17) -> void:
 	label.add_theme_font_override("font", CARD_TITLE_FONT)
