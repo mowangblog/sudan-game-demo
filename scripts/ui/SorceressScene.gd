@@ -50,6 +50,7 @@ var _bg: ColorRect
 var _main_panel: PanelContainer
 var _portrait_area: PanelContainer
 var _dialogue_area: VBoxContainer
+var _dialogue_scroll: ScrollContainer = null   # 对话文本滚动区：文字变长只在此区域内滚动，不挤压下方卡牌
 var _dialogue_text: Label
 var _btn_container: VBoxContainer
 var _card_box: CardBox
@@ -224,16 +225,24 @@ func _build_ui() -> void:
 	_dialogue_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_vb.add_child(_dialogue_area)
 
+	# 对话文本放在 ScrollContainer 内：文字变长只会在该区域滚动，不会把下方卡牌往下挤（卡牌位置固定）
+	_dialogue_scroll = ScrollContainer.new()
+	_dialogue_scroll.name = "DialogueScroll"
+	_dialogue_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_dialogue_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED   # 只允许上下滚动
+	_dialogue_area.add_child(_dialogue_scroll)
+
 	_dialogue_text = Label.new()
 	_dialogue_text.name = "DialogueText"
 	_dialogue_text.add_theme_font_size_override("font_size", 13)
 	_dialogue_text.add_theme_color_override("font_color", C.TEXT)
 	_dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_dialogue_text.custom_minimum_size = Vector2(_main_panel.custom_minimum_size.x - 320, 0)
-	_dialogue_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_dialogue_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dialogue_text.size_flags_vertical = 0   # 不占布局高度，超出时在 ScrollContainer 内滚动，避免推挤下方卡牌
 	_dialogue_text.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialogue_text.gui_input.connect(_on_dialogue_click)
-	_dialogue_area.add_child(_dialogue_text)
+	_dialogue_scroll.add_child(_dialogue_text)
 
 	# 令匣区（初始隐藏）
 	_card_box = CardBox.new()
@@ -398,10 +407,22 @@ func _show_drawn_card(card_data: Dictionary) -> void:
 			count_lbl.text = "%d天" % GameManager.sultan_card_days_left
 	# 纯展示：禁用拖拽/点击，避免 DraggableCard 在弹窗内被拖走
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# 居中展示在对话区下方（令匣之后）
+	# 柔和"落入"动画（参考手牌令牌落入手牌：位移+淡入、无夸张回弹）
+	# 受 VBox 布局限制不能改 position，改用底部枢轴 + 缩放生长 + 淡入，呈现从下往上浮现
+	var cs = card.custom_minimum_size
+	card.pivot_offset = Vector2(cs.x * 0.5, cs.y)
+	card.scale = Vector2(0.92, 0.92)
+	card.modulate.a = 0.0
+	var pop = card.create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	pop.tween_property(card, "modulate:a", 1.0, 0.3)
+	pop.parallel().tween_property(card, "scale", Vector2(1.0, 1.0), 0.4)
+	# 居中展示在对话区下方（令匣之后）；卡牌容器固定高度、不 expand，确保打字机过程中文字变长时牌尺寸不被挤压变化
 	var hb = HBoxContainer.new()
 	hb.name = "DrawnCardHolder"
 	hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	hb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hb.custom_minimum_size = Vector2(0, cs.y)
+	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	hb.add_child(card)
 	_dialogue_area.add_child(hb)
 	_drawn_card = hb
@@ -411,6 +432,7 @@ func _clear_drawn_card() -> void:
 	if _drawn_card and is_instance_valid(_drawn_card):
 		_drawn_card.queue_free()
 		_drawn_card = null
+	# 对话文本现在常驻 ScrollContainer 内（size_flags_vertical=0），无需恢复 expand
 
 
 # ---- 首次抽令讲解 ----
@@ -489,7 +511,7 @@ func _on_box_clicked() -> void:
 	# 通知GameManager记录令牌
 	GameManager.draw_sultan_card_via_sorceress(_current_card_data)
 
-	# 品级讲解台词
+	# 品级讲解台词 + 抽卡卡牌（卡牌固定在底部，入场动画立即播放）
 	_phase = "card_reveal"
 	_clear_buttons()
 	_show_rank_commentary(_current_card_data)
@@ -570,9 +592,11 @@ func _on_typing_tick() -> void:
 	if _typing_pos >= _typing_target.length():
 		# 完成
 		_dialogue_text.text = _typing_prefix + _typing_target
+		if _dialogue_scroll: _dialogue_scroll.scroll_vertical = 999999   # Godot4 无 scroll_to_bottom，设极大值自动钳到最大，滚到最底
 		_stop_typing()
 	else:
 		_dialogue_text.text = _typing_prefix + _typing_target.left(_typing_pos)
+		if _dialogue_scroll: _dialogue_scroll.scroll_vertical = 999999
 
 
 func _stop_typing() -> void:
@@ -586,6 +610,7 @@ func _skip_typing() -> void:
 	_stop_typing()
 	if not _typing_target.is_empty():
 		_dialogue_text.text = _typing_prefix + _typing_target
+		if _dialogue_scroll: _dialogue_scroll.scroll_vertical = 999999
 		_typing_target = ""
 
 

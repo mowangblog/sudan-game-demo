@@ -119,6 +119,7 @@ func make_sultan_card_filled(card_data: Dictionary) -> PanelContainer:
 	card.set_meta("sc_bg", sc_bg)
 	card.set_meta("card_quality", sc_rank)
 	card.set_meta("drag_data", {"type": "sultan_card", "id": card_data.get("id", ""), "name": card_data.get("name", ""), "data": card_data})
+	card.visible = true   # make_sultan_card() 默认 visible=false，展示专用方法必须显式显示
 	return card
 
 func make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
