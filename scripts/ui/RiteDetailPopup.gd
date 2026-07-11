@@ -17,7 +17,7 @@ const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按需
 
 const CONFIRM_BTN_TEX = preload("res://assets/images/ui/queren_btn.png")
 const CANCEL_BTN_TEX = preload("res://assets/images/ui/quxiao_btn.png")
-const CONFIRM_CANCEL_BTN_SIZE := Vector2(150, 84)   # 确认/取消按钮显示尺寸，按需调整（图片原尺寸 358x200，比例 1.79）
+const CONFIRM_CANCEL_BTN_SIZE := Vector2(100, 38)   # 与原文字按钮同尺寸，换图不改大小（图片原尺寸 358x200，用 KEEP_ASPECT_CENTERED 比例自适应）
 
 # 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
 func _popup_bg_stylebox() -> StyleBoxTexture:
