@@ -42,8 +42,11 @@ func _spawn_daily_rites() -> void:
 	var count = 1 + (randi() % 2)
 	for _i in range(count):
 		var idx = randi() % normal_rites.size()
-		var rite = normal_rites[idx]
-		EventBus.rite_appeared.emit(rite.duplicate())
+		var rite = normal_rites[idx].duplicate()
+		var days = 1 + (randi() % 7)   # 随机 1-7 天（替换原静态 time_limit 1-2 天）
+		rite["time_limit"] = days
+		rite["duration"] = days
+		EventBus.rite_appeared.emit(rite)
 
 
 ## === 仪式计时器管理 ===

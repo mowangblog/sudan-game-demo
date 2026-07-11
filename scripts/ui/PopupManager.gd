@@ -82,6 +82,35 @@ func _position_corner_close(cb: TextureButton, popup: Control) -> void:
 	cb.size = Vector2(sz, sz)
 	cb.position = Vector2(popup.position.x + popup.size.x - sz - 4, popup.position.y + 4)
 
+# 事件选择按钮：统一为女术士弹窗的横向长条按钮样式（深色底+金边框+金字+hover高亮）
+func _make_choice_btn(text: String, callback: Callable) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.add_theme_font_size_override("font_size", 12)
+	btn.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
+	btn.custom_minimum_size = Vector2(0, 30)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var btn_sb = StyleBoxFlat.new()
+	btn_sb.bg_color = Color("2a1810")
+	btn_sb.set_corner_radius_all(8)
+	btn_sb.border_width_bottom = 2; btn_sb.border_width_left = 2; btn_sb.border_width_right = 2; btn_sb.border_width_top = 2
+	btn_sb.border_color = _C.get("GOLD_LO", Color("8a6820"))
+	btn_sb.content_margin_left = 12; btn_sb.content_margin_right = 12
+	btn_sb.content_margin_top = 6; btn_sb.content_margin_bottom = 6
+	btn.add_theme_stylebox_override("normal", btn_sb)
+	var hover_sb = StyleBoxFlat.new()
+	hover_sb.bg_color = Color("3a2818")
+	hover_sb.set_corner_radius_all(8)
+	hover_sb.border_width_bottom = 2; hover_sb.border_width_left = 2; hover_sb.border_width_right = 2; hover_sb.border_width_top = 2
+	hover_sb.border_color = _C.get("GOLD_HI", Color("e8d48b"))
+	hover_sb.content_margin_left = 12; hover_sb.content_margin_right = 12
+	hover_sb.content_margin_top = 6; hover_sb.content_margin_bottom = 6
+	btn.add_theme_stylebox_override("hover", hover_sb)
+	btn.mouse_entered.connect(func(): btn.modulate = Color(1.15, 1.15, 1.15))
+	btn.mouse_exited.connect(func(): btn.modulate = Color.WHITE)
+	btn.pressed.connect(callback)
+	return btn
+
 func _sl(t:String, c:Color=Color.WHITE) -> Label:
 	var l = Label.new(); l.text=t; l.add_theme_color_override("font_color",c); return l
 
@@ -292,23 +321,21 @@ func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(tl)
 	
 	var sc = ScrollContainer.new(); sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED   # 只允许上下滚动，禁用左右滚动
 	sc.custom_minimum_size = Vector2(0, sz.y * 0.55); vb.add_child(sc)
 	var text_lbl = Label.new(); text_lbl.text = event.text
 	text_lbl.add_theme_font_size_override("font_size", 13); text_lbl.add_theme_color_override("font_color", _C.get("TEXT", Color("f0e6c8")))
-	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; text_lbl.custom_minimum_size = Vector2(sz.x - 48, 0)
+	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # 跟随 ScrollContainer 宽度，配合 autowrap 自动换行，避免横向溢出
 	sc.add_child(text_lbl)
 	
 	var btns = VBoxContainer.new(); btns.add_theme_constant_override("separation", 6)
 	for i in range(event.choices.size()):
 		var choice = event.choices[i]
-		var btn = Button.new(); btn.text = "%d. %s" % [i + 1, choice.text]
-		btn.add_theme_font_size_override("font_size", 13); btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.custom_minimum_size = Vector2(0, 38)
-		btn.pressed.connect(func(idx=i):
+		btns.add_child(_make_choice_btn(choice.text, func(idx=i):
 			popup.queue_free()
 			on_choice.call(event, idx)
-		)
-		btns.add_child(btn)
+		))
 	vb.add_child(btns)
 
 	_place_in_map(popup, 0.66, 0.66, 360, 300, 1000, 760)
