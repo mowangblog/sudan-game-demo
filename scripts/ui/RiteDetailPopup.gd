@@ -15,6 +15,10 @@ signal validation_failed(message: String)
 const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
 const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按需调整
 
+const CONFIRM_BTN_TEX = preload("res://assets/images/ui/queren_btn.png")
+const CANCEL_BTN_TEX = preload("res://assets/images/ui/quxiao_btn.png")
+const CONFIRM_CANCEL_BTN_SIZE := Vector2(150, 84)   # 确认/取消按钮显示尺寸，按需调整（图片原尺寸 358x200，比例 1.79）
+
 # 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
 func _popup_bg_stylebox() -> StyleBoxTexture:
 	var sb = StyleBoxTexture.new()
@@ -238,17 +242,19 @@ func _add_buttons(lvb: VBoxContainer) -> void:
 	btn_hb.add_theme_constant_override("separation", 16)
 	lvb.add_child(btn_hb)
 
-	var confirm_btn = Button.new()
-	confirm_btn.text = "确认"
-	confirm_btn.custom_minimum_size = Vector2(100, 38)
-	confirm_btn.add_theme_font_size_override("font_size", 13)
+	var confirm_btn = TextureButton.new()
+	confirm_btn.texture_normal = CONFIRM_BTN_TEX
+	confirm_btn.expand = true
+	confirm_btn.stretch_mode = TextureButton.STRETCH_MODE_KEEP_ASPECT_CENTERED
+	confirm_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	confirm_btn.pressed.connect(_on_confirm_pressed)
 	btn_hb.add_child(confirm_btn)
 
-	var cancel_btn = Button.new()
-	cancel_btn.text = "取消"
-	cancel_btn.custom_minimum_size = Vector2(100, 38)
-	cancel_btn.add_theme_font_size_override("font_size", 13)
+	var cancel_btn = TextureButton.new()
+	cancel_btn.texture_normal = CANCEL_BTN_TEX
+	cancel_btn.expand = true
+	cancel_btn.stretch_mode = TextureButton.STRETCH_MODE_KEEP_ASPECT_CENTERED
+	cancel_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	cancel_btn.pressed.connect(_on_cancel_pressed)
 	btn_hb.add_child(cancel_btn)
 
