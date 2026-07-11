@@ -10,6 +10,8 @@ const FLAT_TEXT = Color("f0e6c8")
 const FLAT_DIM = Color("a09070")
 const FLAT_GREEN = Color("4a9a3a")
 const FLAT_FAIL = Color("aa3030")
+const HAND_ZONE_H := 200   # 与 MainScene._bottom 手牌区高度一致
+const STATUS_BAR_H := 38   # 与 StatusBar 顶栏高度一致
 
 var vb: VBoxContainer
 var dice_lbl: Label
@@ -30,6 +32,19 @@ var actual_success: int = 0
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_setup_style()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+func _layout_in_map() -> void:
+	var vs = get_viewport().size
+	var r = Rect2(0, STATUS_BAR_H, vs.x, vs.y - STATUS_BAR_H - HAND_ZONE_H)
+	var pw = clamp(r.size.x * 0.5, 360, min(r.size.x * 0.95, 720))
+	var ph = clamp(r.size.y * 0.62, 320, min(r.size.y * 0.95, 640))
+	custom_minimum_size = Vector2(pw, ph)
+	size = Vector2(pw, ph)
+	position = Vector2(r.position.x + (r.size.x - pw) / 2.0, r.position.y + (r.size.y - ph) / 2.0)
+
+func _on_viewport_resized() -> void:
+	_layout_in_map()
 
 func _setup_style():
 	# 面板样式
@@ -46,11 +61,8 @@ func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary):
 	char_data = char_d
 	sultan_card_data = sultan
 
-	# 居中定位 — 加宽加大
-	custom_minimum_size = Vector2(460, 420)
-	size = Vector2(460, 420)
-	var vs = get_viewport().size
-	position = Vector2((vs.x - 460) / 2, (vs.y - 420) / 2 - 50)
+	# 自适应屏幕大小，居中于地图区（状态栏以下、手牌区以上），约占 2/3
+	_layout_in_map()
 
 	# 清空旧内容
 	for c in get_children():

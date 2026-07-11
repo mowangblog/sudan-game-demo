@@ -10,6 +10,8 @@ const STONE_CARD_BG = preload("res://assets/images/cards/shi_resized.png")
 const BRONZE_CARD_BG = preload("res://assets/images/cards/tong_resized.png")
 const SILVER_CARD_BG = preload("res://assets/images/cards/ying_resized.png")
 const GOLD_RARITY_CARD_BG = preload("res://assets/images/cards/jin_resized.png")
+const INTEL_PORTRAIT = preload("res://assets/images/cards/qingbao.png")  # 情报立绘
+const BOOK_PORTRAIT = preload("res://assets/images/cards/shuji.png")  # 书籍立绘
 const PLAYER_PORTRAIT = preload("res://assets/images/characters/zhujue.png")
 const CHAR_PORTRAITS = {
 	"meji": preload("res://assets/images/characters/meji_resized.png"),
@@ -109,13 +111,15 @@ func make_sultan_card() -> PanelContainer:
 func make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
 	card.name = "Res_" + name_str; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP
+	var resource_type = "gold" if name_str == "金币" else "intel"
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
 	var bg_override: Texture2D = GOLD_CARD_BG if name_str == "金币" else null
 	var radius = 20.0 if name_str == "金币" else 25.0
 	_apply_image_card_base(card, quality, q_border, false, Color("c8a84e80"), bg_override, radius)
-	_add_card_face_content(card, name_str, ("x%d" % count) if count > 1 else "", "", null)
+	# 情报卡统一加立绘；金币卡不加
+	var portrait: Texture2D = INTEL_PORTRAIT if resource_type == "intel" else null
+	_add_card_face_content(card, name_str, ("x%d" % count) if count > 1 else "", "", portrait)
 
-	var resource_type = "gold" if name_str == "金币" else "intel"
 	var res_data = {"type": "resource", "resource_type": resource_type, "id": name_str, "name": name_str, "quality": quality, "count": count, "icon": icon}
 	card.set_meta("drag_data", res_data)
 	card.set_meta("res_type", name_str)
@@ -170,15 +174,16 @@ func _add_card_face_content(card: PanelContainer, title: String, number_text: St
 	var title_lbl = Label.new()
 	title_lbl.name = "TitleLbl"
 	title_lbl.text = title
-	_apply_card_title_style(title_lbl, 17)
+	_apply_card_title_style(title_lbl, 18)
+	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # 标题过长时自动换行，不再溢出卡牌
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	title_lbl.offset_left = 6
-	title_lbl.offset_right = -6
-	title_lbl.offset_top = 5
-	title_lbl.offset_bottom = 34
+	title_lbl.offset_left = 5
+	title_lbl.offset_right = -5
+	title_lbl.offset_top = 8
+	title_lbl.offset_bottom = 40
 	overlay.add_child(title_lbl)
 
 	if portrait != null:
@@ -221,9 +226,9 @@ func _add_gold_resource_text(card: PanelContainer, title: String, count: int) ->
 	_add_card_face_content(card, title, ("x%d" % count) if count > 1 else "", "", null)
 
 
-func _apply_card_title_style(label: Label, font_size: int = 18) -> void:
+func _apply_card_title_style(label: Label, font_size: int = 16) -> void:
 	label.add_theme_font_override("font", CARD_TITLE_FONT)
-	label.add_theme_font_size_override("font_size", 25)
+	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", Color("000000"))
 	label.add_theme_color_override("font_shadow_color", Color.WHITE)
 	label.add_theme_constant_override("outline_size", 0)
@@ -279,7 +284,8 @@ func make_book_card(book_data: Dictionary) -> PanelContainer:
 	var quality = book_data.get("rank", "STONE")
 	var q_border = SC_BORDER.get(quality, C.get("GOLD_LO", Color("8a6820")))
 	_apply_image_card_base(card, quality, q_border, false)
-	_add_card_face_content(card, book_data.get("name", "?"), "", "", null)
+	# 书籍卡统一加立绘
+	_add_card_face_content(card, book_data.get("name", "?"), "", "", BOOK_PORTRAIT)
 
 	card.set_meta("drag_data", {"type": "book", "id": book_data.get("id", ""), "name": book_data.get("name", ""), "data": book_data, "rank": quality})
 

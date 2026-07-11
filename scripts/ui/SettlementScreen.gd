@@ -68,6 +68,20 @@ var next_btn: Button
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+# 按当前视口把面板居中到手牌区上方区域，并随窗口缩放实时重排
+func _layout_in_map() -> void:
+	var vs = get_viewport().size
+	var bottom_limit = vs.y - 200 - 16
+	var w = min(vs.x - 40, 1080)
+	var h = min(bottom_limit - 28, 400)
+	custom_minimum_size = Vector2(w, h)
+	size = Vector2(w, h)
+	position = Vector2((vs.x - w) / 2, (bottom_limit - h) / 2)
+
+func _on_viewport_resized() -> void:
+	_layout_in_map()
 
 func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, reward: String = "", items: Array = []):
 	rite_data = rite
@@ -79,13 +93,7 @@ func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, re
 	_dice_roller = null
 	_dice_svc = null
 
-	var vs = get_viewport().size
-	var bottom_limit = vs.y - 200 - 16
-	var w = min(vs.x - 40, 1080)
-	var h = min(bottom_limit - 28, 400)
-	custom_minimum_size = Vector2(w, h)
-	size = Vector2(w, h)
-	position = Vector2((vs.x - w) / 2, (bottom_limit - h) / 2)
+	_layout_in_map()
 
 	for c in get_children(): c.queue_free()
 

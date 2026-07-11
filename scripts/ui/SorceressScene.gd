@@ -7,6 +7,8 @@ extends Control
 
 const CARD_TITLE_FONT = preload("res://assets/fonts/云峰字库重庆山城棒棒体.ttf")
 const CARD_SIZE := Vector2(100, 180)
+const HAND_ZONE_H := 200   # 与 MainScene._bottom 手牌区高度一致
+const STATUS_BAR_H := 38   # 与 StatusBar 顶栏高度一致
 
 # ---- 常量 ----
 const C = {
@@ -60,6 +62,25 @@ var _noop: Callable = func(): pass
 func _ready() -> void:
 	_load_dialogues()
 	_build_ui()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+
+# 按当前视口把主面板居中到地图区（状态栏下、手牌区上）
+func _layout_main_panel(vs: Vector2) -> void:
+	var r = Rect2(0, STATUS_BAR_H, vs.x, vs.y - STATUS_BAR_H - HAND_ZONE_H)
+	var pw = clamp(r.size.x * 0.66, 360, min(r.size.x * 0.95, 900))
+	var ph = clamp(r.size.y * 0.7, 340, min(r.size.y * 0.95, 680))
+	_main_panel.custom_minimum_size = Vector2(pw, ph)
+	_main_panel.size = Vector2(pw, ph)
+	_main_panel.position = Vector2(r.position.x + (r.size.x - pw) / 2.0, r.position.y + (r.size.y - ph) / 2.0)
+	if is_instance_valid(_dialogue_text):
+		_dialogue_text.custom_minimum_size = Vector2(pw - 200, 0)
+
+
+func _on_viewport_resized() -> void:
+	if not is_instance_valid(_main_panel):
+		return
+	_layout_main_panel(get_viewport().get_visible_rect().size)
 
 
 func _load_dialogues() -> void:
@@ -81,18 +102,14 @@ func _build_ui() -> void:
 	_bg.z_index = 100
 	add_child(_bg)
 
-	# 主面板 — 横长方形，手牌区上方
+	# 主面板 — 横长方形，居中于地图区（状态栏以下、手牌区以上），约占 2/3
 	_main_panel = PanelContainer.new()
 	_main_panel.name = "SorceressPanel"
 	_main_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_main_panel.z_index = 110
 
 	var vs = get_viewport().get_visible_rect().size
-	var pw = min(vs.x - 60, 700)
-	var ph = min(vs.y - 260, 380)  # 留手牌区200+状态栏32+间距28
-	_main_panel.custom_minimum_size = Vector2(pw, ph)
-	# 置顶偏上
-	_main_panel.position = Vector2((vs.x - pw) / 2, 36)
+	_layout_main_panel(vs)
 
 	var ps = StyleBoxFlat.new()
 	ps.bg_color = Color("120808")
@@ -184,7 +201,7 @@ func _build_ui() -> void:
 	_dialogue_text.add_theme_font_size_override("font_size", 13)
 	_dialogue_text.add_theme_color_override("font_color", C.TEXT)
 	_dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dialogue_text.custom_minimum_size = Vector2(pw - 200, 0)
+	_dialogue_text.custom_minimum_size = Vector2(_main_panel.custom_minimum_size.x - 200, 0)
 	_dialogue_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_dialogue_text.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialogue_text.gui_input.connect(_on_dialogue_click)

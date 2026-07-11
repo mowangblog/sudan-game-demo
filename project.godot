@@ -23,6 +23,15 @@ ResourceManager="*res://scripts/autoload/ResourceManager.gd"
 DataManager="*res://scripts/autoload/DataManager.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
 
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+
+[dotnet]
+
+project/assembly_name="sudanGameDemo"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

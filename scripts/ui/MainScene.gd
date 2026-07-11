@@ -131,6 +131,28 @@ func _build() -> void:
 func _bg() -> void:
 	self_modulate = C.BG_DEEP
 
+	# 地图背景图：放在独立 CanvasLayer 中，避免被 MainScene 的 self_modulate 染暗
+	var bg_layer = CanvasLayer.new()
+	bg_layer.name = "MapBgLayer"
+	bg_layer.layer = -100   # 位于 MainScene（layer 0）之下
+	var bg_tex = TextureRect.new()
+	bg_tex.name = "MapBg"
+	bg_tex.texture = preload("res://assets/images/ui/map_bg.png")
+	bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED   # 保持比例铺满，超出部分裁切
+	bg_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg_layer.add_child(bg_tex)
+	add_child(bg_layer)
+	# 只铺「地图区」：StatusBar 之下、手牌区之上（与 MapPanel 的 offset_top=32 / offset_bottom=-200 对齐）
+	var _fit_bg = func():
+		var vs = get_viewport().size
+		var map_top = 32.0
+		var map_bottom = 200.0
+		bg_tex.position = Vector2(0, map_top)
+		bg_tex.size = Vector2(vs.x, vs.y - map_top - map_bottom)
+	_fit_bg.call()
+	get_viewport().size_changed.connect(_fit_bg)
+
 func _status() -> void:
 	status_bar.setup(self, {"C": C})
 	status_bar.build(_on_sorceress_icon_pressed)

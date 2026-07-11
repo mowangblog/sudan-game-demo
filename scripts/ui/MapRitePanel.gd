@@ -22,7 +22,7 @@ func build() -> Control:
 	map.offset_top = 32
 	map.offset_bottom = -200
 	var ps = StyleBoxFlat.new()
-	ps.bg_color = C.get("BG_MID", Color("241712"))
+	ps.bg_color = Color("241712", 0.0)   # 透明：露出底层地图背景图（边框/圆角仍保留）
 	ps.set_corner_radius_all(10)
 	ps.border_width_bottom = 2
 	ps.border_width_top = 2

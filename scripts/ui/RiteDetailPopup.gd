@@ -14,6 +14,8 @@ signal validation_failed(message: String)
 
 const RiteSlotDropScript = preload("res://scripts/ui/RiteSlotDrop.gd")
 const CARD_SIZE := Vector2(100, 180)
+const HAND_ZONE_H := 200   # 与 MainScene._bottom 手牌区高度一致
+const STATUS_BAR_H := 38   # 与 StatusBar 顶栏高度一致
 
 var C: Dictionary = {}
 var AN: Dictionary = {}
@@ -23,6 +25,20 @@ var is_edit: bool = false
 var slot_nodes: Array = []
 var assigned_cards: Array = []
 var card_factory  # 由 MainScene 注入
+var _split_container: HSplitContainer = null  # 分栏容器，缩放重排时同步更新分隔位置
+
+func _ready() -> void:
+	if not is_inside_tree():
+		return
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+# 窗口缩放时，按当前视口重排位置/尺寸，并同步分栏分隔
+func _on_viewport_resized() -> void:
+	if not is_inside_tree():
+		return
+	_configure_frame(get_viewport().size)
+	if is_instance_valid(_split_container):
+		_split_container.split_offset = int(custom_minimum_size.x * 0.45)
 
 func setup(p_rite: Dictionary, p_existing_entry, constants: Dictionary, viewport_size: Vector2) -> void:
 	rite = p_rite
@@ -70,11 +86,13 @@ func commit_assigned_cards() -> void:
 
 
 func _configure_frame(viewport_size: Vector2) -> void:
-	var pw = min(viewport_size.x - 60, 960)
-	var ph = min(viewport_size.y - 260, 480)
+	# 自适应屏幕大小，居中于地图区（状态栏以下、手牌区以上），约占 2/3
+	var r = Rect2(0, STATUS_BAR_H, viewport_size.x, viewport_size.y - STATUS_BAR_H - HAND_ZONE_H)
+	var pw = clamp(r.size.x * 0.66, 360, min(r.size.x * 0.95, 1200))
+	var ph = clamp(r.size.y * 0.7, 340, min(r.size.y * 0.95, 780))
 	custom_minimum_size = Vector2(pw, ph)
 	size = Vector2(pw, ph)
-	position = Vector2((viewport_size.x - pw) / 2, max(40, viewport_size.y * 0.05))
+	position = Vector2(r.position.x + (r.size.x - pw) / 2.0, r.position.y + (r.size.y - ph) / 2.0)
 	var ops = StyleBoxFlat.new()
 	ops.bg_color = C.get("BG_PANEL", Color("2d1c12"))
 	ops.set_corner_radius_all(12)
@@ -94,7 +112,8 @@ func _configure_frame(viewport_size: Vector2) -> void:
 
 func _build_content() -> void:
 	var split = HSplitContainer.new()
-	split.split_offset = 440
+	split.split_offset = int(custom_minimum_size.x * 0.45)
+	_split_container = split
 	add_child(split)
 	_build_left(split)
 	_build_right(split)

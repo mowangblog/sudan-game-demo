@@ -7,6 +7,9 @@ const C = {
 	TEXT=Color("f0e6c8"), DIM=Color("a09070"), LUST=Color("8b3a5c"),
 }
 
+const MENU_TOP = 90   # 菜单整体距屏幕顶部的偏移（即 logo 下移量），想再往下就调大这个值
+const SEP_LOGO = -90  # logo ↔ 第一个按钮间距（负=按钮上移贴近/叠到 logo 底部，想更近就调更小）
+
 func _ready():
 	# 根节点填满窗口
 	anchor_left = 0; anchor_right = 1; anchor_top = 0; anchor_bottom = 1
@@ -19,9 +22,15 @@ func _center_on_resize():
 	# 背景铺满
 	var bg = get_node_or_null("BG")
 	if bg: bg.size = vs
-	# MenuVBox 居中
+	# MenuVBox 水平居中、垂直至少距顶部 MENU_TOP
+	# （不再强制垂直居中：菜单总高接近视口时会把 logo 顶到上边缘，导致“下移”被抵消）
 	var cv = get_node_or_null("MenuVBox")
-	if cv: cv.position = Vector2((vs.x - cv.size.x) / 2, (vs.y - cv.size.y) / 2)
+	if cv:
+		# MENU_TOP 直接作为 logo 距顶部偏移；只有菜单总高 + MENU_TOP 超过视口（会被裁切）时才回退到垂直居中
+		var top = MENU_TOP
+		if cv.size.y + MENU_TOP > vs.y:
+			top = (vs.y - cv.size.y) / 2
+		cv.position = Vector2((vs.x - cv.size.x) / 2, top)
 
 func _build():
 	# 背景图直接按窗口尺寸
@@ -35,60 +44,44 @@ func _build():
 	
 	var cv = VBoxContainer.new()
 	cv.name = "MenuVBox"
-	cv.add_theme_constant_override("separation", 6)
+	cv.add_theme_constant_override("separation", SEP_LOGO)   # 控制 logo ↔ 按钮组（按钮之间的间距见 btnbox）
 	add_child(cv)
 	
-	# 标题
-	var title = Label.new(); title.text = "🕌 摄政王的游戏"
-	title.add_theme_font_size_override("font_size", 36)
-	title.add_theme_color_override("font_color", C.GOLD)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cv.add_child(title)
+	# 标题（logo 图片）
+	var logo = TextureRect.new()
+	logo.name = "Logo"
+	logo.texture = preload("res://assets/images/ui/logo.png")
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.custom_minimum_size = Vector2(360, 360)   # 原图 655x655(1:1)，按原比例放大显示
+	logo.size = Vector2(360, 360)
+	cv.add_child(logo)
 	
-	var sub = Label.new(); sub.text = "Sultan's Game"
-	sub.add_theme_font_size_override("font_size", 14)
-	sub.add_theme_color_override("font_color", C.DIM)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cv.add_child(sub)
+	# 按钮组：独立容器，按钮之间间距固定 -20（你的设定），与 logo↔按钮 互不影响
+	var btnbox = VBoxContainer.new()
+	btnbox.add_theme_constant_override("separation", -20)
+	cv.add_child(btnbox)
 	
-	var sp1 = Control.new(); sp1.custom_minimum_size = Vector2(0, 30); cv.add_child(sp1)
-	
-	# 按钮
+	# 按钮（全部为图片素材）
 	var btns = [
-		{"t":"🎮  开始新游戏", "f":_start_new_game, "c":C.GOLD},
-		{"t":"📂  继续游戏",   "f":_continue_game, "c":C.DIM},
-		{"t":"⚙  设置",       "f":_show_settings, "c":C.DIM},
-		{"t":"🚪  退出",       "f":_quit,          "c":Color("aa5050")},
+		{"n":"StartBtn",    "f":_start_new_game, "img":preload("res://assets/images/ui/start_btn.png")},
+		{"n":"ContinueBtn", "f":_continue_game,  "img":preload("res://assets/images/ui/jixu_btn.png")},
+		{"n":"SettingsBtn", "f":_show_settings,  "img":preload("res://assets/images/ui/shezhi_btn.png")},
+		{"n":"QuitBtn",     "f":_quit,           "img":preload("res://assets/images/ui/tuichu_btn.png")},
 	]
-	
+
 	for bd in btns:
-		var btn = Button.new()
-		btn.text = bd.t
-		btn.custom_minimum_size = Vector2(240, 48)
-		btn.add_theme_font_size_override("font_size", 16)
-		var sb = StyleBoxFlat.new()
-		sb.bg_color = Color("2a1c0a"); sb.set_corner_radius_all(8)
-		sb.border_width_bottom=2; sb.border_width_top=2
-		sb.border_width_left=2; sb.border_width_right=2; sb.border_color = C.GOLD_LO
-		sb.content_margin_left=16; sb.content_margin_right=16
-		btn.add_theme_stylebox_override("normal", sb)
-		var sh = StyleBoxFlat.new(); sh.set_corner_radius_all(8)
-		sh.bg_color = Color("3a2c0a"); sh.border_width_bottom=2; sh.border_width_top=2
-		sh.border_width_left=2; sh.border_width_right=2; sh.border_color = C.GOLD_HI
-		sh.content_margin_left=16; sh.content_margin_right=16
-		btn.add_theme_stylebox_override("hover", sh)
-		btn.add_theme_color_override("font_color", bd.c)
-		btn.add_theme_color_override("font_hover_color", C.GOLD_HI)
-		btn.pressed.connect(bd.f)
-		cv.add_child(btn)
-	
-	# 底部版本
-	var sp2 = Control.new(); sp2.custom_minimum_size = Vector2(0, 20); cv.add_child(sp2)
-	var ver = Label.new(); ver.text = "v0.1"
-	ver.add_theme_font_size_override("font_size", 10)
-	ver.add_theme_color_override("font_color", Color("5a4a3a"))
-	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cv.add_child(ver)
+		var sbtn = TextureButton.new()
+		sbtn.name = bd.n
+		sbtn.texture_normal = bd.img
+		sbtn.ignore_texture_size = true
+		sbtn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+		sbtn.custom_minimum_size = Vector2(200, 120)   # 原图 358x200(≈1.79:1)，缩小一点
+		sbtn.size = Vector2(200, 120)
+		sbtn.pressed.connect(bd.f)
+		sbtn.mouse_entered.connect(func(): sbtn.modulate = Color(1.15, 1.15, 1.15))
+		sbtn.mouse_exited.connect(func(): sbtn.modulate = Color.WHITE)
+		btnbox.add_child(sbtn)
 	
 	# 初始居中
 	call_deferred("_center_on_resize")
