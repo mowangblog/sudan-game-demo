@@ -108,6 +108,19 @@ func make_sultan_card() -> PanelContainer:
 
 	return card
 
+# 用具体令牌数据填充真实卡牌样式（背景图 + 边框按 type/rank），供女术士抽卡后展示
+func make_sultan_card_filled(card_data: Dictionary) -> PanelContainer:
+	var card = make_sultan_card()
+	var sc_type = card_data.get("type", "LUST")
+	var sc_rank = card_data.get("rank", "STONE")
+	var rk_border = SC_BORDER.get(sc_rank, C.get("GOLD_LO", Color("8a6820")))
+	var sc_bg = sultan_card_bg(sc_type, sc_rank)
+	_apply_image_card_base(card, sc_rank, rk_border, false, Color("c8a84e80"), sc_bg, 20.0)
+	card.set_meta("sc_bg", sc_bg)
+	card.set_meta("card_quality", sc_rank)
+	card.set_meta("drag_data", {"type": "sultan_card", "id": card_data.get("id", ""), "name": card_data.get("name", ""), "data": card_data})
+	return card
+
 func make_resource_card(name_str: String, icon: String, quality: String, count: int) -> PanelContainer:
 	var card = preload("res://scripts/ui/DraggableCard.gd").new()
 	card.name = "Res_" + name_str; card.custom_minimum_size = CARD_SIZE; card.mouse_filter = Control.MOUSE_FILTER_STOP

@@ -55,6 +55,8 @@ var _btn_container: VBoxContainer
 var _card_box: CardBox
 var _swap_card: PanelContainer = null        # 换令时展示的只读当前令
 var _swap_on_confirm: Callable = func(): pass  # 换令确认回调（供卡牌点击复用）
+var card_factory: CardFactory = null          # 注入：用于抽卡后真实展示卡牌
+var _drawn_card: Control = null              # 抽卡后展示的真实令牌卡牌（含居中容器）
 var _close_btn: TextureButton = null          # 右上角物理角落的关闭按钮（叠加在 self 上）
 
 # ---- 进度面板 ----
@@ -254,6 +256,7 @@ func open_for_draw(card_data: Dictionary, is_first: bool, on_complete: Callable)
 	visible = true
 	_card_box.reset_box()
 	_clear_swap_card()
+	_clear_drawn_card()
 	_hide_progress_panel()
 
 	if _is_first_draw:
@@ -375,6 +378,41 @@ func _clear_swap_card() -> void:
 		_swap_card = null
 
 
+# 抽卡成功后：在对话区下方真实展示抽到的令牌卡牌（与手牌令牌同外观，仅展示不可拖拽）
+func _show_drawn_card(card_data: Dictionary) -> void:
+	_clear_drawn_card()
+	if card_factory == null:
+		return
+	# 抽到真实卡牌后，隐藏令匣动画占位，给卡牌让出空间（下次抽卡由 open_for_draw 重新显示）
+	if is_instance_valid(_card_box):
+		_card_box.visible = false
+	var card = card_factory.make_sultan_card_filled(card_data)
+	# 卡面文字：类型名 + 剩余天数（与手牌令牌一致）
+	var overlay = card.get_node_or_null("CardTextOverlay")
+	if overlay:
+		var title_lbl = overlay.get_node_or_null("TitleLbl") as Label
+		if title_lbl:
+			title_lbl.text = TN.get(card_data.get("type", "LUST"), "?")
+		var count_lbl = overlay.get_node_or_null("CountLbl") as Label
+		if count_lbl:
+			count_lbl.text = "%d天" % GameManager.sultan_card_days_left
+	# 纯展示：禁用拖拽/点击，避免 DraggableCard 在弹窗内被拖走
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 居中展示在对话区下方（令匣之后）
+	var hb = HBoxContainer.new()
+	hb.name = "DrawnCardHolder"
+	hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	hb.add_child(card)
+	_dialogue_area.add_child(hb)
+	_drawn_card = hb
+
+
+func _clear_drawn_card() -> void:
+	if _drawn_card and is_instance_valid(_drawn_card):
+		_drawn_card.queue_free()
+		_drawn_card = null
+
+
 # ---- 首次抽令讲解 ----
 func _show_first_time_intro() -> void:
 	_phase = "type_intro"
@@ -455,6 +493,7 @@ func _on_box_clicked() -> void:
 	_phase = "card_reveal"
 	_clear_buttons()
 	_show_rank_commentary(_current_card_data)
+	_show_drawn_card(_current_card_data)
 
 	# 「我知道了」按钮
 	_add_btn(_dialogues.get("draw_flow", {}).get("acknowledge_btn", "我知道了"), func(): _finish_draw())

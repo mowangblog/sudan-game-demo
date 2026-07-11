@@ -89,6 +89,7 @@ func _ready() -> void:
 	# 创建女术士页面（初始隐藏）
 	_sorceress_scene = SorceressScene.new()
 	_sorceress_scene.name = "SorceressScene"
+	_sorceress_scene.card_factory = card_factory   # 注入，用于抽卡后真实展示令牌卡牌
 	_sorceress_scene.visible = false
 	add_child(_sorceress_scene)
 	GameManager.start_game()
