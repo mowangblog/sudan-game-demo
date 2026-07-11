@@ -428,10 +428,8 @@ func _bottom() -> void:
 	
 	# 灵光一现 — 左下角骷髅
 	var insight = _make_insight_button()
-	insight.position = Vector2(10, 0)
-	insight.size.x = 86
-	insight.size.y = hand_container.size.y
-	hand_container.add_child(insight)
+	insight.position = Vector2(10, -70)   # y 为负：按钮向上探出 70px，使其高度超出手牌区（顶部进入地图区）
+	hand_container.add_child(insight)   # 尺寸保持 CARD_SIZE（与卡牌一致），不被手牌区高度撑开
 	
 	# 角色卡
 	for cid in ["player","meji","tietou","kuaijiao","zhaqiyi"]:
@@ -510,7 +508,6 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(insight): insight.size.y = hand_container.size.y
 		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
 		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
 		_update_card_zone_border()
@@ -530,24 +527,27 @@ func _update_card_zone_border():
 
 func _make_insight_button() -> PanelContainer:
 	var insight = PanelContainer.new(); insight.name="InsightBtn"
-	insight.custom_minimum_size=CARD_SIZE; insight.mouse_filter=Control.MOUSE_FILTER_STOP
-	var iss = StyleBoxFlat.new(); iss.bg_color=Color("1a1018"); iss.set_corner_radius_all(10)
-	iss.border_width_bottom=2; iss.border_width_top=2; iss.border_width_left=2; iss.border_width_right=2
-	iss.border_color=C.GOLD_LO.darkened(0.5); iss.shadow_size=6; iss.shadow_color=C.SHADOW
-	insight.add_theme_stylebox_override("panel",iss)
+	insight.custom_minimum_size=Vector2(240, 270); insight.size=Vector2(240, 270); insight.mouse_filter=Control.MOUSE_FILTER_STOP
+	# 去掉背景与边框，只保留图片（图片自身带透明背景，即为完整的「俺寻思」）
+	var iss = StyleBoxFlat.new()
+	iss.bg_color = Color(0, 0, 0, 0)            # 背景透明
+	iss.set_corner_radius_all(0)
+	iss.border_width_bottom = 0; iss.border_width_top = 0; iss.border_width_left = 0; iss.border_width_right = 0
+	iss.shadow_size = 0                         # 关阴影，否则图片四周会透出一圈暗边
+	insight.add_theme_stylebox_override("panel", iss)
 	# 单击 → 提示拖入卡牌
 	insight.gui_input.connect(func(e):
 		if e is InputEventMouseButton and e.pressed and e.button_index==MOUSE_BUTTON_LEFT:
 			_log("💀 灵光一现：将卡牌拖入此处以探索/处理")
 	)
-	var iv = VBoxContainer.new(); iv.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	iv.alignment=BoxContainer.ALIGNMENT_CENTER; insight.add_child(iv)
-	var lbl = Label.new(); lbl.text="💀\n俺\n寻\n思"; lbl.add_theme_font_size_override("font_size",14)
-	lbl.add_theme_color_override("font_color",C.GOLD); lbl.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	iv.add_child(lbl)
-	var hint = Label.new(); hint.text="拖入\n卡牌"; hint.add_theme_font_size_override("font_size",9)
-	hint.add_theme_color_override("font_color",C.DIM); hint.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	iv.add_child(hint)
+	# 「俺寻思」按钮面：用 anxunsi.png 替换原来的 💀+文字（只显示图片）
+	var iv = TextureRect.new(); iv.name="InsightFace"
+	iv.texture = preload("res://assets/images/ui/anxunsi.png")
+	iv.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	iv.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	iv.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # 完整显示图片、不裁切（想铺满裁切改 COVERED）
+	iv.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 点击/拖放落到 InsightBtn 面板上
+	insight.add_child(iv)
 	return insight
 
 func _on_hand_card_dropped(card: PanelContainer, global_pos: Vector2):
