@@ -30,6 +30,24 @@ const NUMBER_5 = DOT_5
 const NUMBER_6 = DOT_6
 const RiteItemEffectResolver = preload("res://scripts/game/RiteItemEffectResolver.gd")
 
+const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
+const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按实际角花尺寸调整
+
+# 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
+func _popup_bg_stylebox() -> StyleBoxTexture:
+	var sb = StyleBoxTexture.new()
+	sb.texture = POPUP_BG
+	sb.region_rect = Rect2(0, 0, 614, 410)
+	sb.texture_margin_left = POPUP_BG_MARGIN
+	sb.texture_margin_top = POPUP_BG_MARGIN
+	sb.texture_margin_right = POPUP_BG_MARGIN
+	sb.texture_margin_bottom = POPUP_BG_MARGIN
+	sb.content_margin_left = POPUP_BG_MARGIN
+	sb.content_margin_right = POPUP_BG_MARGIN
+	sb.content_margin_top = POPUP_BG_MARGIN
+	sb.content_margin_bottom = POPUP_BG_MARGIN
+	return sb
+
 var rite_data: Dictionary = {}
 var char_data: Dictionary = {}
 var sultan_card_data: Dictionary = {}
@@ -65,6 +83,7 @@ var check_lbl: Label
 var result_lbl: Label
 var count_lbl: Label
 var next_btn: Button
+var _close_btn: TextureButton   # 右上角物理角落的关闭按钮（叠加在父节点上）
 
 func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -82,6 +101,39 @@ func _layout_in_map() -> void:
 
 func _on_viewport_resized() -> void:
 	_layout_in_map()
+	_position_corner_close()
+
+# 右上角物理角落的关闭按钮：叠加到父节点上（本节点是 PanelContainer，角上的子节点会被拉伸覆盖，
+# 故放在父节点），真正贴弹窗角落，与 RiteDetailPopup 行为一致。本节点销毁时自动清理。
+func _add_corner_close() -> void:
+	if _close_btn != null and is_instance_valid(_close_btn):
+		return
+	_close_btn = TextureButton.new()
+	_close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
+	_close_btn.ignore_texture_size = true
+	_close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	_close_btn.custom_minimum_size = Vector2(32, 32)
+	_close_btn.size = Vector2(32, 32)
+	_close_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	_close_btn.mouse_entered.connect(func(): _close_btn.modulate = Color(1.15, 1.15, 1.15))
+	_close_btn.mouse_exited.connect(func(): _close_btn.modulate = Color.WHITE)
+	_close_btn.pressed.connect(func(): _finish_settlement())
+	var p = get_parent()
+	if p != null:
+		p.add_child(_close_btn)
+	_position_corner_close()
+	tree_exiting.connect(func():
+		if is_instance_valid(_close_btn):
+			_close_btn.queue_free()
+	)
+
+func _position_corner_close() -> void:
+	if _close_btn == null or not is_instance_valid(_close_btn):
+		return
+	var sz = 32
+	_close_btn.custom_minimum_size = Vector2(sz, sz)
+	_close_btn.size = Vector2(sz, sz)
+	_close_btn.position = Vector2(position.x + size.x - sz - 4, position.y + 4)
 
 func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, reward: String = "", items: Array = []):
 	rite_data = rite
@@ -97,16 +149,11 @@ func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary, re
 
 	for c in get_children(): c.queue_free()
 
-	var ps = StyleBoxFlat.new(); ps.bg_color = BG; ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3
-	ps.border_width_left = 3; ps.border_width_right = 3
-	ps.border_color = GOLD; ps.shadow_size = 16; ps.shadow_color = SHADOW
-	ps.content_margin_left = 16; ps.content_margin_right = 16
-	ps.content_margin_top = 12; ps.content_margin_bottom = 12
-	add_theme_stylebox_override("panel", ps)
+	add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 	_build_layout()
 	_start_settlement()
+	_add_corner_close()
 
 func _build_layout():
 	var split = HSplitContainer.new()

@@ -61,6 +61,27 @@ func _close_btn(popup) -> TextureButton:
 	cb.pressed.connect(func(): popup.queue_free())
 	return cb
 
+# 右上角物理角落的关闭按钮：叠加到 _root 上，真正贴弹窗角落（不受 PanelContainer 内容区 80px 缩进影响），
+# 与 RiteDetailPopup 行为一致。弹窗销毁时自动清理，视口缩放时跟随重排。
+func _add_corner_close(popup: Control) -> TextureButton:
+	var cb = _close_btn(popup)
+	cb.mouse_filter = Control.MOUSE_FILTER_STOP
+	_root.add_child(cb)
+	_position_corner_close(cb, popup)
+	if not popup.has_meta("corner_close"):
+		popup.set_meta("corner_close", cb)
+		popup.tree_exiting.connect(func():
+			if is_instance_valid(cb):
+				cb.queue_free()
+		)
+	return cb
+
+func _position_corner_close(cb: TextureButton, popup: Control) -> void:
+	var sz = 32
+	cb.custom_minimum_size = Vector2(sz, sz)
+	cb.size = Vector2(sz, sz)
+	cb.position = Vector2(popup.position.x + popup.size.x - sz - 4, popup.position.y + 4)
+
 func _sl(t:String, c:Color=Color.WHITE) -> Label:
 	var l = Label.new(); l.text=t; l.add_theme_color_override("font_color",c); return l
 
@@ -108,6 +129,9 @@ func _on_viewport_resized() -> void:
 		popup.custom_minimum_size = Vector2(pw, ph)
 		popup.size = Vector2(pw, ph)
 		popup.position = Vector2(r.position.x + (r.size.x - pw) / 2.0, r.position.y + (r.size.y - ph) / 2.0)
+		var cb = popup.get_meta("corner_close", null)
+		if cb and is_instance_valid(cb):
+			_position_corner_close(cb, popup)
 
 func show_char_popup(d: Dictionary):
 	var popup = PanelContainer.new()
@@ -128,7 +152,6 @@ func show_char_popup(d: Dictionary):
 	var name_lbl = Label.new(); name_lbl.text = d.get("name", "?")
 	name_lbl.add_theme_font_size_override("font_size", 18); name_lbl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_hb.add_child(name_lbl)
-	title_hb.add_child(_close_btn(popup))
 
 	var title_sub = Label.new(); title_sub.text = d.get("title", "")
 	title_sub.add_theme_font_size_override("font_size", 12)
@@ -180,6 +203,7 @@ func show_char_popup(d: Dictionary):
 
 	_place_in_map(popup, 0.62, 0.72, 360, 260)
 	_root.add_child(popup)
+	_add_corner_close(popup)
 
 func show_sultan_popup(d: Dictionary):
 	var popup = PanelContainer.new()
@@ -192,7 +216,6 @@ func show_sultan_popup(d: Dictionary):
 	var tl = Label.new(); tl.text = "🃏 " + d.get("name", "?")
 	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	hb.add_child(_close_btn(popup))
 
 	var info = Label.new()
 	info.text = "%s · %s | 剩余 %d 天" % [_TN.get(d.get("type", ""), "?"), _RG.get(d.get("rank", ""), "?"), GameManager.sultan_card_days_left]
@@ -206,6 +229,7 @@ func show_sultan_popup(d: Dictionary):
 
 	_place_in_map(popup, 0.5, 0.55, 300, 220)
 	_root.add_child(popup)
+	_add_corner_close(popup)
 
 func show_res_popup(name_str: String, icon: String, quality: String, count: int):
 	var popup = PanelContainer.new()
@@ -218,7 +242,6 @@ func show_res_popup(name_str: String, icon: String, quality: String, count: int)
 	var tl = Label.new(); tl.text = "%s %s" % [icon, name_str]
 	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	hb.add_child(_close_btn(popup))
 
 	var ql = Label.new(); ql.text = "%s · ×%d" % [q_stars.get(quality, "★"), count]
 	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", _C.get("GOLD_HI", Color("e8d48b")))
@@ -227,6 +250,7 @@ func show_res_popup(name_str: String, icon: String, quality: String, count: int)
 
 	_place_in_map(popup, 0.42, 0.42, 260, 160)
 	_root.add_child(popup)
+	_add_corner_close(popup)
 
 func show_game_over():
 	var popup = PanelContainer.new()
@@ -289,3 +313,4 @@ func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
 
 	_place_in_map(popup, 0.66, 0.66, 360, 300, 1000, 760)
 	_root.add_child(popup)
+	_add_corner_close(popup)
