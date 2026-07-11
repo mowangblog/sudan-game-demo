@@ -125,7 +125,7 @@ func _build_content() -> void:
 	main_vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(main_vb)
 
-	_add_close_button(main_vb)
+	_add_close_button(self)
 
 	var split = HSplitContainer.new()
 	split.split_offset = int(custom_minimum_size.x * 0.45)
@@ -246,20 +246,24 @@ func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
 			slot._drop_data(Vector2.ZERO, {"type": "resource", "data": item_data})
 
 
-func _add_close_button(parent: VBoxContainer) -> void:
-	var top_row = HBoxContainer.new()
-	top_row.alignment = BoxContainer.ALIGNMENT_END
-	parent.add_child(top_row)
+func _add_close_button(parent: Control) -> void:
 	var close_btn = TextureButton.new()
 	close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
 	close_btn.ignore_texture_size = true
 	close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	close_btn.custom_minimum_size = Vector2(28, 28)  # 原图 205×205 (1:1)
 	close_btn.size = Vector2(28, 28)
+	close_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	close_btn.mouse_entered.connect(func(): close_btn.modulate = Color(1.15, 1.15, 1.15))
 	close_btn.mouse_exited.connect(func(): close_btn.modulate = Color.WHITE)
 	close_btn.pressed.connect(_on_cancel_pressed)
-	top_row.add_child(close_btn)
+	# 锚定到整个弹窗的右上角（最角落），不随内容区缩进
+	close_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	close_btn.offset_right = -4
+	close_btn.offset_top = 4
+	close_btn.offset_left = -4 - 28
+	close_btn.offset_bottom = 4 + 28
+	parent.add_child(close_btn)
 
 
 func _add_confirm_and_cancel(parent: VBoxContainer) -> void:
