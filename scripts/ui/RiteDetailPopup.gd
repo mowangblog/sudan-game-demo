@@ -125,6 +125,8 @@ func _build_content() -> void:
 	main_vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(main_vb)
 
+	_add_close_button(main_vb)
+
 	var split = HSplitContainer.new()
 	split.split_offset = int(custom_minimum_size.x * 0.45)
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -133,7 +135,7 @@ func _build_content() -> void:
 	_build_left(split)
 	_build_right(split)
 
-	_add_confirm_button(main_vb)
+	_add_confirm_and_cancel(main_vb)
 
 
 func _build_left(split: HSplitContainer) -> void:
@@ -180,7 +182,6 @@ func _build_left(split: HSplitContainer) -> void:
 	var spacer = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	lvb.add_child(spacer)
-	_add_cancel_button(lvb)
 
 
 func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -> void:
@@ -245,23 +246,26 @@ func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
 			slot._drop_data(Vector2.ZERO, {"type": "resource", "data": item_data})
 
 
-func _add_cancel_button(parent: VBoxContainer) -> void:
+func _add_close_button(parent: VBoxContainer) -> void:
+	var top_row = HBoxContainer.new()
+	top_row.alignment = BoxContainer.ALIGNMENT_END
+	parent.add_child(top_row)
+	var close_btn = TextureButton.new()
+	close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
+	close_btn.ignore_texture_size = true
+	close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	close_btn.custom_minimum_size = Vector2(28, 28)  # 原图 205×205 (1:1)
+	close_btn.size = Vector2(28, 28)
+	close_btn.mouse_entered.connect(func(): close_btn.modulate = Color(1.15, 1.15, 1.15))
+	close_btn.mouse_exited.connect(func(): close_btn.modulate = Color.WHITE)
+	close_btn.pressed.connect(_on_cancel_pressed)
+	top_row.add_child(close_btn)
+
+
+func _add_confirm_and_cancel(parent: VBoxContainer) -> void:
 	var btn_hb = HBoxContainer.new()
 	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	parent.add_child(btn_hb)
-
-	var cancel_btn = TextureButton.new()
-	cancel_btn.texture_normal = CANCEL_BTN_TEX
-	cancel_btn.ignore_texture_size = true
-	cancel_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	cancel_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
-	cancel_btn.pressed.connect(_on_cancel_pressed)
-	btn_hb.add_child(cancel_btn)
-
-
-func _add_confirm_button(parent: VBoxContainer) -> void:
-	var btn_hb = HBoxContainer.new()
-	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_hb.add_theme_constant_override("separation", 16)
 	parent.add_child(btn_hb)
 
 	var confirm_btn = TextureButton.new()
@@ -271,6 +275,14 @@ func _add_confirm_button(parent: VBoxContainer) -> void:
 	confirm_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	confirm_btn.pressed.connect(_on_confirm_pressed)
 	btn_hb.add_child(confirm_btn)
+
+	var cancel_btn = TextureButton.new()
+	cancel_btn.texture_normal = CANCEL_BTN_TEX
+	cancel_btn.ignore_texture_size = true
+	cancel_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	cancel_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
+	cancel_btn.pressed.connect(_on_cancel_pressed)
+	btn_hb.add_child(cancel_btn)
 
 
 func _build_right(split: HSplitContainer) -> void:
@@ -295,20 +307,6 @@ func _build_right(split: HSplitContainer) -> void:
 	rv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rv.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(rv)
-
-	var close_row = HBoxContainer.new()
-	close_row.alignment = BoxContainer.ALIGNMENT_END
-	rv.add_child(close_row)
-	var close_btn = TextureButton.new()
-	close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
-	close_btn.ignore_texture_size = true
-	close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	close_btn.custom_minimum_size = Vector2(28, 28)  # 原图 205×205 (1:1)
-	close_btn.size = Vector2(28, 28)
-	close_btn.mouse_entered.connect(func(): close_btn.modulate = Color(1.15, 1.15, 1.15))
-	close_btn.mouse_exited.connect(func(): close_btn.modulate = Color.WHITE)
-	close_btn.pressed.connect(_on_cancel_pressed)
-	close_row.add_child(close_btn)
 
 	var rsc = ScrollContainer.new()
 	rsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
