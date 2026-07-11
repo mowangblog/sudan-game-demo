@@ -2,7 +2,7 @@
 # Overlay popup for configuring a rite. Owns slots and assigned card nodes.
 
 class_name RiteDetailPopup
-extends PanelContainer
+extends Panel
 
 signal committed(config: Dictionary)
 signal cancelled(is_edit: bool, existing_entry)
@@ -121,9 +121,13 @@ func _configure_frame(viewport_size: Vector2) -> void:
 func _build_content() -> void:
 	var main_vb = VBoxContainer.new()
 	main_vb.add_theme_constant_override("separation", 12)
-	main_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(main_vb)
+	# 弹窗是 Panel（非容器），内容区手动用锚点填满，并留九宫格 content_margin 边距
+	main_vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	main_vb.offset_left = POPUP_BG_MARGIN
+	main_vb.offset_top = POPUP_BG_MARGIN
+	main_vb.offset_right = -POPUP_BG_MARGIN
+	main_vb.offset_bottom = -POPUP_BG_MARGIN
 
 	_add_close_button(self)
 
