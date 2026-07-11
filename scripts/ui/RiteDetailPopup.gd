@@ -17,7 +17,7 @@ const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按需
 
 const CONFIRM_BTN_TEX = preload("res://assets/images/ui/queren_btn.png")
 const CANCEL_BTN_TEX = preload("res://assets/images/ui/quxiao_btn.png")
-const CONFIRM_CANCEL_BTN_SIZE := Vector2(100, 38)   # 与原文字按钮同尺寸，换图不改大小（图片原尺寸 358x200，用 KEEP_ASPECT_CENTERED 比例自适应）
+const CONFIRM_CANCEL_BTN_SIZE := Vector2(200, 76)   # 与原文字按钮同尺寸，换图不改大小（图片原尺寸 358x200，用 KEEP_ASPECT_CENTERED 比例自适应）
 
 # 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
 func _popup_bg_stylebox() -> StyleBoxTexture:
@@ -282,6 +282,8 @@ func _add_confirm_and_cancel(parent: VBoxContainer) -> void:
 	confirm_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	confirm_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	confirm_btn.pressed.connect(_on_confirm_pressed)
+	confirm_btn.mouse_entered.connect(func(): confirm_btn.modulate = Color(1.15, 1.15, 1.15))
+	confirm_btn.mouse_exited.connect(func(): confirm_btn.modulate = Color.WHITE)
 	btn_hb.add_child(confirm_btn)
 
 	var cancel_btn = TextureButton.new()
@@ -290,6 +292,8 @@ func _add_confirm_and_cancel(parent: VBoxContainer) -> void:
 	cancel_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	cancel_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	cancel_btn.pressed.connect(_on_cancel_pressed)
+	cancel_btn.mouse_entered.connect(func(): cancel_btn.modulate = Color(1.15, 1.15, 1.15))
+	cancel_btn.mouse_exited.connect(func(): cancel_btn.modulate = Color.WHITE)
 	btn_hb.add_child(cancel_btn)
 
 

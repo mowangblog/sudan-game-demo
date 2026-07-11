@@ -40,6 +40,9 @@ func _ready():
 	custom_minimum_size = CARD_SIZE
 	size = CARD_SIZE
 	_draw_empty()
+	# hover 高亮：鼠标进入时整体提亮，离开恢复
+	mouse_entered.connect(func(): modulate = Color(1.15, 1.15, 1.15))
+	mouse_exited.connect(func(): modulate = Color.WHITE)
 
 var _press_pos: Vector2
 var _pressing: bool = false
