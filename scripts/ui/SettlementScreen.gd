@@ -33,6 +33,9 @@ const RiteItemEffectResolver = preload("res://scripts/game/RiteItemEffectResolve
 const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
 const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按实际角花尺寸调整
 
+const JIXU_BTN = preload("res://assets/images/ui/jixu.png")
+const JIXU_BTN_SIZE := Vector2(140, 78)   # 按 jixu.png 实际比例(358x200)显示，避免变形
+
 # 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
 func _popup_bg_stylebox() -> StyleBoxTexture:
 	var sb = StyleBoxTexture.new()
@@ -82,7 +85,9 @@ var _pending_char: Dictionary = {}
 var check_lbl: Label
 var result_lbl: Label
 var count_lbl: Label
-var next_btn: Button
+var _result_overlay: Panel = null   # 骰子结果蒙版（覆盖骰子区，不占布局高度）
+var _overlay_tween: Tween = null
+var next_btn: TextureButton
 var _close_btn: TextureButton   # 右上角物理角落的关闭按钮（叠加在父节点上）
 
 func _ready():
@@ -209,19 +214,7 @@ func _build_layout():
 	check_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	dice_vb.add_child(check_lbl)
 
-	# 结果
-	result_lbl = Label.new()
-	result_lbl.add_theme_font_size_override("font_size", 20)
-	result_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	result_lbl.visible = false
-	dice_vb.add_child(result_lbl)
-
-	# 成功/失败计数
-	count_lbl = Label.new()
-	count_lbl.add_theme_font_size_override("font_size", 12)
-	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_lbl.visible = false
-	dice_vb.add_child(count_lbl)
+	# 骰子结果改以"蒙版"形式覆盖在骰子区之上短暂显示（见 _result_overlay），不加入布局，避免撑高页面
 
 	# 重投按钮
 	_reroll_btn = Button.new()
@@ -265,10 +258,16 @@ func _build_layout():
 	_stage_log.add_theme_constant_override("separation", 10)
 	narrative_vb.add_child(_stage_log)
 
-	next_btn = Button.new()
-	next_btn.text = "继续 ▶"; next_btn.custom_minimum_size = Vector2(120, 36)
-	next_btn.add_theme_font_size_override("font_size", 13)
+	next_btn = TextureButton.new()
+	next_btn.texture_normal = JIXU_BTN
+	next_btn.ignore_texture_size = true
+	next_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	next_btn.custom_minimum_size = JIXU_BTN_SIZE
+	next_btn.size = JIXU_BTN_SIZE
+	next_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	next_btn.visible = false
+	next_btn.mouse_entered.connect(func(): next_btn.modulate = Color(1.15, 1.15, 1.15))
+	next_btn.mouse_exited.connect(func(): next_btn.modulate = Color.WHITE)
 	next_btn.pressed.connect(_on_next)
 	narrative_vb.add_child(next_btn)
 
@@ -354,7 +353,7 @@ func _process_stage():
 	if _stage_idx >= _stages.size():
 		_finish_settlement(); return
 	var stage = _stages[_stage_idx]
-	result_lbl.visible = false; count_lbl.visible = false; check_lbl.text = ""
+	_hide_result_overlay(); check_lbl.text = ""
 	_reroll_btn.visible = false
 	# 清除上一阶段的骰子
 	if _dice_roller:
@@ -459,13 +458,8 @@ func _on_dice_settled_stage(_results: Dictionary):
 
 	var ok = sc >= _pending_required
 	_stage_success_counts.append(sc)
-	result_lbl.visible=true
-	result_lbl.text="✅ 成功" if ok else "❌ 失败"
-	result_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
 	if not ok: _stage_all_success=false
-	count_lbl.visible=true
-	count_lbl.text="成功×%d  失败×%d  |  需×%d" % [sc,fc,_pending_required]
-	count_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
+	_show_result_overlay(ok, sc, fc)
 
 	# 在 stage_log 中追加结果文本（打字机）
 	var res_lbl = Label.new()
@@ -477,10 +471,11 @@ func _on_dice_settled_stage(_results: Dictionary):
 		if not ok and _rerolls_remaining > 0:
 			_reroll_btn.visible = true
 			_reroll_btn.text = "🔄 重投 ×%d" % _rerolls_remaining
+			# 重投可用：蒙层保留作结果展示，右侧不显示"继续"（让用户自行选择重投）
 		else:
 			if not ok and _current_stage.get("on_failure","")=="end":
 				_stages=_stages.slice(0,_stage_idx+1)
-			next_btn.visible=true)
+			next_btn.visible = true)
 
 func _on_next():
 	_stage_idx+=1
@@ -610,7 +605,55 @@ func _setup_3d_dice():
 		for c in dice_tray.get_children():
 			c.queue_free()
 		dice_tray.add_child(_dice_svc)
+		_ensure_result_overlay()
 
+
+# 骰子结果以"蒙版"覆盖在骰子区（dice_tray）之上短暂显示，不加入布局，避免撑高页面
+func _ensure_result_overlay() -> void:
+	if _result_overlay != null and is_instance_valid(_result_overlay):
+		return
+	_result_overlay = Panel.new()
+	_result_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_result_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_result_overlay.visible = false
+	var obs = StyleBoxFlat.new()
+	obs.bg_color = Color(0, 0, 0, 0.8)
+	obs.set_corner_radius_all(8)
+	_result_overlay.add_theme_stylebox_override("panel", obs)
+	var ovb = VBoxContainer.new()
+	ovb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ovb.alignment = BoxContainer.ALIGNMENT_CENTER
+	ovb.add_theme_constant_override("separation", 8)
+	_result_overlay.add_child(ovb)
+	result_lbl = Label.new()
+	result_lbl.add_theme_font_size_override("font_size", 24)
+	result_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ovb.add_child(result_lbl)
+	count_lbl = Label.new()
+	count_lbl.add_theme_font_size_override("font_size", 14)
+	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ovb.add_child(count_lbl)
+	dice_tray.add_child(_result_overlay)
+
+func _show_result_overlay(ok: bool, sc: int, fc: int) -> void:
+	_ensure_result_overlay()
+	if _overlay_tween != null and is_instance_valid(_overlay_tween):
+		_overlay_tween.kill()
+	result_lbl.text = "✅ 成功" if ok else "❌ 失败"
+	result_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
+	count_lbl.text = "成功×%d  失败×%d  |  需×%d" % [sc, fc, _pending_required]
+	count_lbl.add_theme_color_override("font_color", GREEN if ok else FAIL)
+	# 不自动消失：蒙层常驻，待用户点右侧文字区的"继续"按钮收起（_on_next → _process_stage 会隐藏它）
+	_result_overlay.visible = true
+	_result_overlay.modulate.a = 0.0
+	_overlay_tween = create_tween()
+	_overlay_tween.tween_property(_result_overlay, "modulate:a", 1.0, 0.2)
+
+func _hide_result_overlay() -> void:
+	if _overlay_tween != null and is_instance_valid(_overlay_tween):
+		_overlay_tween.kill()
+	if _result_overlay != null and is_instance_valid(_result_overlay):
+		_result_overlay.visible = false
 
 func _layout_dice_grid(dice: Array) -> void:
 	var max_per_row := 5
