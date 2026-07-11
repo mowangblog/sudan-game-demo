@@ -108,7 +108,7 @@ func make_sultan_card() -> PanelContainer:
 
 	return card
 
-# 用具体令牌数据填充真实卡牌样式（背景图 + 边框按 type/rank），供女术士抽卡后展示
+# 用具体令牌数据填充真实卡牌样式（背景图 + 边框按 type/rank），供摄政王抽卡后展示
 func make_sultan_card_filled(card_data: Dictionary) -> PanelContainer:
 	var card = make_sultan_card()
 	var sc_type = card_data.get("type", "LUST")

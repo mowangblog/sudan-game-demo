@@ -13,7 +13,7 @@ signal sultan_card_drawn(card_data: Dictionary)
 signal sultan_card_consumed(card_id: String)
 signal sultan_card_expired(card_id: String)       # 逾期未消耗 → 触发死亡
 signal sultan_card_countdown_tick(card_id: String, remaining_days: int)
-signal sultan_card_needs_draw(is_first: bool)     # 需要打开女术士页面抽令
+signal sultan_card_needs_draw(is_first: bool)     # 需要打开摄政王页面抽令
 
 ## === 仪式信号 ===
 signal rite_appeared(rite_data: Dictionary)        # 地图上出现新仪式

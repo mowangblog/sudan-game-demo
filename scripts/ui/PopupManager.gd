@@ -82,7 +82,7 @@ func _position_corner_close(cb: TextureButton, popup: Control) -> void:
 	cb.size = Vector2(sz, sz)
 	cb.position = Vector2(popup.position.x + popup.size.x - sz - 4, popup.position.y + 4)
 
-# 事件选择按钮：统一为女术士弹窗的横向长条按钮样式（深色底+金边框+金字+hover高亮）
+# 事件选择按钮：统一为摄政王弹窗的横向长条按钮样式（深色底+金边框+金字+hover高亮）
 func _make_choice_btn(text: String, callback: Callable) -> Button:
 	var btn = Button.new()
 	btn.text = text

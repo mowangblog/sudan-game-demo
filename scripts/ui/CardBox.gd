@@ -29,12 +29,15 @@ func _ready() -> void:
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(vb)
 
-	var icon_lbl = Label.new()
-	icon_lbl.text = "📜"
-	icon_lbl.add_theme_font_size_override("font_size", 28)
-	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.add_child(icon_lbl)
+	var icon_tex = TextureRect.new()
+	icon_tex.name = "BoxIcon"
+	icon_tex.texture = preload("res://assets/images/ui/box_icon.png")
+	icon_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_tex.custom_minimum_size = Vector2(40, 26)
+	icon_tex.size = Vector2(40, 26)
+	icon_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vb.add_child(icon_tex)
 
 	var hint_lbl = Label.new()
 	hint_lbl.text = "令匣"

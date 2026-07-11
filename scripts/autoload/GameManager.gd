@@ -1,6 +1,6 @@
 # GameManager.gd
-# 摄政王令生命周期 — 女术士页面抽令、每天结束倒计时减1、逾期处决
-# 改动：_draw_sultan_card → emit信号触发女术士页面，不再静默抽令
+# 摄政王令生命周期 — 摄政王页面抽令、每天结束倒计时减1、逾期处决
+# 改动：_draw_sultan_card → emit信号触发摄政王页面，不再静默抽令
 
 extends Node
 
@@ -29,7 +29,7 @@ func start_game() -> void:
 	ResourceManager.reset()
 	TurnManager.reset()
 	EventBus.game_started.emit()
-	# 开局：触发女术士页面抽第一张令（而非静默抽令）
+	# 开局：触发摄政王页面抽第一张令（而非静默抽令）
 	EventBus.sultan_card_needs_draw.emit(true)
 
 
@@ -39,7 +39,7 @@ func _on_day_started(day: int) -> void:
 		return
 
 	if active_sultan_card.is_empty():
-		# 无令在手 → 需要抽令，触发女术士页面
+		# 无令在手 → 需要抽令，触发摄政王页面
 		EventBus.sultan_card_needs_draw.emit(false)
 	else:
 		if sultan_card_days_left <= 0:
@@ -55,7 +55,7 @@ func _on_day_ended(_day: int) -> void:
 	EventBus.sultan_card_countdown_tick.emit(active_sultan_card.id, sultan_card_days_left)
 
 
-# ---- 抽令（由女术士页面调用） ----
+# ---- 抽令（由摄政王页面调用） ----
 func draw_sultan_card_via_sorceress(card_data: Dictionary) -> void:
 	active_sultan_card = card_data
 	sultan_card_days_left = 7
@@ -63,7 +63,7 @@ func draw_sultan_card_via_sorceress(card_data: Dictionary) -> void:
 	EventBus.sultan_card_drawn.emit(card_data)
 
 
-# ---- 消耗：清空后触发女术士页面抽新令 ----
+# ---- 消耗：清空后触发摄政王页面抽新令 ----
 func consume_sultan_card(rite_id: int) -> void:
 	if active_sultan_card.is_empty():
 		return
@@ -73,7 +73,7 @@ func consume_sultan_card(rite_id: int) -> void:
 	active_sultan_card = {}
 	sultan_card_days_left = 0
 	EventBus.sultan_card_consumed.emit(card_id)
-	# 折令后 → 需要抽新令，触发女术士页面
+	# 折令后 → 需要抽新令，触发摄政王页面
 	EventBus.sultan_card_needs_draw.emit(false)
 	print("[GameManager] Sultan card '%s' consumed via rite %d" % [card_name, rite_id])
 
@@ -89,7 +89,7 @@ func swap_sultan_card() -> void:
 	swap_tokens -= 1
 	active_sultan_card = {}
 	sultan_card_days_left = 0
-	# 触发女术士页面抽新令（倒计时不变由女术士页面处理）
+	# 触发摄政王页面抽新令（倒计时不变由摄政王页面处理）
 	EventBus.sultan_card_needs_draw.emit(false)
 
 

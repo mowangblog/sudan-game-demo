@@ -44,7 +44,7 @@ var rite_settlement_controller = RiteSettlementControllerScript.new()
 var insight_controller = InsightControllerScript.new()
 var event_checker = EventCheckerScript.new()
 var _pending_event_check: bool = false
-var _sorceress_scene: SorceressScene = null  # 女术士页面
+var _sorceress_scene: SorceressScene = null  # 摄政王页面
 
 # ============ UI 节点 ============
 var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
@@ -86,7 +86,7 @@ func _ready() -> void:
 			_place_rite_btn(rite, _map_area, map_rite_panel.get_existing_positions())
 	)
 	EventBus.sultan_card_needs_draw.connect(_on_sultan_card_needs_draw)
-	# 创建女术士页面（初始隐藏）
+	# 创建摄政王页面（初始隐藏）
 	_sorceress_scene = SorceressScene.new()
 	_sorceress_scene.name = "SorceressScene"
 	_sorceress_scene.card_factory = card_factory   # 注入，用于抽卡后真实展示令牌卡牌
@@ -630,7 +630,7 @@ func _next_press() -> void:
 	_pending_event_check = true
 	rite_settlement_controller.call("start")
 
-# ---- 女术士页面：抽令信号处理 ----
+# ---- 摄政王页面：抽令信号处理 ----
 func _on_sultan_card_needs_draw(is_first: bool) -> void:
 	if not is_instance_valid(_sorceress_scene):
 		return
@@ -640,7 +640,7 @@ func _on_sultan_card_needs_draw(is_first: bool) -> void:
 		_animate_card_into_hand()
 	)
 
-# ---- 主动点击女术士图标 ----
+# ---- 主动点击摄政王图标 ----
 func _on_sorceress_icon_pressed() -> void:
 	if not is_instance_valid(_sorceress_scene):
 		return

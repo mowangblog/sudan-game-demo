@@ -22,6 +22,8 @@ func _center_on_resize():
 	# 背景铺满
 	var bg = get_node_or_null("BG")
 	if bg: bg.size = vs
+	var dim = get_node_or_null("BGDim")
+	if dim: dim.size = vs
 	# MenuVBox 水平居中、垂直至少距顶部 MENU_TOP
 	# （不再强制垂直居中：菜单总高接近视口时会把 logo 顶到上边缘，导致“下移”被抵消）
 	var cv = get_node_or_null("MenuVBox")
@@ -41,6 +43,14 @@ func _build():
 	bg.size = vs
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(bg)
+	
+	# 背景蒙层：半透明深色，覆盖在背景图之上、菜单之下，让主菜单背景暗淡一点
+	var dim = ColorRect.new()
+	dim.name = "BGDim"
+	dim.color = Color(0, 0, 0, 0.35)   # alpha 0.35 = 暗淡一点（想更暗就调大，如 0.5）
+	dim.size = vs
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(dim)
 	
 	var cv = VBoxContainer.new()
 	cv.name = "MenuVBox"

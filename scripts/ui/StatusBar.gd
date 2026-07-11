@@ -31,7 +31,7 @@ func build(icon_callback: Callable = Callable()) -> PanelContainer:
 	_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	_bar.offset_bottom = 38
 	var ps = StyleBoxFlat.new()
-	ps.bg_color = Color("1a0f0a").darkened(0.15)
+	ps.bg_color = Color(0, 0, 0, 0)   # 透明：去掉状态栏背景条，仅保留文字与控件
 	ps.border_width_bottom = 0   # 去掉状态栏底部的淡金色线（那条线正好压在背景顶部）
 	ps.content_margin_left = 12; ps.content_margin_right = 12
 	ps.content_margin_top = 4; ps.content_margin_bottom = 4
@@ -42,7 +42,7 @@ func build(icon_callback: Callable = Callable()) -> PanelContainer:
 	outer.add_theme_constant_override("separation", 0)
 	_bar.add_child(outer)
 
-	# 令匣图标（接入女术士页，固定在状态栏左上角）
+	# 令匣图标（接入摄政王页，固定在状态栏左上角）
 	if icon_callback.is_valid():
 		outer.add_child(_sorceress_icon(icon_callback))
 		var _icon_sep = Control.new()
@@ -58,43 +58,14 @@ func build(icon_callback: Callable = Callable()) -> PanelContainer:
 	hero_lbl = _rep_chip("义名", Color("5a8aba"), 0); left.add_child(hero_lbl)
 	spirit_lbl = _rep_chip("灵知", Color("6a8a5a"), 0); left.add_child(spirit_lbl)
 
-	# 弹性间隔
-	var spacer = Control.new(); spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	outer.add_child(spacer)
-
-	# 右侧：日期 + 倒计时刻度槽 + 天数 + 金骰
-	var right = HBoxContainer.new(); right.add_theme_constant_override("separation", 8)
-	right.alignment = BoxContainer.ALIGNMENT_END
-	outer.add_child(right)
-
-	day_lbl = _l("第1天", 13, C.get("TEXT", Color("f0e6c8")))
-	right.add_child(day_lbl)
-	right.add_child(_sep())
-
-	var gauge = HBoxContainer.new(); gauge.add_theme_constant_override("separation", 2)
-	for i in range(GAUGE_TOTAL):
-		var block = ColorRect.new()
-		block.custom_minimum_size = Vector2(8, 16)
-		block.color = Color("333333")
-		gauge_blocks.append(block)
-		gauge.add_child(block)
-	right.add_child(gauge)
-
-	gauge_lbl = _l("7 天", 13, C.get("GOLD_HI", Color("e8d48b")))
-	right.add_child(gauge_lbl)
-	right.add_child(_sep())
-
-	gold_dice_lbl = _l("🎲金骰:3", 13, C.get("GOLD_HI", Color("e8d48b")))
-	right.add_child(gold_dice_lbl)
-
 	return _bar
 
 
 func refresh() -> void:
-	if not is_instance_valid(day_lbl):
-		return
-	day_lbl.text = "第%d天" % TurnManager.current_day
-	gold_dice_lbl.text = "🎲金骰:%d" % ResourceManager.gold_dice
+	if is_instance_valid(day_lbl):
+		day_lbl.text = "第%d天" % TurnManager.current_day
+	if is_instance_valid(gold_dice_lbl):
+		gold_dice_lbl.text = "🎲金骰:%d" % ResourceManager.gold_dice
 	_refresh_gauge()
 	_good(good_lbl, ResourceManager.reputations.good)
 	_good(evil_lbl, ResourceManager.reputations.evil)
@@ -132,10 +103,16 @@ func _good(chip: PanelContainer, val: int) -> void:
 func _sorceress_icon(cb: Callable) -> Button:
 	var b = Button.new()
 	b.name = "SorceressBtn"
-	b.text = "📜 令匣"
+	b.text = "令匣"
+	# 图标：原图 461x307 过大，加载后缩放到约 18x12 再作为 Button.icon，避免撑大按钮
+	var _img = Image.new()
+	_img.load("res://assets/images/ui/box_icon.png")
+	_img.resize(18, 12, Image.INTERPOLATE_BILINEAR)
+	b.icon = ImageTexture.create_from_image(_img)
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_size_override("font_size", 12)
 	b.add_theme_color_override("font_color", C.get("GOLD", Color("c8a84e")))
-	b.custom_minimum_size = Vector2(0, 24)
+	b.custom_minimum_size = Vector2(0, 24)   # 按钮尺寸保持原样（高 24，宽自适应）
 	var sb = StyleBoxFlat.new()
 	sb.bg_color = Color("1a1208")
 	sb.set_corner_radius_all(6)
