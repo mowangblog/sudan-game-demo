@@ -30,6 +30,10 @@ const SC_BORDER = {
 	"SILVER": Color("c0a848"), "GOLD": Color("e0c860"),
 }
 
+# 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
+const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
+const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按实际角花尺寸调整
+
 # ---- 状态 ----
 var _dialogues: Dictionary = {}
 var _phase: String = ""  # "greeting" / "type_intro" / "rank_intro" / "draw_box" / "card_reveal" / "swap" / "progress" / "chat"
@@ -51,6 +55,7 @@ var _btn_container: VBoxContainer
 var _card_box: CardBox
 var _swap_card: PanelContainer = null        # 换令时展示的只读当前令
 var _swap_on_confirm: Callable = func(): pass  # 换令确认回调（供卡牌点击复用）
+var _close_btn: TextureButton = null          # 右上角物理角落的关闭按钮（叠加在 self 上）
 
 # ---- 进度面板 ----
 var _progress_panel: ScrollContainer = null    # 进度面板（懒构建，复用对话区空间）
@@ -68,13 +73,15 @@ func _ready() -> void:
 # 按当前视口把主面板居中到地图区（状态栏下、手牌区上）
 func _layout_main_panel(vs: Vector2) -> void:
 	var r = Rect2(0, STATUS_BAR_H, vs.x, vs.y - STATUS_BAR_H - HAND_ZONE_H)
-	var pw = clamp(r.size.x * 0.66, 360, min(r.size.x * 0.95, 900))
-	var ph = clamp(r.size.y * 0.7, 340, min(r.size.y * 0.95, 680))
+	# 背景换成九宫格图（content_margin=80），需放宽面板尺寸，避免内容被内缩得过窄
+	var pw = clamp(r.size.x * 0.7, 640, min(r.size.x * 0.96, 1000))
+	var ph = clamp(r.size.y * 0.72, 440, min(r.size.y * 0.95, 760))
 	_main_panel.custom_minimum_size = Vector2(pw, ph)
 	_main_panel.size = Vector2(pw, ph)
 	_main_panel.position = Vector2(r.position.x + (r.size.x - pw) / 2.0, r.position.y + (r.size.y - ph) / 2.0)
+	_position_close_btn()
 	if is_instance_valid(_dialogue_text):
-		_dialogue_text.custom_minimum_size = Vector2(pw - 200, 0)
+		_dialogue_text.custom_minimum_size = Vector2(pw - 320, 0)
 
 
 func _on_viewport_resized() -> void:
@@ -94,6 +101,32 @@ func _load_dialogues() -> void:
 		_dialogues = json
 
 
+# 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
+func _popup_bg_stylebox() -> StyleBoxTexture:
+	var sb = StyleBoxTexture.new()
+	sb.texture = POPUP_BG
+	sb.region_rect = Rect2(0, 0, 614, 410)
+	sb.texture_margin_left = POPUP_BG_MARGIN
+	sb.texture_margin_top = POPUP_BG_MARGIN
+	sb.texture_margin_right = POPUP_BG_MARGIN
+	sb.texture_margin_bottom = POPUP_BG_MARGIN
+	sb.content_margin_left = POPUP_BG_MARGIN
+	sb.content_margin_right = POPUP_BG_MARGIN
+	sb.content_margin_top = POPUP_BG_MARGIN
+	sb.content_margin_bottom = POPUP_BG_MARGIN
+	return sb
+
+
+# 把关闭按钮贴到主面板物理右上角（叠加在 self，不受内容区 80px 缩进影响）
+func _position_close_btn() -> void:
+	if _close_btn == null or not is_instance_valid(_close_btn):
+		return
+	var sz = 32
+	_close_btn.custom_minimum_size = Vector2(sz, sz)
+	_close_btn.size = Vector2(sz, sz)
+	_close_btn.position = Vector2(_main_panel.position.x + _main_panel.size.x - sz - 4, _main_panel.position.y + 4)
+
+
 func _build_ui() -> void:
 	# 全屏半透明背景
 	_bg = ColorRect.new()
@@ -111,17 +144,24 @@ func _build_ui() -> void:
 	var vs = get_viewport().get_visible_rect().size
 	_layout_main_panel(vs)
 
-	var ps = StyleBoxFlat.new()
-	ps.bg_color = Color("120808")
-	ps.set_corner_radius_all(16)
-	ps.border_width_bottom = 4; ps.border_width_top = 4
-	ps.border_width_left = 4; ps.border_width_right = 4
-	ps.border_color = C.GOLD
-	ps.shadow_size = 20; ps.shadow_color = Color("c8a84e30")
-	ps.content_margin_left = 20; ps.content_margin_right = 20
-	ps.content_margin_top = 14; ps.content_margin_bottom = 14
-	_main_panel.add_theme_stylebox_override("panel", ps)
+	_main_panel.add_theme_stylebox_override("panel", _popup_bg_stylebox())
 	add_child(_main_panel)
+
+	# 右上角物理角落的关闭按钮（叠加到 self，真正贴面板角落，不随内容区 80px 缩进影响）
+	_close_btn = TextureButton.new()
+	_close_btn.name = "SorceressClose"
+	_close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
+	_close_btn.ignore_texture_size = true
+	_close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	_close_btn.custom_minimum_size = Vector2(32, 32)
+	_close_btn.size = Vector2(32, 32)
+	_close_btn.z_index = 120
+	_close_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	_close_btn.mouse_entered.connect(func(): _close_btn.modulate = Color(1.15, 1.15, 1.15))
+	_close_btn.mouse_exited.connect(func(): _close_btn.modulate = Color.WHITE)
+	_close_btn.pressed.connect(_on_leave)
+	add_child(_close_btn)
+	_position_close_btn()
 
 	var outer_hb = HBoxContainer.new()
 	outer_hb.add_theme_constant_override("separation", 14)
@@ -176,23 +216,6 @@ func _build_ui() -> void:
 	right_vb.add_theme_constant_override("separation", 6)
 	outer_hb.add_child(right_vb)
 
-	# 关闭按钮行
-	var close_hb = HBoxContainer.new()
-	right_vb.add_child(close_hb)
-	var spacer = Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	close_hb.add_child(spacer)
-	var close_btn = TextureButton.new()
-	close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
-	close_btn.ignore_texture_size = true
-	close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	close_btn.custom_minimum_size = Vector2(32, 32)  # 原图 205×205 (1:1)
-	close_btn.size = Vector2(32, 32)
-	close_btn.mouse_entered.connect(func(): close_btn.modulate = Color(1.15, 1.15, 1.15))
-	close_btn.mouse_exited.connect(func(): close_btn.modulate = Color.WHITE)
-	close_btn.pressed.connect(_on_leave)
-	close_hb.add_child(close_btn)
-
 	# 对话文本区
 	_dialogue_area = VBoxContainer.new()
 	_dialogue_area.add_theme_constant_override("separation", 6)
@@ -204,7 +227,7 @@ func _build_ui() -> void:
 	_dialogue_text.add_theme_font_size_override("font_size", 13)
 	_dialogue_text.add_theme_color_override("font_color", C.TEXT)
 	_dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dialogue_text.custom_minimum_size = Vector2(_main_panel.custom_minimum_size.x - 200, 0)
+	_dialogue_text.custom_minimum_size = Vector2(_main_panel.custom_minimum_size.x - 320, 0)
 	_dialogue_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_dialogue_text.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialogue_text.gui_input.connect(_on_dialogue_click)
