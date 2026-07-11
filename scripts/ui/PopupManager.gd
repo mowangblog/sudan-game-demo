@@ -28,6 +28,19 @@ func setup(root: Control, constants: Dictionary) -> void:
 func _sep() -> HSeparator:
 	var s = HSeparator.new(); s.add_theme_constant_override("separation", 6); return s
 
+# 统一的关闭（叉号）按钮：图片 cha_btn.png
+func _close_btn(popup) -> TextureButton:
+	var cb = TextureButton.new()
+	cb.texture_normal = preload("res://assets/images/ui/cha_btn.png")
+	cb.ignore_texture_size = true
+	cb.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	cb.custom_minimum_size = Vector2(32, 32)  # 原图 205×205 (1:1)
+	cb.size = Vector2(32, 32)
+	cb.mouse_entered.connect(func(): cb.modulate = Color(1.15, 1.15, 1.15))
+	cb.mouse_exited.connect(func(): cb.modulate = Color.WHITE)
+	cb.pressed.connect(func(): popup.queue_free())
+	return cb
+
 func _sl(t:String, c:Color=Color.WHITE) -> Label:
 	var l = Label.new(); l.text=t; l.add_theme_color_override("font_color",c); return l
 
@@ -99,8 +112,7 @@ func show_char_popup(d: Dictionary):
 	var name_lbl = Label.new(); name_lbl.text = d.get("name", "?")
 	name_lbl.add_theme_font_size_override("font_size", 18); name_lbl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; title_hb.add_child(name_lbl)
-	var cb = Button.new(); cb.text = "✕"; cb.custom_minimum_size = Vector2(32, 32)
-	cb.pressed.connect(func(): popup.queue_free()); title_hb.add_child(cb)
+	title_hb.add_child(_close_btn(popup))
 
 	var title_sub = Label.new(); title_sub.text = d.get("title", "")
 	title_sub.add_theme_font_size_override("font_size", 12)
@@ -168,8 +180,7 @@ func show_sultan_popup(d: Dictionary):
 	var tl = Label.new(); tl.text = "🃏 " + d.get("name", "?")
 	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	var cb = Button.new(); cb.text = "✕"; cb.custom_minimum_size = Vector2(32, 32)
-	cb.pressed.connect(func(): popup.queue_free()); hb.add_child(cb)
+	hb.add_child(_close_btn(popup))
 
 	var info = Label.new()
 	info.text = "%s · %s | 剩余 %d 天" % [_TN.get(d.get("type", ""), "?"), _RG.get(d.get("rank", ""), "?"), GameManager.sultan_card_days_left]
@@ -199,8 +210,7 @@ func show_res_popup(name_str: String, icon: String, quality: String, count: int)
 	var tl = Label.new(); tl.text = "%s %s" % [icon, name_str]
 	tl.add_theme_font_size_override("font_size", 18); tl.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hb.add_child(tl)
-	var cb = Button.new(); cb.text = "✕"; cb.custom_minimum_size = Vector2(32, 32)
-	cb.pressed.connect(func(): popup.queue_free()); hb.add_child(cb)
+	hb.add_child(_close_btn(popup))
 
 	var ql = Label.new(); ql.text = "%s · ×%d" % [q_stars.get(quality, "★"), count]
 	ql.add_theme_font_size_override("font_size", 13); ql.add_theme_color_override("font_color", _C.get("GOLD_HI", Color("e8d48b")))

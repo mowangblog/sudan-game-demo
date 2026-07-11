@@ -182,11 +182,14 @@ func _build_ui() -> void:
 	var spacer = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_hb.add_child(spacer)
-	var close_btn = Button.new()
-	close_btn.text = "✕ 离开"
-	close_btn.add_theme_font_size_override("font_size", 12)
-	close_btn.add_theme_color_override("font_color", C.DIM)
-	close_btn.custom_minimum_size = Vector2(70, 28)
+	var close_btn = TextureButton.new()
+	close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
+	close_btn.ignore_texture_size = true
+	close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	close_btn.custom_minimum_size = Vector2(32, 32)  # 原图 205×205 (1:1)
+	close_btn.size = Vector2(32, 32)
+	close_btn.mouse_entered.connect(func(): close_btn.modulate = Color(1.15, 1.15, 1.15))
+	close_btn.mouse_exited.connect(func(): close_btn.modulate = Color.WHITE)
 	close_btn.pressed.connect(_on_leave)
 	close_hb.add_child(close_btn)
 

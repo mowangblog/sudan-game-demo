@@ -458,7 +458,7 @@ func _bottom() -> void:
 	nb.pressed.connect(_next_press)
 	nb.mouse_entered.connect(func(): nb.modulate = Color(1.15, 1.15, 1.15))
 	nb.mouse_exited.connect(func(): nb.modulate = Color.WHITE)
-	nb.position = Vector2(hand_container.size.x - 215, 45)
+	nb.position = Vector2(hand_container.size.x - 215, 85)
 	hand_container.add_child(nb)
 	
 	# 排序按钮 — 下一天下方
@@ -471,7 +471,7 @@ func _bottom() -> void:
 	sort_btn.pressed.connect(hand_layout.cycle_sort)
 	sort_btn.mouse_entered.connect(func(): sort_btn.modulate = Color(1.15, 1.15, 1.15))
 	sort_btn.mouse_exited.connect(func(): sort_btn.modulate = Color.WHITE)
-	sort_btn.position = Vector2(hand_container.size.x - 283, 73)
+	sort_btn.position = Vector2(hand_container.size.x - 273, 113)
 	hand_container.add_child(sort_btn)
 	
 	# 初始化手牌布局管理器
@@ -521,8 +521,8 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 215, 45)
-		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 283, 73)
+		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 215, 90)
+		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 273, 118)
 		_update_card_zone_border()
 	)
 
