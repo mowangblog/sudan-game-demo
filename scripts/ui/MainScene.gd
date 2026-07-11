@@ -141,15 +141,14 @@ func _bg() -> void:
 	bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED   # 保持比例铺满，超出部分裁切
 	bg_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg_tex.modulate = Color(1.0, 1.0, 1.0)   # 原图已提亮，此处保持 1.0；想再亮就调大（如 1.3）
 	bg_layer.add_child(bg_tex)
 	add_child(bg_layer)
-	# 只铺「地图区」：StatusBar 之下、手牌区之上（与 MapPanel 的 offset_top=32 / offset_bottom=-200 对齐）
+	# 铺满「整个游戏界面」：全屏背景（map_bg 为 1920×1080 = 16:9，与 1600×900 视口同比例，故完整展示无裁切、无变形）
 	var _fit_bg = func():
 		var vs = get_viewport().size
-		var map_top = 32.0
-		var map_bottom = 200.0
-		bg_tex.position = Vector2(0, map_top)
-		bg_tex.size = Vector2(vs.x, vs.y - map_top - map_bottom)
+		bg_tex.size = Vector2(vs.x, vs.y)
+		bg_tex.position = Vector2(0, 0)
 	_fit_bg.call()
 	get_viewport().size_changed.connect(_fit_bg)
 
@@ -407,7 +406,7 @@ func _bottom() -> void:
 	# 手牌区背景 — 作为 MainScene 的子节点，与 hand_container 同级，永不干涉卡牌排序
 	var bg = ColorRect.new(); bg.name="HandBg"
 	bg.set_anchors_preset(Control.PRESET_BOTTOM_WIDE); bg.offset_top=-200
-	bg.color = Color("0d0804", 0.85)
+	bg.color = Color("241712", 0.55)   # 调淡：原为近黑 0.85 不透明，看起来像黑蒙版；现用半透明面板色，露出背景
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	move_child(bg, get_child_count() - 2)  # 确保 bg 在 hand_container 下面

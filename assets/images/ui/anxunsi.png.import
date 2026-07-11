@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cgprfw8cn7vv3"
-path="res://.godot/imported/map_bg.png-afb51aee71888a129ecb81806686c5b1.ctex"
+uid="uid://cgmmm35qefed1"
+path="res://.godot/imported/anxunsi.png-c641cc2f99d8ec4d50a1841c4905143c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/ui/map_bg.png"
-dest_files=["res://.godot/imported/map_bg.png-afb51aee71888a129ecb81806686c5b1.ctex"]
+source_file="res://assets/images/ui/anxunsi.png"
+dest_files=["res://.godot/imported/anxunsi.png-c641cc2f99d8ec4d50a1841c4905143c.ctex"]
 
 [params]
 

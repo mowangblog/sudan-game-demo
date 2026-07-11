@@ -24,13 +24,12 @@ func build() -> Control:
 	var ps = StyleBoxFlat.new()
 	ps.bg_color = Color("241712", 0.0)   # 透明：露出底层地图背景图（边框/圆角仍保留）
 	ps.set_corner_radius_all(10)
-	ps.border_width_bottom = 2
-	ps.border_width_top = 2
-	ps.border_width_left = 2
-	ps.border_width_right = 2
+	ps.border_width_bottom = 0
+	ps.border_width_top = 0
+	ps.border_width_left = 0
+	ps.border_width_right = 0
 	ps.border_color = C.get("GOLD_LO", Color("8a6820"))
-	ps.shadow_size = 6
-	ps.shadow_color = C.get("SHADOW", Color("00000099"))
+	ps.shadow_size = 0   # 透明面板下阴影会透成整片蒙层，关掉（想保留浮起感可改成 0 并把 bg 设半透明）
 	ps.content_margin_left = 12
 	ps.content_margin_right = 12
 	ps.content_margin_top = 10
