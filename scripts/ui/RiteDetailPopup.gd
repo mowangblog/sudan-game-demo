@@ -12,6 +12,24 @@ signal card_clicked(slot_type: String, card_data: Dictionary)
 signal highlight_requested(slot)
 signal validation_failed(message: String)
 
+const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
+const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按需调整
+
+# 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
+func _popup_bg_stylebox() -> StyleBoxTexture:
+	var sb = StyleBoxTexture.new()
+	sb.texture = POPUP_BG
+	sb.region_rect = Rect2(0, 0, 614, 410)
+	sb.texture_margin_left = POPUP_BG_MARGIN
+	sb.texture_margin_top = POPUP_BG_MARGIN
+	sb.texture_margin_right = POPUP_BG_MARGIN
+	sb.texture_margin_bottom = POPUP_BG_MARGIN
+	sb.content_margin_left = POPUP_BG_MARGIN
+	sb.content_margin_right = POPUP_BG_MARGIN
+	sb.content_margin_top = POPUP_BG_MARGIN
+	sb.content_margin_bottom = POPUP_BG_MARGIN
+	return sb
+
 const RiteSlotDropScript = preload("res://scripts/ui/RiteSlotDrop.gd")
 const CARD_SIZE := Vector2(100, 180)
 const HAND_ZONE_H := 200   # 与 MainScene._bottom 手牌区高度一致
@@ -93,21 +111,7 @@ func _configure_frame(viewport_size: Vector2) -> void:
 	custom_minimum_size = Vector2(pw, ph)
 	size = Vector2(pw, ph)
 	position = Vector2(r.position.x + (r.size.x - pw) / 2.0, r.position.y + (r.size.y - ph) / 2.0)
-	var ops = StyleBoxFlat.new()
-	ops.bg_color = C.get("BG_PANEL", Color("2d1c12"))
-	ops.set_corner_radius_all(12)
-	ops.border_width_bottom = 3
-	ops.border_width_top = 3
-	ops.border_width_left = 3
-	ops.border_width_right = 3
-	ops.border_color = C.get("GOLD", Color("c8a84e"))
-	ops.shadow_size = 16
-	ops.shadow_color = C.get("SHADOW", Color("00000099"))
-	ops.content_margin_left = 12
-	ops.content_margin_right = 12
-	ops.content_margin_top = 10
-	ops.content_margin_bottom = 10
-	add_theme_stylebox_override("panel", ops)
+	add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 
 func _build_content() -> void:

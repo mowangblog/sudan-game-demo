@@ -12,6 +12,9 @@ var _AI: Dictionary = {}; var _AN: Dictionary = {}
 var _live_popups: Array = []      # 当前存活的弹窗（用于窗口缩放实时重排）
 var _resize_bound: bool = false   # 是否已绑定视口缩放信号
 
+const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
+const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按实际角花尺寸调整
+
 func setup(root: Control, constants: Dictionary) -> void:
 	_root = root
 	if not _resize_bound:
@@ -27,6 +30,23 @@ func setup(root: Control, constants: Dictionary) -> void:
 
 func _sep() -> HSeparator:
 	var s = HSeparator.new(); s.add_theme_constant_override("separation", 6); return s
+
+# 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（nine-patch，整图完整展示、四角不拉伸、中间拉伸）
+func _popup_bg_stylebox() -> StyleBoxTexture:
+	var sb = StyleBoxTexture.new()
+	sb.texture = POPUP_BG
+	sb.region_rect = Rect2(0, 0, 614, 410)
+	# StyleBoxTexture 天生就是九宫格(3x3 缩放)，用 texture_margin_* 定义四角固定边宽。
+	# 注意：nine_patch_stretch 是 NinePatchRect 节点的属性，StyleBoxTexture 上不存在，写它会运行时报错。
+	sb.texture_margin_left = POPUP_BG_MARGIN
+	sb.texture_margin_top = POPUP_BG_MARGIN
+	sb.texture_margin_right = POPUP_BG_MARGIN
+	sb.texture_margin_bottom = POPUP_BG_MARGIN
+	sb.content_margin_left = POPUP_BG_MARGIN
+	sb.content_margin_right = POPUP_BG_MARGIN
+	sb.content_margin_top = POPUP_BG_MARGIN
+	sb.content_margin_bottom = POPUP_BG_MARGIN
+	return sb
 
 # 统一的关闭（叉号）按钮：图片 cha_btn.png
 func _close_btn(popup) -> TextureButton:
@@ -92,11 +112,7 @@ func _on_viewport_resized() -> void:
 func show_char_popup(d: Dictionary):
 	var popup = PanelContainer.new()
 	popup.name = "CharPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
-	ps.border_color = _C.get("GOLD", Color("c8a84e")); ps.shadow_size = 12; ps.shadow_color = Color("000000cc")
-	ps.content_margin_left = 16; ps.content_margin_right = 16; ps.content_margin_top = 12; ps.content_margin_bottom = 12
-	popup.add_theme_stylebox_override("panel", ps)
+	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 	var main_hb = HBoxContainer.new()
 	main_hb.add_theme_constant_override("separation", 16)
@@ -169,11 +185,7 @@ func show_sultan_popup(d: Dictionary):
 	var popup = PanelContainer.new()
 	popup.name = "SultanPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var tc = _TC.get(d.get("type", ""), _C.get("LUST", Color("8b3a5c")))
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
-	ps.border_color = tc; ps.shadow_size = 12; ps.shadow_color = Color(tc.r, tc.g, tc.b, 0.4)
-	ps.content_margin_left = 16; ps.content_margin_right = 16; ps.content_margin_top = 12; ps.content_margin_bottom = 12
-	popup.add_theme_stylebox_override("panel", ps)
+	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 8); popup.add_child(vb)
 	var hb = HBoxContainer.new(); vb.add_child(hb)
@@ -199,11 +211,7 @@ func show_res_popup(name_str: String, icon: String, quality: String, count: int)
 	var popup = PanelContainer.new()
 	popup.name = "ResPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var q_stars = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
-	ps.border_color = _C.get("GOLD", Color("c8a84e")); ps.shadow_size = 12; ps.shadow_color = Color("000000cc")
-	ps.content_margin_left = 16; ps.content_margin_right = 16; ps.content_margin_top = 12; ps.content_margin_bottom = 12
-	popup.add_theme_stylebox_override("panel", ps)
+	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 6); popup.add_child(vb)
 	var hb = HBoxContainer.new(); vb.add_child(hb)
@@ -223,11 +231,7 @@ func show_res_popup(name_str: String, icon: String, quality: String, count: int)
 func show_game_over():
 	var popup = PanelContainer.new()
 	popup.name = "GameOverPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
-	ps.border_color = _C.get("RED", Color("ff4040")); ps.shadow_size = 16; ps.shadow_color = Color("ff000066")
-	ps.content_margin_left = 20; ps.content_margin_right = 20; ps.content_margin_top = 16; ps.content_margin_bottom = 16
-	popup.add_theme_stylebox_override("panel", ps)
+	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 12); popup.add_child(vb)
 	var tl = Label.new(); tl.text = "💀 游戏结束"; tl.add_theme_font_size_override("font_size", 24)
@@ -254,11 +258,7 @@ func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
 	popup.name = "EventPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var sz = _map_target_size(0.66, 0.66, 360, 300, 1000, 760)
 	popup.custom_minimum_size = sz
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3; ps.border_width_left = 3; ps.border_width_right = 3
-	ps.border_color = _C.get("GOLD", Color("c8a84e")); ps.shadow_size = 16; ps.shadow_color = Color("000000cc")
-	ps.content_margin_left = 20; ps.content_margin_right = 20; ps.content_margin_top = 14; ps.content_margin_bottom = 14
-	popup.add_theme_stylebox_override("panel", ps)
+	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
 	
 	var vb = VBoxContainer.new(); vb.add_theme_constant_override("separation", 10); popup.add_child(vb)
 	

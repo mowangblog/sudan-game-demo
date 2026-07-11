@@ -13,6 +13,24 @@ const FLAT_FAIL = Color("aa3030")
 const HAND_ZONE_H := 200   # 与 MainScene._bottom 手牌区高度一致
 const STATUS_BAR_H := 38   # 与 StatusBar 顶栏高度一致
 
+const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
+const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按实际角花尺寸调整
+
+# 统一的弹窗背景：九宫格图 tanchuang_bg_jiugongge.png（3x3 缩放，整图完整展示、四角不拉伸）
+func _popup_bg_stylebox() -> StyleBoxTexture:
+	var sb = StyleBoxTexture.new()
+	sb.texture = POPUP_BG
+	sb.region_rect = Rect2(0, 0, 614, 410)
+	sb.texture_margin_left = POPUP_BG_MARGIN
+	sb.texture_margin_top = POPUP_BG_MARGIN
+	sb.texture_margin_right = POPUP_BG_MARGIN
+	sb.texture_margin_bottom = POPUP_BG_MARGIN
+	sb.content_margin_left = POPUP_BG_MARGIN
+	sb.content_margin_right = POPUP_BG_MARGIN
+	sb.content_margin_top = POPUP_BG_MARGIN
+	sb.content_margin_bottom = POPUP_BG_MARGIN
+	return sb
+
 var vb: VBoxContainer
 var dice_lbl: Label
 var detail_lbl: Label
@@ -48,13 +66,7 @@ func _on_viewport_resized() -> void:
 
 func _setup_style():
 	# 面板样式
-	var ps = StyleBoxFlat.new(); ps.bg_color = Color("1a0f0a"); ps.set_corner_radius_all(12)
-	ps.border_width_bottom = 3; ps.border_width_top = 3
-	ps.border_width_left = 3; ps.border_width_right = 3; ps.border_color = FLAT_GOLD
-	ps.shadow_size = 12; ps.shadow_color = Color("000000cc")
-	ps.content_margin_left = 20; ps.content_margin_right = 20
-	ps.content_margin_top = 16; ps.content_margin_bottom = 16
-	add_theme_stylebox_override("panel", ps)
+	add_theme_stylebox_override("panel", _popup_bg_stylebox())
 
 func setup_and_show(rite: Dictionary, char_d: Dictionary, sultan: Dictionary):
 	rite_data = rite
