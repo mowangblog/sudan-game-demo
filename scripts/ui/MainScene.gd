@@ -51,7 +51,7 @@ var cp:PanelContainer;var ct_lbl:Label;var cr_lbl:Label;var cd_lbl:Label
 var hand_container: Control
 var event_detail_panel: PanelContainer
 var event_detail_vb: VBoxContainer
-var _rite_popup: PanelContainer   # 当前打开的仪式弹窗
+var _rite_popup: RiteDetailPopup   # 当前打开的仪式弹窗
 var hand_cards: Array = []
 var char_panels:Dictionary={};var char_data_all:Dictionary={}
 var resource_cards: Dictionary = {}  # {"金": card_node, "情报": card_node}
