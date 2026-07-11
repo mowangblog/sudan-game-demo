@@ -244,6 +244,7 @@ func _add_buttons(lvb: VBoxContainer) -> void:
 
 	var confirm_btn = TextureButton.new()
 	confirm_btn.texture_normal = CONFIRM_BTN_TEX
+	confirm_btn.ignore_texture_size = true
 	confirm_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	confirm_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	confirm_btn.pressed.connect(_on_confirm_pressed)
@@ -251,6 +252,7 @@ func _add_buttons(lvb: VBoxContainer) -> void:
 
 	var cancel_btn = TextureButton.new()
 	cancel_btn.texture_normal = CANCEL_BTN_TEX
+	cancel_btn.ignore_texture_size = true
 	cancel_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	cancel_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	cancel_btn.pressed.connect(_on_cancel_pressed)
