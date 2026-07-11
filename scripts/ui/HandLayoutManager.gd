@@ -7,14 +7,14 @@ extends RefCounted
 
 var hand_cards: Array  # 引用 MainScene 的 hand_cards
 var hand_container: Control
-var sort_btn: Button
+var sort_btn: TextureButton
 var sort_mode: int = 0
 var _update_count_cb: Callable
 var _CHAR_QUALITY: Dictionary = {}
 
 const CARD_SIZE := Vector2(100, 180)
 
-func setup(p_hand_cards: Array, p_hand_container: Control, p_sort_btn: Button, update_count_cb: Callable, char_quality: Dictionary) -> void:
+func setup(p_hand_cards: Array, p_hand_container: Control, p_sort_btn: TextureButton, update_count_cb: Callable, char_quality: Dictionary) -> void:
 	hand_cards = p_hand_cards
 	hand_container = p_hand_container
 	sort_btn = p_sort_btn

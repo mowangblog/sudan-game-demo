@@ -56,7 +56,7 @@ var hand_cards: Array = []
 var char_panels:Dictionary={};var char_data_all:Dictionary={}
 var resource_cards: Dictionary = {}  # {"金": card_node, "情报": card_node}
 var sort_mode: int = 0  # 0=无 1=分类 2=品质
-var sort_btn: Button
+var sort_btn: TextureButton
 
 # ============ 状态 ============
 var active_rites: Array = []
@@ -448,17 +448,30 @@ func _bottom() -> void:
 	cp.drag_ended.connect(_on_hand_card_dropped)
 	hand_container.add_child(cp); hand_cards.append(cp)
 	
-	# 下一天 — 右下角
-	var nb = Button.new(); nb.text="▶ 下一天"; nb.custom_minimum_size=Vector2(120,44)
-	nb.add_theme_font_size_override("font_size", 15); nb.pressed.connect(_next_press)
-	nb.position = Vector2(hand_container.size.x - 135, 55)
+	# 下一天 — 右下角（图片按钮）
+	var nb = TextureButton.new()
+	nb.texture_normal = preload("res://assets/images/ui/next_day_btn.png")
+	nb.ignore_texture_size = true
+	nb.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	nb.custom_minimum_size = Vector2(200, 112)  # 比例≈1.786 贴合原图，不变形
+	nb.size = Vector2(200, 112)
+	nb.pressed.connect(_next_press)
+	nb.mouse_entered.connect(func(): nb.modulate = Color(1.15, 1.15, 1.15))
+	nb.mouse_exited.connect(func(): nb.modulate = Color.WHITE)
+	nb.position = Vector2(hand_container.size.x - 215, 45)
 	hand_container.add_child(nb)
 	
 	# 排序按钮 — 下一天下方
-	sort_btn = Button.new(); sort_btn.text="排序"; sort_btn.custom_minimum_size=Vector2(60,24)
-	sort_btn.add_theme_font_size_override("font_size", 10)
+	sort_btn = TextureButton.new()
+	sort_btn.texture_normal = preload("res://assets/images/ui/sort_btn.png")
+	sort_btn.ignore_texture_size = true
+	sort_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	sort_btn.custom_minimum_size = Vector2(56, 56)  # 原图 205×205 (1:1)
+	sort_btn.size = Vector2(56, 56)
 	sort_btn.pressed.connect(hand_layout.cycle_sort)
-	sort_btn.position = Vector2(hand_container.size.x - 135, 105)
+	sort_btn.mouse_entered.connect(func(): sort_btn.modulate = Color(1.15, 1.15, 1.15))
+	sort_btn.mouse_exited.connect(func(): sort_btn.modulate = Color.WHITE)
+	sort_btn.position = Vector2(hand_container.size.x - 283, 73)
 	hand_container.add_child(sort_btn)
 	
 	# 初始化手牌布局管理器
@@ -508,8 +521,8 @@ func _bottom() -> void:
 	hand_layout.arrange()
 	
 	hand_container.resized.connect(func():
-		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 - 36)
-		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 135, hand_container.size.y / 2 + 16)
+		if is_instance_valid(nb): nb.position = Vector2(hand_container.size.x - 215, 45)
+		if is_instance_valid(sort_btn): sort_btn.position = Vector2(hand_container.size.x - 283, 73)
 		_update_card_zone_border()
 	)
 
@@ -547,6 +560,7 @@ func _make_insight_button() -> PanelContainer:
 	iv.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	iv.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # 完整显示图片、不裁切（想铺满裁切改 COVERED）
 	iv.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 点击/拖放落到 InsightBtn 面板上
+	iv.modulate = Color(1.15, 1.15, 1.15)   # 提亮一点
 	insight.add_child(iv)
 	return insight
 
