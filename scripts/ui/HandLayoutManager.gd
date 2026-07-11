@@ -34,7 +34,7 @@ func arrange():
 	if visible_cards.size() == 0: return
 	
 	var insight = hand_container.get_node_or_null("InsightBtn")
-	var left = insight.position.x + insight.size.x + 8 if insight and is_instance_valid(insight) else 106
+	var left = insight.position.x + insight.size.x - 10 if insight and is_instance_valid(insight) else 106
 	var right = sort_btn.position.x - 8 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
 	var card_y = hand_container.size.y / 2 - CARD_SIZE.y / 2.0
 	var card_w = CARD_SIZE.x; var gap = 8; var n = visible_cards.size()
@@ -77,7 +77,7 @@ func update_card_zone():
 	var cz = hand_container.get_node_or_null("CardZone")
 	if not cz: return
 	var insight = hand_container.get_node_or_null("InsightBtn")
-	var cz_left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
+	var cz_left = insight.position.x + insight.size.x - 10 if insight and is_instance_valid(insight) else 100
 	var cz_right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
 	cz.position = Vector2(cz_left, 4)
 	cz.size = Vector2(cz_right - cz_left, hand_container.size.y - 8)

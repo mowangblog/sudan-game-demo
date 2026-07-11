@@ -405,8 +405,8 @@ func _bottom() -> void:
 	
 	# 手牌区背景 — 作为 MainScene 的子节点，与 hand_container 同级，永不干涉卡牌排序
 	var bg = ColorRect.new(); bg.name="HandBg"
-	bg.set_anchors_preset(Control.PRESET_BOTTOM_WIDE); bg.offset_top=-200
-	bg.color = Color("241712", 0.55)   # 调淡：原为近黑 0.85 不透明，看起来像黑蒙版；现用半透明面板色，露出背景
+	bg.set_anchors_preset(Control.PRESET_BOTTOM_WIDE); bg.offset_top=-120   # 高度 120，低于卡牌高度(180)，让卡牌能探出上边
+	bg.color = Color("0d0804")   # 不透明深色蒙版（截图里那种低于卡牌高度的底条）
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	move_child(bg, get_child_count() - 2)  # 确保 bg 在 hand_container 下面
@@ -415,11 +415,11 @@ func _bottom() -> void:
 	var cz = PanelContainer.new(); cz.name="CardZoneBorder"
 	cz.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var czs = StyleBoxFlat.new()
-	czs.bg_color = Color("0a0604", 0.4)
-	czs.border_width_bottom = 2; czs.border_width_top = 2
-	czs.border_width_left = 2; czs.border_width_right = 2
+	czs.bg_color = Color(0, 0, 0, 0)   # 去掉卡牌区背景蒙版（全透明）
+	czs.border_width_bottom = 0; czs.border_width_top = 0
+	czs.border_width_left = 0; czs.border_width_right = 0
 	czs.border_color = C.GOLD_LO
-	czs.set_corner_radius_all(6)
+	czs.set_corner_radius_all(0)
 	cz.add_theme_stylebox_override("panel", czs)
 	add_child(cz)
 	move_child(cz, get_child_count() - 2)  # 在 HandBg 上面、hand_container 下面
@@ -428,7 +428,7 @@ func _bottom() -> void:
 	
 	# 灵光一现 — 左下角骷髅
 	var insight = _make_insight_button()
-	insight.position = Vector2(10, -70)   # y 为负：按钮向上探出 70px，使其高度超出手牌区（顶部进入地图区）
+	insight.position = Vector2(-10, -70)   # x=-10 左侧再减 10px（按钮左探出 10px）
 	hand_container.add_child(insight)   # 尺寸保持 CARD_SIZE（与卡牌一致），不被手牌区高度撑开
 	
 	# 角色卡
@@ -520,7 +520,7 @@ func _update_card_zone_border():
 	var cz = get_node_or_null("CardZoneBorder")
 	if not cz: return
 	var insight = hand_container.get_node_or_null("InsightBtn")
-	var left = insight.position.x + insight.size.x + 4 if insight and is_instance_valid(insight) else 100
+	var left = insight.position.x + insight.size.x - 10 if insight and is_instance_valid(insight) else 100
 	var right = sort_btn.position.x - 4 if sort_btn and is_instance_valid(sort_btn) else hand_container.size.x - 8
 	cz.position = Vector2(left, hand_container.position.y + 4)
 	cz.size = Vector2(right - left, hand_container.size.y - 8)

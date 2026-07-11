@@ -32,8 +32,7 @@ func build(icon_callback: Callable = Callable()) -> PanelContainer:
 	_bar.offset_bottom = 38
 	var ps = StyleBoxFlat.new()
 	ps.bg_color = Color("1a0f0a").darkened(0.15)
-	ps.border_width_bottom = 2
-	ps.border_color = C.get("GOLD_LO", Color("8a6820"))
+	ps.border_width_bottom = 0   # 去掉状态栏底部的淡金色线（那条线正好压在背景顶部）
 	ps.content_margin_left = 12; ps.content_margin_right = 12
 	ps.content_margin_top = 4; ps.content_margin_bottom = 4
 	_bar.add_theme_stylebox_override("panel", ps)
