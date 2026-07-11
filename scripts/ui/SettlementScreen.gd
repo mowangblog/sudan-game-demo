@@ -273,19 +273,6 @@ func _build_layout():
 	narrative_vb.add_child(next_btn)
 
 func _start_settlement():
-	if not char_data.is_empty():
-		char_lbl.text = "👤 " + char_data.get("name", "?")
-		var attrs = char_data.get("attributes", {})
-		var best_k = ""; var best_v = 0
-		for k in attrs:
-			if attrs[k] > best_v: best_v = attrs[k]; best_k = k
-		var ai_map = {"phy":"💪","com":"⚔","sur":"🏕","soc":"💬","cha":"💋","ste":"🕶","wis":"📚","mag":"🔮"}
-		var an_map = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}
-		attr_lbl.text = "%s %s %d" % [ai_map.get(best_k, ""), an_map.get(best_k, best_k), best_v]
-	else:
-		char_lbl.text = "无角色"
-		attr_lbl.text = ""
-
 	# 兼容旧仪式：无 stages 则自动生成
 	if rite_data.has("stages") and not rite_data.stages.is_empty():
 		_stages = rite_data.stages
@@ -293,7 +280,43 @@ func _start_settlement():
 		_stages = _auto_stage(rite_data)
 	_stage_idx = 0
 	_stage_all_success = true
+
+	if not char_data.is_empty():
+		char_lbl.text = "👤 " + char_data.get("name", "?")
+		# 显示本次仪式需要的属性（角色当前对应属性值），而不是角色最高属性
+		_update_required_attr_label()
+	else:
+		char_lbl.text = "无角色"
+		attr_lbl.text = ""
+
 	_animate_entrance()
+
+# 显示本次仪式（所有阶段检定）需要的属性，以及角色当前对应属性值
+func _update_required_attr_label() -> void:
+	var ai_map = {"phy":"💪","com":"⚔","sur":"🏕","soc":"💬","cha":"💋","ste":"🕶","wis":"📚","mag":"🔮"}
+	var an_map = {"phy":"体魄","com":"战斗","sur":"生存","soc":"社交","cha":"魅力","ste":"隐匿","wis":"智慧","mag":"魔力"}
+	var attrs = char_data.get("attributes", {})
+	var seen := {}
+	var parts := []
+	for stage in _stages:
+		var check = stage.get("check")
+		if check == null or not (check is Dictionary) or check.is_empty():
+			continue
+		var keys := []
+		if check.has("attribute"):
+			keys.append(check.attribute)
+		elif check.has("attributes"):
+			for k in check.attributes:
+				keys.append(k)
+		for k in keys:
+			if seen.has(k):
+				continue
+			seen[k] = true
+			parts.append("%s %s %d" % [ai_map.get(k, ""), an_map.get(k, k), attrs.get(k, 0)])
+	if parts.is_empty():
+		attr_lbl.text = "（无属性检定）"
+	else:
+		attr_lbl.text = "  ".join(PackedStringArray(parts))
 
 
 func _animate_entrance():
