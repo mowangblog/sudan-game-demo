@@ -119,12 +119,21 @@ func _configure_frame(viewport_size: Vector2) -> void:
 
 
 func _build_content() -> void:
+	var main_vb = VBoxContainer.new()
+	main_vb.add_theme_constant_override("separation", 12)
+	main_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_child(main_vb)
+
 	var split = HSplitContainer.new()
 	split.split_offset = int(custom_minimum_size.x * 0.45)
+	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_split_container = split
-	add_child(split)
+	main_vb.add_child(split)
 	_build_left(split)
 	_build_right(split)
+
+	_add_confirm_button(main_vb)
 
 
 func _build_left(split: HSplitContainer) -> void:
@@ -171,7 +180,7 @@ func _build_left(split: HSplitContainer) -> void:
 	var spacer = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	lvb.add_child(spacer)
-	_add_buttons(lvb)
+	_add_cancel_button(lvb)
 
 
 func _add_slot_box(slot_flow: FlowContainer, index: int, slot_cfg: Dictionary) -> void:
@@ -236,19 +245,10 @@ func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
 			slot._drop_data(Vector2.ZERO, {"type": "resource", "data": item_data})
 
 
-func _add_buttons(lvb: VBoxContainer) -> void:
+func _add_cancel_button(parent: VBoxContainer) -> void:
 	var btn_hb = HBoxContainer.new()
 	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_hb.add_theme_constant_override("separation", 16)
-	lvb.add_child(btn_hb)
-
-	var confirm_btn = TextureButton.new()
-	confirm_btn.texture_normal = CONFIRM_BTN_TEX
-	confirm_btn.ignore_texture_size = true
-	confirm_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	confirm_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
-	confirm_btn.pressed.connect(_on_confirm_pressed)
-	btn_hb.add_child(confirm_btn)
+	parent.add_child(btn_hb)
 
 	var cancel_btn = TextureButton.new()
 	cancel_btn.texture_normal = CANCEL_BTN_TEX
@@ -257,6 +257,20 @@ func _add_buttons(lvb: VBoxContainer) -> void:
 	cancel_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
 	cancel_btn.pressed.connect(_on_cancel_pressed)
 	btn_hb.add_child(cancel_btn)
+
+
+func _add_confirm_button(parent: VBoxContainer) -> void:
+	var btn_hb = HBoxContainer.new()
+	btn_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	parent.add_child(btn_hb)
+
+	var confirm_btn = TextureButton.new()
+	confirm_btn.texture_normal = CONFIRM_BTN_TEX
+	confirm_btn.ignore_texture_size = true
+	confirm_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	confirm_btn.custom_minimum_size = CONFIRM_CANCEL_BTN_SIZE
+	confirm_btn.pressed.connect(_on_confirm_pressed)
+	btn_hb.add_child(confirm_btn)
 
 
 func _build_right(split: HSplitContainer) -> void:
@@ -276,19 +290,15 @@ func _build_right(split: HSplitContainer) -> void:
 	right.add_theme_stylebox_override("panel", rps)
 	split.add_child(right)
 
-	var rsc = ScrollContainer.new()
-	rsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rsc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.add_child(rsc)
-
-	var rvb = VBoxContainer.new()
-	rvb.add_theme_constant_override("separation", 12)
-	rvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rsc.add_child(rvb)
+	var rv = VBoxContainer.new()
+	rv.add_theme_constant_override("separation", 12)
+	rv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rv.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(rv)
 
 	var close_row = HBoxContainer.new()
 	close_row.alignment = BoxContainer.ALIGNMENT_END
-	rvb.add_child(close_row)
+	rv.add_child(close_row)
 	var close_btn = TextureButton.new()
 	close_btn.texture_normal = preload("res://assets/images/ui/cha_btn.png")
 	close_btn.ignore_texture_size = true
@@ -299,6 +309,16 @@ func _build_right(split: HSplitContainer) -> void:
 	close_btn.mouse_exited.connect(func(): close_btn.modulate = Color.WHITE)
 	close_btn.pressed.connect(_on_cancel_pressed)
 	close_row.add_child(close_btn)
+
+	var rsc = ScrollContainer.new()
+	rsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rsc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rv.add_child(rsc)
+
+	var rvb = VBoxContainer.new()
+	rvb.add_theme_constant_override("separation", 12)
+	rvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rsc.add_child(rvb)
 
 	var desc = Label.new()
 	desc.text = rite.get("description", "")
