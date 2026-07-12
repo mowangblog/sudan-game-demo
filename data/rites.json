@@ -900,20 +900,6 @@
 				"required_tags": [],
 				"optional": false
 			},
-			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
-			},
-			{
-				"type": "item",
-				"label": "辅助物品",
-				"required": false,
-				"accepts": [
-                    "intel"
-				],
-				"max": 1
-			}
 		],
 		"time_limit": 1,
 		"duration": 1,
@@ -952,11 +938,6 @@
                     "strong"
 				],
 				"optional": false
-			},
-			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
 			},
 			{
 				"type": "item",
@@ -1007,11 +988,6 @@
 				"optional": false
 			},
 			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
-			},
-			{
 				"type": "item",
 				"label": "辅助物品",
 				"required": false,
@@ -1056,11 +1032,6 @@
 				"type": "character",
 				"required_tags": [],
 				"optional": false
-			},
-			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
 			},
 			{
 				"type": "item",
@@ -1221,12 +1192,7 @@
                     "stealth"
 				],
 				"optional": false
-			},
-			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
-			},
+			},	
 			{
 				"type": "item",
 				"label": "辅助物品",
@@ -1275,12 +1241,7 @@
                     "scholar"
 				],
 				"optional": false
-			},
-			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
-			},
+			},	
 			{
 				"type": "item",
 				"label": "辅助物品",
@@ -1352,12 +1313,7 @@
                     "follower"
 				],
 				"optional": false
-			},
-			{
-				"type": "resource",
-				"required_tags": [],
-				"optional": true
-			},
+			},	
 			{
 				"type": "item",
 				"label": "辅助物品",
@@ -1608,13 +1564,9 @@
 				"optional": false
 			},
 			{
-				"type": "item",
-				"label": "辅助物品",
-				"required": false,
-				"accepts": [
-                    "intel"
-				],
-				"max": 1
+				"type": "character",
+				"required_tags": [],
+				"optional": false
 			}
 		],
 		"time_limit": 1,
