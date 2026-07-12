@@ -10,6 +10,7 @@ const DRAG_THRESHOLD := 6.0
 
 var is_hovered: bool = false
 var is_dragging: bool = false
+var is_snapping: bool = false   # 弹回动画进行中，避免与布局 tween 冲突
 var _drag_tracking: bool = false
 var _drag_active: bool = false
 var _drag_mouse_start: Vector2
@@ -101,16 +102,25 @@ func _update_drag(mouse_pos: Vector2):
 
 func snap_back():
 	is_dragging = false
+	is_snapping = true
 	z_index = 0
 	modulate = Color.WHITE
 	_on_hover_style.call(false)
 	var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	t.tween_property(self, "position", _rest_position, 0.25)
+	t.tween_callback(func(): is_snapping = false)
 
 func set_rest_position(pos: Vector2):
 	_rest_position = pos
-	if not is_dragging:
-		position = pos
+	if is_dragging or is_snapping:
+		return
+	# Y 由 hover / 高亮脉冲控制，仅在不悬停、无高亮时归位（手牌区 Y 对所有卡恒定）
+	if not is_hovered and _highlight_tween == null:
+		position.y = pos.y
+	# X 用 tween 滑动，产生“卡牌缓缓滑动/堆叠”的动画
+	if abs(position.x - pos.x) > 0.5:
+		var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		t.tween_property(self, "position:x", pos.x, 0.2)
 
 var _highlight_tween: Tween
 var _highlight_pos_tween: Tween

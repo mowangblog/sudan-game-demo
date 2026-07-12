@@ -96,10 +96,17 @@ func _ready() -> void:
 	_refresh()
 
 func _process(_delta: float):
+	var dragging = false
 	for c in hand_cards:
 		if is_instance_valid(c) and c.is_dragging:
-			hand_layout.arrange()
-			return
+			dragging = true
+			break
+	if dragging:
+		hand_layout.arrange()
+		return
+	# 非拖拽时每帧重排，让卡牌跟随鼠标滑动；
+	# 鼠标是否落在手牌区、以及离开时冻结，都在 arrange() 内部用真实手牌区域判断。
+	hand_layout.arrange()
 
 func _init_theme() -> Theme:
 	var t = Theme.new()
@@ -164,7 +171,7 @@ func _map() -> void:
 	call_deferred("_place_permanent_rites")
 
 # ---- 令匣图标入口（已内嵌到 StatusBar 左上角，见 StatusBar._sorceress_icon） ----
-func _place_permanent_rites():
+func _place_permanent_rites(): 
 	map_rite_panel.place_permanent_rites(_load_rites())
 
 

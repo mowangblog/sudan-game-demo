@@ -9,6 +9,7 @@ var hand_cards: Array  # 引用 MainScene 的 hand_cards
 var hand_container: Control
 var sort_btn: TextureButton
 var sort_mode: int = 0
+var _window_start: float = 0.0   # 展开窗口起始索引（鼠标离开手牌区时冻结）
 var _update_count_cb: Callable
 var _CHAR_QUALITY: Dictionary = {}
 
@@ -48,30 +49,55 @@ func arrange():
 			visible_cards[i].set_rest_position(Vector2(x0 + i * (card_w + gap), card_y))
 		return
 	
-	var norm_avail = avail - stack_reveal
-	var norm_count = 1
+	# 计算最多能完整铺开的卡数 k
+	var k = 1
 	var used = card_w
-	while norm_count < n - 1:
+	while k < n:
 		var next = used + gap + card_w
-		if next + stack_reveal > avail: break
+		if next > avail - stack_reveal: break
 		used = next
-		norm_count += 1
-	
-	var stacked_n = n - norm_count
-	if stacked_n <= 0:
-		norm_count = 0
-		stacked_n = n
-		used = 0
-	
+		k += 1
+
+	# 鼠标 X → 展开窗口起始索引 s（鼠标离开手牌区时冻结在上次的值）
+	var lm = hand_container.get_local_mouse_position()
+	var s: float
+	# 卡牌往往比容器高（card_y 为负，视觉上露在容器矩形上方），必须用手牌真实所在区域判断，
+	# 否则鼠标移到堆叠区（卡牌上方露出的部分）时 has_point 失败，arrange 不触发。
+	var hand_zone = Rect2(left, card_y - 24, max(avail, 0.0), CARD_SIZE.y + 40)
+	if hand_zone.has_point(lm):
+		var t = clamp((lm.x - left) / max(avail, 1.0), 0.0, 1.0)
+		s = t * float(n - k)
+	else:
+		s = _window_start
+	_window_start = clamp(s, 0.0, float(n - k))
+	var si = int(floor(_window_start))
+
+	# 左堆：索引 < si，锚定左边缘向右堆叠
+	var left_end = left
 	var x = left
-	for i in range(norm_count):
-		visible_cards[i].set_rest_position(Vector2(x, card_y))
-		x += card_w + gap
-	
-	x = left + used + gap if norm_count > 0 else left
-	for i in range(norm_count, n):
+	for i in range(si):
 		visible_cards[i].set_rest_position(Vector2(x, card_y))
 		x += stack_reveal
+	left_end = x
+
+	# 右堆：索引 >= si + k，锚定右边缘向左堆叠
+	var rcount = n - si - k
+	var right_start = right
+	if rcount > 0:
+		for i in range(si + k, n):
+			var off = (n - 1 - i) * stack_reveal
+			visible_cards[i].set_rest_position(Vector2(right - card_w - off, card_y))
+		right_start = right - card_w - (rcount - 1) * stack_reveal
+
+	# 展开区：索引 [si, si + k - 1]，居中放在左右堆之间
+	var spread_w = k * card_w + (k - 1) * gap
+	var mid_l = left_end + gap
+	var mid_r = right_start - gap
+	var spread_start = mid_l
+	if spread_w < (mid_r - mid_l):
+		spread_start = mid_l + (mid_r - mid_l - spread_w) / 2.0
+	for i in range(k):
+		visible_cards[si + i].set_rest_position(Vector2(spread_start + i * (card_w + gap), card_y))
 
 func update_card_zone():
 	var cz = hand_container.get_node_or_null("CardZone")
