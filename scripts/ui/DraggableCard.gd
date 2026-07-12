@@ -120,7 +120,7 @@ func set_rest_position(pos: Vector2):
 	# X 用 tween 滑动，产生“卡牌缓缓滑动/堆叠”的动画
 	if abs(position.x - pos.x) > 0.5:
 		var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-		t.tween_property(self, "position:x", pos.x, 0.4)
+		t.tween_property(self, "position:x", pos.x, 0.8)
 
 var _highlight_tween: Tween
 var _highlight_pos_tween: Tween

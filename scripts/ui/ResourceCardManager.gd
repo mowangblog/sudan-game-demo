@@ -56,11 +56,17 @@ func split_resource_card(source_card: PanelContainer, name_str: String, icon: St
 	update_card_count(source_card, c2 - 1)
 	var newc = _make_resource_card(name_str, icon, quality, 1)
 	hand_container.add_child(newc)
+	# 让新卡从源卡“拆出”：起始位置压在源卡上、半透明，再滑到自己的槽位并淡入，
+	# 而不是像普通入库卡那样从容器左上角(0,0=屏幕最左)飞入。
+	newc.position = source_card.position
+	newc.modulate = Color(1, 1, 1, 0)
 	var idx = hand_cards.find(source_card)
 	if idx != -1:
 		hand_cards.insert(idx + 1, newc)
 	else:
 		hand_cards.append(newc)
+	var pop = newc.create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	pop.tween_property(newc, "modulate", Color.WHITE, 0.2)
 	hand_layout.arrange()
 
 
