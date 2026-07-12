@@ -92,6 +92,13 @@ func _ready() -> void:
 	_sorceress_scene.card_factory = card_factory   # 注入，用于抽卡后真实展示令牌卡牌
 	_sorceress_scene.visible = false
 	add_child(_sorceress_scene)
+	# 摄政王页（全屏 z=100 遮罩模态）打开期间抑制 PopupManager 弹窗显示，
+	# 关掉它（visible=false，抽卡完成/取消/换令均走此路径）后解除抑制，
+	# 事件等弹窗按序补显示，避免与摄政王页叠加导致点不到。
+	_sorceress_scene.visibility_changed.connect(func():
+		if not _sorceress_scene.visible:
+			popups.set_suppressed(false)
+	)
 	GameManager.start_game()
 	_refresh()
 
@@ -644,6 +651,7 @@ func _next_press() -> void:
 func _on_sultan_card_needs_draw(is_first: bool) -> void:
 	if not is_instance_valid(_sorceress_scene):
 		return
+	popups.set_suppressed(true)   # 摄政王页即将打开，抑制事件等弹窗，待其关闭后按序补显示
 	var card_data: Dictionary = {}
 	_sorceress_scene.open_for_draw(card_data, is_first, func(card: Dictionary):
 		_refresh()
@@ -654,6 +662,7 @@ func _on_sultan_card_needs_draw(is_first: bool) -> void:
 func _on_sorceress_icon_pressed() -> void:
 	if not is_instance_valid(_sorceress_scene):
 		return
+	popups.set_suppressed(true)   # 打开摄政王页期间抑制其他弹窗，关闭后按序补显示
 	if GameManager.active_sultan_card.is_empty():
 		_sorceress_scene.open_for_draw({}, GameManager.has_drawn_first_card, func(card: Dictionary):
 			_refresh()

@@ -12,6 +12,46 @@ var _AI: Dictionary = {}; var _AN: Dictionary = {}
 var _live_popups: Array = []      # 当前存活的弹窗（用于窗口缩放实时重排）
 var _resize_bound: bool = false   # 是否已绑定视口缩放信号
 
+# ---- 弹窗顺序队列 ----
+# 任意时刻只显示一个弹窗，关闭当前才显示下一个；外部模态（如摄政王页）打开时
+# 调用 set_suppressed(true) 抑制显示，解除后按序补显示，避免多弹窗叠加导致点不到。
+var _popup_queue: Array = []      # 待显示弹窗的呈现闭包
+var _current_popup: Control = null
+var _suppressed: bool = false
+
+func set_suppressed(s: bool) -> void:
+	_suppressed = s
+	if not _suppressed:
+		_pump()
+
+func _enqueue_popup(builder: Callable) -> void:
+	_popup_queue.append(builder)
+	_pump()
+
+func _pump() -> void:
+	if _current_popup != null or _suppressed:
+		return
+	if _popup_queue.is_empty():
+		return
+	var builder = _popup_queue.pop_front()
+	_current_popup = builder.call()
+
+func _dismiss(popup: Control) -> void:
+	if _current_popup == popup:
+		_current_popup = null
+	if is_instance_valid(popup):
+		popup.queue_free()
+	_pump()
+
+# 把已构建（已 _place_in_map 定位）但未入树的弹窗延迟到队列轮到时入树并显示
+func _present(popup: Control, with_close: bool = true) -> void:
+	_enqueue_popup(func():
+		_root.add_child(popup)
+		if with_close:
+			_add_corner_close(popup)
+		return popup
+	)
+
 const POPUP_BG = preload("res://assets/images/ui/tanchuang_bg_jiugongge.png")
 const POPUP_BG_MARGIN := 80   # 九宫格四角固定边宽（像素），按实际角花尺寸调整
 
@@ -58,7 +98,7 @@ func _close_btn(popup) -> TextureButton:
 	cb.size = Vector2(32, 32)
 	cb.mouse_entered.connect(func(): cb.modulate = Color(1.15, 1.15, 1.15))
 	cb.mouse_exited.connect(func(): cb.modulate = Color.WHITE)
-	cb.pressed.connect(func(): popup.queue_free())
+	cb.pressed.connect(func(): _dismiss(popup))
 	return cb
 
 # 右上角物理角落的关闭按钮：叠加到 _root 上，真正贴弹窗角落（不受 PanelContainer 内容区 80px 缩进影响），
@@ -160,6 +200,9 @@ func _on_viewport_resized() -> void:
 			_position_corner_close(cb, popup)
 
 func show_char_popup(d: Dictionary):
+	_present(_build_char_popup(d))
+
+func _build_char_popup(d: Dictionary):
 	var popup = PanelContainer.new()
 	popup.name = "CharPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
@@ -228,10 +271,12 @@ func show_char_popup(d: Dictionary):
 		right.add_child(pr)
 
 	_place_in_map(popup, 0.62, 0.72, 360, 260)
-	_root.add_child(popup)
-	_add_corner_close(popup)
+	return popup
 
 func show_sultan_popup(d: Dictionary):
+	_present(_build_sultan_popup(d))
+
+func _build_sultan_popup(d: Dictionary):
 	var popup = PanelContainer.new()
 	popup.name = "SultanPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var tc = _TC.get(d.get("type", ""), _C.get("LUST", Color("8b3a5c")))
@@ -254,10 +299,12 @@ func show_sultan_popup(d: Dictionary):
 	var _sp_s = Control.new(); _sp_s.size_flags_vertical = Control.SIZE_EXPAND_FILL; vb.add_child(_sp_s)
 
 	_place_in_map(popup, 0.5, 0.55, 300, 220)
-	_root.add_child(popup)
-	_add_corner_close(popup)
+	return popup
 
 func show_res_popup(name_str: String, icon: String, quality: String, count: int):
+	_present(_build_res_popup(name_str, icon, quality, count))
+
+func _build_res_popup(name_str: String, icon: String, quality: String, count: int):
 	var popup = PanelContainer.new()
 	popup.name = "ResPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var q_stars = {"STONE": "★", "BRONZE": "★★", "SILVER": "★★★", "GOLD": "★★★★"}
@@ -275,10 +322,12 @@ func show_res_popup(name_str: String, icon: String, quality: String, count: int)
 	var _sp_r = Control.new(); _sp_r.size_flags_vertical = Control.SIZE_EXPAND_FILL; vb.add_child(_sp_r)
 
 	_place_in_map(popup, 0.42, 0.42, 260, 160)
-	_root.add_child(popup)
-	_add_corner_close(popup)
+	return popup
 
 func show_game_over():
+	_present(_build_game_over(), false)
+
+func _build_game_over():
 	var popup = PanelContainer.new()
 	popup.name = "GameOverPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	popup.add_theme_stylebox_override("panel", _popup_bg_stylebox())
@@ -296,14 +345,17 @@ func show_game_over():
 	var rb = Button.new(); rb.text = "🏠 返回主菜单"; rb.custom_minimum_size = Vector2(160, 40)
 	rb.add_theme_font_size_override("font_size", 14); vb.add_child(rb)
 	rb.pressed.connect(func():
-		popup.queue_free()
+		_dismiss(popup)
 		_root.get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 	)
 
 	_place_in_map(popup, 0.5, 0.5, 320, 220)
-	_root.add_child(popup)
+	return popup
 
 func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
+	_present(_build_event_popup(event, on_choice))
+
+func _build_event_popup(event: Dictionary, on_choice: Callable):
 	var popup = PanelContainer.new()
 	popup.name = "EventPopup"; popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var sz = _map_target_size(0.66, 0.66, 360, 300, 1000, 760)
@@ -330,11 +382,10 @@ func show_event_popup(event: Dictionary, on_choice: Callable) -> void:
 	for i in range(event.choices.size()):
 		var choice = event.choices[i]
 		btns.add_child(_make_choice_btn(choice.text, func(idx=i):
-			popup.queue_free()
+			_dismiss(popup)
 			on_choice.call(event, idx)
 		))
 	vb.add_child(btns)
 
 	_place_in_map(popup, 0.66, 0.66, 360, 300, 1000, 760)
-	_root.add_child(popup)
-	_add_corner_close(popup)
+	return popup
