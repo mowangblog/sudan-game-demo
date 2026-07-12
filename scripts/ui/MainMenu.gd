@@ -194,6 +194,16 @@ func _show_settings():
 	close.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close.add_theme_font_size_override("font_size", 14)
 	close.add_theme_color_override("font_color", C.GOLD)
+	# 纯黑底、无描边（与女术士页/事件弹窗选择按钮统一）
+	var nb = StyleBoxFlat.new()
+	nb.bg_color = Color("0d0d0d")
+	nb.set_corner_radius_all(6)
+	nb.content_margin_left = 12; nb.content_margin_right = 12
+	nb.content_margin_top = 6; nb.content_margin_bottom = 6
+	close.add_theme_stylebox_override("normal", nb)
+	var hvb = nb.duplicate()
+	hvb.bg_color = Color("1f1f1f")
+	close.add_theme_stylebox_override("hover", hvb)
 	vb.add_child(close)
 	close.pressed.connect(func(): ov.queue_free())
 

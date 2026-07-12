@@ -626,31 +626,23 @@ func _clear_buttons() -> void:
 		child.queue_free()
 
 
+# 与「设置」弹窗关闭按钮同款样式：纯黑底 + 金字 + 字号14 + 高36 + 撑满宽度（无金描边）
 func _make_btn(text: String, callback: Callable) -> Button:
 	var btn = Button.new()
 	btn.text = text
-	btn.add_theme_font_size_override("font_size", 12)
+	btn.add_theme_font_size_override("font_size", 14)
 	btn.add_theme_color_override("font_color", C.GOLD)
-	btn.custom_minimum_size = Vector2(0, 30)
+	btn.custom_minimum_size = Vector2(0, 36)
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var btn_sb = StyleBoxFlat.new()
-	btn_sb.bg_color = Color("2a1810")
-	btn_sb.set_corner_radius_all(8)
-	btn_sb.border_width_bottom = 2; btn_sb.border_width_left = 2; btn_sb.border_width_right = 2; btn_sb.border_width_top = 2
-	btn_sb.border_color = C.GOLD_LO
-	btn_sb.content_margin_left = 12; btn_sb.content_margin_right = 12
-	btn_sb.content_margin_top = 6; btn_sb.content_margin_bottom = 6
-	btn.add_theme_stylebox_override("normal", btn_sb)
-
-	var hover_sb = StyleBoxFlat.new()
-	hover_sb.bg_color = Color("3a2818")
-	hover_sb.set_corner_radius_all(8)
-	hover_sb.border_width_bottom = 2; hover_sb.border_width_left = 2; hover_sb.border_width_right = 2; hover_sb.border_width_top = 2
-	hover_sb.border_color = C.GOLD_HI
-	hover_sb.content_margin_left = 12; hover_sb.content_margin_right = 12
-	hover_sb.content_margin_top = 6; hover_sb.content_margin_bottom = 6
-	btn.add_theme_stylebox_override("hover", hover_sb)
-
+	var nb = StyleBoxFlat.new()
+	nb.bg_color = Color("0d0d0d")
+	nb.set_corner_radius_all(6)
+	nb.content_margin_left = 12; nb.content_margin_right = 12
+	nb.content_margin_top = 6; nb.content_margin_bottom = 6
+	btn.add_theme_stylebox_override("normal", nb)
+	var hvb = nb.duplicate()
+	hvb.bg_color = Color("1f1f1f")
+	btn.add_theme_stylebox_override("hover", hvb)
 	btn.pressed.connect(callback)
 	return btn
 

@@ -82,32 +82,23 @@ func _position_corner_close(cb: TextureButton, popup: Control) -> void:
 	cb.size = Vector2(sz, sz)
 	cb.position = Vector2(popup.position.x + popup.size.x - sz - 4, popup.position.y + 4)
 
-# 事件选择按钮：统一为摄政王弹窗的横向长条按钮样式（深色底+金边框+金字+hover高亮）
+# 事件选择按钮：与「设置」弹窗关闭按钮同款样式（纯黑底+金字+字号14+高36+撑满宽度，无金描边）
 func _make_choice_btn(text: String, callback: Callable) -> Button:
 	var btn = Button.new()
 	btn.text = text
-	btn.add_theme_font_size_override("font_size", 12)
+	btn.add_theme_font_size_override("font_size", 14)
 	btn.add_theme_color_override("font_color", _C.get("GOLD", Color("c8a84e")))
-	btn.custom_minimum_size = Vector2(0, 30)
+	btn.custom_minimum_size = Vector2(0, 36)
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var btn_sb = StyleBoxFlat.new()
-	btn_sb.bg_color = Color("2a1810")
-	btn_sb.set_corner_radius_all(8)
-	btn_sb.border_width_bottom = 2; btn_sb.border_width_left = 2; btn_sb.border_width_right = 2; btn_sb.border_width_top = 2
-	btn_sb.border_color = _C.get("GOLD_LO", Color("8a6820"))
-	btn_sb.content_margin_left = 12; btn_sb.content_margin_right = 12
-	btn_sb.content_margin_top = 6; btn_sb.content_margin_bottom = 6
-	btn.add_theme_stylebox_override("normal", btn_sb)
-	var hover_sb = StyleBoxFlat.new()
-	hover_sb.bg_color = Color("3a2818")
-	hover_sb.set_corner_radius_all(8)
-	hover_sb.border_width_bottom = 2; hover_sb.border_width_left = 2; hover_sb.border_width_right = 2; hover_sb.border_width_top = 2
-	hover_sb.border_color = _C.get("GOLD_HI", Color("e8d48b"))
-	hover_sb.content_margin_left = 12; hover_sb.content_margin_right = 12
-	hover_sb.content_margin_top = 6; hover_sb.content_margin_bottom = 6
-	btn.add_theme_stylebox_override("hover", hover_sb)
-	btn.mouse_entered.connect(func(): btn.modulate = Color(1.15, 1.15, 1.15))
-	btn.mouse_exited.connect(func(): btn.modulate = Color.WHITE)
+	var nb = StyleBoxFlat.new()
+	nb.bg_color = Color("0d0d0d")
+	nb.set_corner_radius_all(6)
+	nb.content_margin_left = 12; nb.content_margin_right = 12
+	nb.content_margin_top = 6; nb.content_margin_bottom = 6
+	btn.add_theme_stylebox_override("normal", nb)
+	var hvb = nb.duplicate()
+	hvb.bg_color = Color("1f1f1f")
+	btn.add_theme_stylebox_override("hover", hvb)
 	btn.pressed.connect(callback)
 	return btn
 
