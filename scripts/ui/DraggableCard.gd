@@ -31,7 +31,7 @@ func _notification(what: int):
 		NOTIFICATION_MOUSE_ENTER:
 			if not is_dragging:
 				is_hovered = true
-				z_index = 10
+				z_index = 50
 				var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 				t.tween_property(self, "position:y", _rest_position.y - 12, 0.15)
 				_on_hover_style.call(true)
@@ -120,7 +120,7 @@ func set_rest_position(pos: Vector2):
 	# X 用 tween 滑动，产生“卡牌缓缓滑动/堆叠”的动画
 	if abs(position.x - pos.x) > 0.5:
 		var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-		t.tween_property(self, "position:x", pos.x, 0.2)
+		t.tween_property(self, "position:x", pos.x, 0.4)
 
 var _highlight_tween: Tween
 var _highlight_pos_tween: Tween
