@@ -204,6 +204,13 @@ func _show_settings():
 	var hvb = nb.duplicate()
 	hvb.bg_color = Color("1f1f1f")
 	close.add_theme_stylebox_override("hover", hvb)
+	# 按下：黑底白字
+	var pvb = nb.duplicate()
+	pvb.bg_color = Color("000000")
+	close.add_theme_stylebox_override("pressed", pvb)
+	var hv_color := Color("f0f0f0")
+	close.add_theme_color_override("font_hover_color", hv_color)
+	close.add_theme_color_override("font_pressed_color", Color.WHITE)
 	vb.add_child(close)
 	close.pressed.connect(func(): ov.queue_free())
 

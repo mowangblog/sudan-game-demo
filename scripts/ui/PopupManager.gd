@@ -99,6 +99,12 @@ func _make_choice_btn(text: String, callback: Callable) -> Button:
 	var hvb = nb.duplicate()
 	hvb.bg_color = Color("1f1f1f")
 	btn.add_theme_stylebox_override("hover", hvb)
+	# 按下：黑底白字
+	var pvb = nb.duplicate()
+	pvb.bg_color = Color("000000")
+	btn.add_theme_stylebox_override("pressed", pvb)
+	btn.add_theme_color_override("font_hover_color", Color("f0f0f0"))
+	btn.add_theme_color_override("font_pressed_color", Color.WHITE)
 	btn.pressed.connect(callback)
 	return btn
 
