@@ -52,37 +52,40 @@ func arrange():
 				c.z_index = 1 + i
 		return
 	
-	# 计算最多能完整铺开的卡数 k。
-	# 用户提供修正：之前用 2*overhang 约束（最坏情况左右都有堆叠）太狠，会把一张本该展开的卡也挤进堆叠、留空档；
-	# 改为 1*overhang（-1 而非 -2），放一张卡回展开区。overhang = 卡宽-露出的步长（堆叠顶卡向右探出的宽度）。
-	# 左堆侧已由 free_l = left_end + overhang + gap 保护（展开首卡从堆视觉右边缘之后开始），
-	# 右堆侧由 free_r = right_start - gap 保护；放宽后极端“鼠标居中、左右都堆”时展开可能略微贴紧右堆，但不留空档。
-	# 解得 k <= (avail - overhang - n*stack_reveal - gap) / (card_w + gap - stack_reveal)
+	# 计算最多能完整铺开的卡数 k（随鼠标位置动态）。
+	# 根因修复“空挡”：旧逻辑 k 用固定公式（按最坏情况两侧都堆保守估算），鼠标滑到极左/极右、实际只有一侧有堆时，
+	# 另一侧空间被解放但 k 不变，中间留出约一张卡的空白。现在改“左堆视觉宽+展开区+右堆视觉宽=手牌宽”反解 k，
+	# 且哪一侧无堆（overL/overR=0）k 自动变大把那侧填满，三块紧凑无空（模拟验证最大空隙 ≤28px）。
+	# overhang = 堆叠顶卡探出宽度 = 卡宽-步长；denom = 卡宽+缝-步长。
 	var stack_overhang = card_w - stack_reveal
-	var k = 1
-	if n > 1:
-		var denom = card_w + gap - stack_reveal
-		var num = avail - stack_overhang - n * stack_reveal - gap
-		k = int(floor(num / denom))
-		k = clamp(k, 1, n)
-
-	# 鼠标 X → 展开窗口起始索引 s（鼠标离开手牌区时冻结在上次的值）
+	var denom = card_w + gap - stack_reveal
 	var lm = hand_container.get_local_mouse_position()
-	var s: float
 	# 卡牌往往比容器高（card_y 为负，视觉上露在容器矩形上方），必须用手牌真实所在区域判断，
 	# 否则鼠标移到堆叠区（卡牌上方露出的部分）时 has_point 失败，arrange 不触发。
 	var hand_zone = Rect2(left, card_y - 24, max(avail, 0.0), CARD_SIZE.y + 40)
-	if hand_zone.has_point(lm):
-		# 鼠标 X → 聚焦卡索引 focus∈[0, n-1]，再让聚焦卡尽量落在展开窗口中央。
-		# 这样鼠标放在最左/最右那张卡上时，对应一侧的堆能完全收空（对称），
-		# 不会像“边缘对齐线性映射”那样右侧总残留一张。
-		var focus = clamp((lm.x - left) / max(avail, 1.0), 0.0, 1.0) * float(n - 1)
-		s = focus - float(k - 1) / 2.0
-	else:
-		s = _window_start
-	_window_start = clamp(s, 0.0, float(n - k))
-	# round 而非 floor：左右取整对称，避免右侧因向下取整多留一张。
-	var si = int(round(_window_start))
+	var active = hand_zone.has_point(lm)
+	var focus = 0.0
+	if active:
+		# 鼠标 X → 聚焦卡索引 focus∈[0, n-1]；鼠标放在最左/最右卡上时对应侧堆收空（对称）。
+		focus = clamp((lm.x - left) / max(avail, 1.0), 0.0, 1.0) * float(n - 1)
+	# si=左堆张数（鼠标离开手牌区时冻结在 _window_start，不回弹）；k=展开张数。迭代收敛：
+	# 每轮用当前 si 解出 k（某侧无堆则该侧 over=0、k 更大），再用焦点与 k 重算 si，直到稳定。
+	var si = int(round(clamp(_window_start, 0.0, float(n - 1))))
+	var k = 1
+	for iter in range(12):
+		var overL = stack_overhang if si > 0 else 0
+		var rc = n - si - k
+		var overR = stack_overhang if rc > 0 else 0
+		var ke = (avail - n * stack_reveal + gap - overL - overR) / denom
+		k = int(round(ke))
+		k = clamp(k, 1, n)
+		rc = n - si - k
+		if rc < 0:
+			rc = 0
+			k = n - si
+		if active:
+			si = int(round(clamp(focus - float(k - 1) / 2.0, 0.0, float(n - k))))
+	_window_start = float(si)
 
 	# 左堆：索引 < si，锚定左边缘向右堆叠；靠窗口（右边）的卡层级更高
 	var left_end = left
@@ -109,22 +112,13 @@ func arrange():
 				c.z_index = 1 + si + k + (n - 1) - i
 		right_start = right - card_w - (rcount - 1) * stack_reveal
 
-	# 展开区：索引 [si, si + k - 1]。
-	# 交界处理：① 放在左右堆之间、紧贴堆边缘（free_l/free_r），聚焦卡居中；放不下（对侧大堆的极端）才退化为贴边。
-	# ② 展开卡层级整体抬到两侧堆叠之上（z=n+1+i），保证左右交界一致、展开卡不被堆卡盖住（修之前右交界堆卡压展开卡的“交界不对”）。
-	# 左堆顶卡向右探出 stack_overhang，展开区须从堆的“视觉右边缘”之后开始，
-	# 否则展开首卡会盖住堆叠区顶卡（正是“展示区盖住堆叠区里两张卡”的根因）。
-	var free_l = left_end + (stack_overhang if si > 0 else 0) + gap
-	var free_r = right_start - gap
-	var spread_w = k * card_w + (k - 1) * gap
-	var focus_idx = _window_start + float(k - 1) / 2.0
-	var focus_x = left + focus_idx * (card_w + gap) + card_w / 2.0
-	var spread_start = focus_x - spread_w / 2.0
-	if spread_w <= (free_r - free_l):
-		spread_start = clamp(spread_start, free_l, free_r - spread_w)
-	else:
-		# 理论上 k 已按最坏情况约束，不会走到这里；退化时也夹在 [free_l, free_r] 内，绝不盖堆/溢出。
-		spread_start = clamp(spread_start, free_l, free_r - spread_w)
+	# 展开区：索引 [si, si + k - 1]。从左堆视觉右边缘（midL）起 flush 铺满到右堆之前（midR），
+	# 不居中——k 已按“正好填满两侧堆之间”算出，居中反而会在某侧留白（正是之前“空挡”的来源）。
+	# 左堆顶卡向右探出 stack_overhang，展开区从堆视觉右边缘之后开始，避免盖住堆叠顶卡。
+	# 展开卡层级整体抬到两侧堆叠之上（z=n+1+i），保证左右交界一致、展开卡不被堆卡盖住。
+	var midL = left_end + (stack_overhang if si > 0 else 0) + gap
+	var midR = right_start - gap
+	var spread_start = midL
 	for i in range(k):
 		var c = visible_cards[si + i]
 		c.set_rest_position(Vector2(spread_start + i * (card_w + gap), card_y))
