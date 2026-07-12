@@ -95,6 +95,9 @@ func _ready() -> void:
 	GameManager.start_game()
 	_refresh()
 
+	# BGM：游戏内背景音乐（循环）。与菜单 BGM 交叉淡入淡出（BGM 单例跨场景存活）。
+	BGM.play(load("res://assets/bgm/main_game.ogg"))
+
 func _process(_delta: float):
 	var dragging = false
 	for c in hand_cards:
