@@ -39,7 +39,14 @@ func _ready():
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = CARD_SIZE
 	size = CARD_SIZE
-	_draw_empty()
+	# 入树时若已有卡（prefill 在 setup 阶段已 _drop_data 设好 current_card，但此刻 slot 才真正进树），
+	# 重画卡面；否则绘制空槽背景。注意 RiteDetailPopup.setup() 在弹窗 add_child 之前调用，
+	# prefill 的卡节点当时尚未进入场景树，此处 _draw_card_preview 会正确重建并显示，
+	# 修复“重开已配置仪式时卡槽空、卡面不回显”的问题（逻辑数据在，仅美术被 _ready 的 _draw_empty 清掉）。
+	if current_card.is_empty():
+		_draw_empty()
+	else:
+		_draw_card_preview()
 	# hover 高亮：鼠标进入时整体提亮，离开恢复
 	mouse_entered.connect(func(): modulate = Color(1.15, 1.15, 1.15))
 	mouse_exited.connect(func(): modulate = Color.WHITE)

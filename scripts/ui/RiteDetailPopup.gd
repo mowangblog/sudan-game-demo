@@ -244,6 +244,8 @@ func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
 		slot._drop_data(Vector2.ZERO, {"type": "character", "data": existing_entry.char})
 	elif slot_cfg.get("type", "") == "sultan_card" and not existing_entry.sultan_card.is_empty():
 		slot._drop_data(Vector2.ZERO, {"type": "sultan_card", "data": existing_entry.sultan_card})
+	elif slot_cfg.get("type", "") == "gold" and not existing_entry.gold.is_empty():
+		slot._drop_data(Vector2.ZERO, {"type": "resource", "data": existing_entry.gold})
 	elif slot_cfg.get("type", "") == "item":
 		var item_data = _get_existing_item_for_slot(slot.slot_index)
 		if not item_data.is_empty():
