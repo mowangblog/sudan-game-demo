@@ -240,12 +240,18 @@ func _create_slot(index: int, slot_cfg: Dictionary):
 func _prefill_slot(slot, slot_cfg: Dictionary) -> void:
 	if not is_edit:
 		return
-	if slot_cfg.get("type", "") == "character" and not existing_entry.char.is_empty():
-		slot._drop_data(Vector2.ZERO, {"type": "character", "data": existing_entry.char})
-	elif slot_cfg.get("type", "") == "sultan_card" and not existing_entry.sultan_card.is_empty():
-		slot._drop_data(Vector2.ZERO, {"type": "sultan_card", "data": existing_entry.sultan_card})
-	elif slot_cfg.get("type", "") == "gold" and not existing_entry.gold.is_empty():
-		slot._drop_data(Vector2.ZERO, {"type": "resource", "data": existing_entry.gold})
+	# 注意：active_rites 里混有多种结构的 entry（用户配置的带 gold，InsightController
+	# 注入的洞察 entry 只有 char/sultan_card、无 gold 键），必须用 .get 安全取值，
+	# 否则对缺键的 entry 用 .key 直接访问会抛 “Invalid access to property or key 'gold'”。
+	var char_data = existing_entry.get("char", {})
+	var sultan_data = existing_entry.get("sultan_card", {})
+	var gold_data = existing_entry.get("gold", {})
+	if slot_cfg.get("type", "") == "character" and not char_data.is_empty():
+		slot._drop_data(Vector2.ZERO, {"type": "character", "data": char_data})
+	elif slot_cfg.get("type", "") == "sultan_card" and not sultan_data.is_empty():
+		slot._drop_data(Vector2.ZERO, {"type": "sultan_card", "data": sultan_data})
+	elif slot_cfg.get("type", "") == "gold" and not gold_data.is_empty():
+		slot._drop_data(Vector2.ZERO, {"type": "resource", "data": gold_data})
 	elif slot_cfg.get("type", "") == "item":
 		var item_data = _get_existing_item_for_slot(slot.slot_index)
 		if not item_data.is_empty():
