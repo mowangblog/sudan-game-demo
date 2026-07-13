@@ -11,6 +11,10 @@
 
 本项目为个人学习目的的 MVP 复刻，重点在于理解原版游戏的美术风格、UI 设计及核心系统机制。
 
+已部署GitHub Pages，体验地址：[mowangblog.github.io/shewang-game-demo](https://mowangblog.github.io/shewang-game-demo/)
+
+已部署个人网站，体验地址：[gdcode.top/game](https://gdcode.top/game/)
+
 ## 核心系统
 
 | 系统 | 描述 |
