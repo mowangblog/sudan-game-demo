@@ -35,4 +35,4 @@ project/assembly_name="sudanGameDemo"
 
 [physics]
 
-3d/physics_engine="Jolt Physics"
+3d/physics_engine="Godot Physics"
